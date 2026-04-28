@@ -828,9 +828,11 @@ function guardarProducto(estado) {
 // TABLA PRODUCTOS
 // ============================================================
 const CAT_NAMES = {
-  onboarding:'Onboarding', capacitacion:'Capacitación', reconocimiento:'Reconocimiento',
-  cotidiano:'Cotidiano', outdoors:'Outdoors', fechas:'Fechas especiales',
-  indumentaria:'Indumentaria', escritura:'Escritura', tecnologia:'Tecnología', eco:'Eco & Sustentable', llaveros:'Llaveros & Accesorios', packaging:'Packaging'
+  kits:'Kits & Bienvenida', drinkware:'Drinkware', escritura:'Escritura',
+  papeleria:'Papelería & Escritorio', bolsos:'Bolsos & Marroquinería',
+  tecnologia:'Tecnología', llaveros:'Llaveros & Accesorios',
+  indumentaria:'Indumentaria', outdoors:'Outdoors & Bienestar',
+  eco:'Eco & Sustentable', premium:'Premium & Ejecutivo', packaging:'Packaging & Presentación'
 };
 const RANGO_NAMES = { economico:'Económico', intermedio:'Intermedio', premium:'Premium' };
 
@@ -957,13 +959,17 @@ function renderDashboard() {
 // CATEGORÍAS ADMIN
 // ============================================================
 const CATS = [
-  { id:'onboarding', nombre:'Onboarding & Bienvenida', icon:'🎁' },
-  { id:'capacitacion', nombre:'Capacitación & Eventos', icon:'📋' },
-  { id:'reconocimiento', nombre:'Reconocimiento & Premios', icon:'⭐' },
-  { id:'cotidiano', nombre:'Escritorio & Oficina', icon:'☕' },
-  { id:'outdoors', nombre:'Outdoors & Bienestar', icon:'🌿' },
-  { id:'fechas', nombre:'Fechas especiales', icon:'🎄' },
+  { id:'kits', nombre:'Kits & Bienvenida', icon:'🎁' },
+  { id:'drinkware', nombre:'Drinkware', icon:'🥤' },
+  { id:'escritura', nombre:'Escritura', icon:'✏️' },
+  { id:'papeleria', nombre:'Papelería & Escritorio', icon:'📓' },
+  { id:'bolsos', nombre:'Bolsos & Marroquinería', icon:'👜' },
+  { id:'tecnologia', nombre:'Tecnología', icon:'💻' },
+  { id:'llaveros', nombre:'Llaveros & Accesorios', icon:'🔑' },
   { id:'indumentaria', nombre:'Indumentaria', icon:'👕' },
+  { id:'outdoors', nombre:'Outdoors & Bienestar', icon:'🌿' },
+  { id:'eco', nombre:'Eco & Sustentable', icon:'♻️' },
+  { id:'premium', nombre:'Premium & Ejecutivo', icon:'⭐' },
   { id:'packaging', nombre:'Packaging & Presentación', icon:'📦' },
 ];
 
