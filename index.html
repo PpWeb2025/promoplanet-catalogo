@@ -706,17 +706,9 @@ const CATEGORIAS = [
 ];
 
 // ============================================================
-// PRODUCTOS — se leen desde localStorage (cargados desde el admin)
+// PRODUCTOS — se leen desde la API
 // ============================================================
-const DEMO_PRODUCTOS = [];
-
-function getProductosPublicos() {
-  const guardados = JSON.parse(localStorage.getItem('pp_productos') || '[]');
-  // Si hay productos en localStorage usarlos, si no usar los demo
-  const lista = guardados.length > 0 ? guardados : DEMO_PRODUCTOS;
-  return lista.filter(p => p.estado === 'publicado');
-}
-let PRODUCTOS = getProductosPublicos();
+let PRODUCTOS = [];
 
 // ============================================================
 // STATE
@@ -749,7 +741,7 @@ function renderCatSidebar() {
 function renderCatGrid() {
   const el = document.getElementById('cats-grid');
   el.innerHTML = CATEGORIAS.map(c => {
-    const count = getProductosPublicos().filter(p => p.categoria === c.id).length;
+    const count = PRODUCTOS.filter(p => p.categoria === c.id).length;
     return `<div class="cat-card" onclick="setCatFromGrid('${c.id}')">
       <div class="cat-icon" style="color:${c.color}">${c.icon}</div>
       <div class="cat-name">${c.nombre}</div>
@@ -802,7 +794,6 @@ function getTecnicasActivas() {
 }
 
 function filtrar() {
-  PRODUCTOS = getProductosPublicos();
   const q = document.getElementById('search-input').value.toLowerCase();
   const maxQty = parseInt(document.getElementById('qty-range').value);
   const rangos = getRangosActivos();
@@ -812,7 +803,7 @@ function filtrar() {
     if (catActiva !== 'todos' && p.categoria !== catActiva) return false;
     if (destActivo !== 'todos' && !p.destinatarios.includes(destActivo)) return false;
     if (occActiva !== 'todos' && !p.ocasiones.includes(occActiva)) return false;
-    if (!rangos.includes(p.rango)) return false;
+    if (p.rango && !rangos.includes(p.rango)) return false;
     if (p.minimo > maxQty) return false;
     if (!p.tecnicas.some(t => tecnicas.includes(t))) return false;
     if (q && !p.nombre.toLowerCase().includes(q) && !p.codigo.toLowerCase().includes(q) && !p.descripcion.toLowerCase().includes(q)) return false;
@@ -838,7 +829,7 @@ function renderProductos(lista) {
   if (!lista.length) {
     grid.innerHTML = '';
     empty.style.display = 'block';
-    const sinProductos = getProductosPublicos().length === 0;
+    const sinProductos = PRODUCTOS.length === 0;
     document.getElementById('empty-icon').textContent = sinProductos ? '🚀' : '🔍';
     document.getElementById('empty-title').textContent = sinProductos ? 'Catálogo en preparación' : 'Sin resultados';
     document.getElementById('empty-msg').innerHTML = sinProductos
@@ -854,8 +845,8 @@ function renderProductos(lista) {
     const enSeleccion = seleccion.find(s => s.id === p.id);
     return `<div class="product-card" onclick="verProducto(${p.id})">
       <div class="product-img">
-        ${p.fotos && p.fotos.length > 0 
-          ? `<img src="${p.fotos[0]}" alt="${p.nombre}" style="width:100%;height:100%;object-fit:cover">`
+        ${p.fotos && p.fotos.length > 0
+          ? `<img src="/api/drive/imagen/${p.fotos[0]}" alt="${p.nombre}" style="width:100%;height:100%;object-fit:cover">`
           : `<span class="placeholder-icon">${p.emoji || '📦'}</span>`}
         ${badgeHtml}
       </div>
@@ -869,7 +860,7 @@ function renderProductos(lista) {
           <span class="product-tag">Mín. ${p.minimo} u.</span>
         </div>
         <div class="product-footer">
-          <div class="rango-precio"><strong>${RANGO_LABEL[p.rango]}</strong></div>
+          <div class="rango-precio">${p.rango ? `<strong>${RANGO_LABEL[p.rango]}</strong>` : `<span style="color:var(--texto-suave);font-style:italic">Consultar precio</span>`}</div>
           <button class="btn-add ${enSeleccion ? 'added' : ''}" onclick="event.stopPropagation(); agregarProducto(${p.id})" id="btn-add-${p.id}">
             ${enSeleccion ? '✓ Agregado' : '+ Consultar'}
           </button>
@@ -950,10 +941,10 @@ function verProducto(id) {
     let gIdx = 0;
     const renderGaleria = () => {
       mpImg.innerHTML = `
-        <img src="${p.fotos[gIdx]}" alt="${p.nombre}" style="width:100%;height:100%;object-fit:contain;padding:0.5rem">
+        <img src="/api/drive/imagen/${p.fotos[gIdx]}" alt="${p.nombre}" style="width:100%;height:100%;object-fit:contain;padding:0.5rem">
         ${p.fotos.length > 1 ? `
         <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px">
-          ${p.fotos.map((f,i) => `<div onclick="window._gIdx=${i};document.getElementById('mp-img').querySelector('img').src='${f}';document.querySelectorAll('.g-dot').forEach((d,di)=>d.style.background=di===${i}?'var(--celeste)':'rgba(255,255,255,0.5)')" class="g-dot" style="width:8px;height:8px;border-radius:50%;background:${i===0?'var(--celeste)':'rgba(255,255,255,0.5)'};cursor:pointer;transition:all 0.2s"></div>`).join('')}
+          ${p.fotos.map((f,i) => `<div onclick="window._gIdx=${i};document.getElementById('mp-img').querySelector('img').src='/api/drive/imagen/${f}';document.querySelectorAll('.g-dot').forEach((d,di)=>d.style.background=di===${i}?'var(--celeste)':'rgba(255,255,255,0.5)')" class="g-dot" style="width:8px;height:8px;border-radius:50%;background:${i===0?'var(--celeste)':'rgba(255,255,255,0.5)'};cursor:pointer;transition:all 0.2s"></div>`).join('')}
         </div>` : ''}
       `;
     };
@@ -966,7 +957,7 @@ function verProducto(id) {
   document.getElementById('mp-meta').innerHTML = `
     <span class="badge tag-cat">${cat?.nombre || ''}</span>
     <span class="badge tag-min">Mín. ${p.minimo} unidades</span>
-    <span class="badge tag-tec">${RANGO_LABEL[p.rango]}</span>
+    ${p.rango ? `<span class="badge tag-tec">${RANGO_LABEL[p.rango]}</span>` : `<span class="badge tag-tec" style="font-style:italic">Consultar precio</span>`}
     ${p.tecnicas.map(t => `<span class="badge tag-tec">${t}</span>`).join('')}
   `;
   document.getElementById('mp-desc').textContent = p.descripcion;
@@ -1035,11 +1026,20 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 });
 
 // ============================================================
-// INIT
+// INIT — carga productos desde la API
 // ============================================================
-renderCatSidebar();
-renderCatGrid();
-filtrar();
+async function init() {
+  try {
+    const res = await fetch('/api/productos');
+    PRODUCTOS = await res.json();
+  } catch {
+    PRODUCTOS = [];
+  }
+  renderCatSidebar();
+  renderCatGrid();
+  filtrar();
+}
+init();
 </script>
 
 <!-- WHATSAPP FLOTANTE -->

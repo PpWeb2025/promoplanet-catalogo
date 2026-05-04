@@ -564,6 +564,7 @@
         <div class="form-group">
           <label>Rango de precio</label>
           <select id="f-rango">
+            <option value="">Sin precio definido</option>
             <option value="economico">Económico</option>
             <option value="intermedio">Intermedio</option>
             <option value="premium">Premium</option>
@@ -657,36 +658,50 @@
 
 <script>
 // ============================================================
-// AUTH — contraseña simple (cambiar en producción)
+// AUTH — via API
 // ============================================================
-const PASS = 'promoplanet2026';
-
-function login() {
-  const v = document.getElementById('pwd-input').value;
-  if (v === PASS) {
+async function login() {
+  const password = document.getElementById('pwd-input').value;
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+  if (res.ok) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').classList.add('visible');
-    renderTabla();
-    renderDashboard();
+    await Promise.all([renderTabla(), renderDashboard()]);
     renderCatAdmin();
   } else {
     document.getElementById('login-error').style.display = 'block';
   }
 }
-function logout() {
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
   document.getElementById('app').classList.remove('visible');
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('pwd-input').value = '';
 }
 
+// Verificar sesión activa al cargar la página
+(async () => {
+  const res = await fetch('/api/auth/me');
+  if (res.ok) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    await Promise.all([renderTabla(), renderDashboard()]);
+    renderCatAdmin();
+  }
+})();
+
 // ============================================================
-// DATA — localStorage como base de datos local
+// DATA — API REST
 // ============================================================
-function getProductos() {
-  return JSON.parse(localStorage.getItem('pp_productos') || '[]');
-}
-function saveProductos(data) {
-  localStorage.setItem('pp_productos', JSON.stringify(data));
+async function getProductos() {
+  const res = await fetch('/api/productos/admin/list');
+  if (!res.ok) return [];
+  return res.json();
 }
 
 // ============================================================
@@ -778,9 +793,9 @@ function setPrincipal(el) {
 }
 
 // ============================================================
-// GUARDAR PRODUCTO
-// ============////////////////////////////////////////////////
-function guardarProducto(estado) {
+// GUARDAR PRODUCTO — via API
+// ============================================================
+async function guardarProducto(estado) {
   const codigo = document.getElementById('f-codigo').value.trim();
   const nombre = document.getElementById('f-nombre').value.trim();
   const cat = document.getElementById('f-categoria').value;
@@ -789,7 +804,6 @@ function guardarProducto(estado) {
   const getChecked = groupId => Array.from(document.querySelectorAll(`#${groupId} input:checked`)).map(i => i.value);
 
   const prod = {
-    id: editandoId || Date.now(),
     codigo, nombre,
     categoria: cat,
     rango: document.getElementById('f-rango').value,
@@ -803,25 +817,29 @@ function guardarProducto(estado) {
     ocasiones: getChecked('occ-group'),
     proveedor: document.getElementById('f-proveedor').value,
     notas: document.getElementById('f-notas').value,
-    driveCode: document.getElementById('foto-drive-url').value,
+    drive_code: document.getElementById('foto-drive-url').value,
     estado: estado || document.getElementById('f-estado').value,
-    fechaCarga: new Date().toISOString(),
     emoji: '📦',
-    fotos: []
+    fotos: [],
   };
 
-  const lista = getProductos();
-  if (editandoId) {
-    const idx = lista.findIndex(p => p.id === editandoId);
-    if (idx >= 0) lista[idx] = prod;
-  } else {
-    lista.unshift(prod);
+  const url = editandoId ? `/api/productos/admin/${editandoId}` : '/api/admin/productos/admin';
+  const method = editandoId ? 'PUT' : 'POST';
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(prod),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    showToast(err.error || 'Error al guardar', 'error');
+    return;
   }
-  saveProductos(lista);
+
   closeModal('modal-producto');
-  renderTabla();
-  renderDashboard();
-  showToast(estado === 'publicado' ? '✅ Producto publicado en el catálogo' : '📝 Guardado como borrador', 'success');
+  await Promise.all([renderTabla(), renderDashboard()]);
+  showToast(prod.estado === 'publicado' ? '✅ Producto publicado en el catálogo' : '📝 Guardado como borrador', 'success');
 }
 
 // ============================================================
@@ -836,8 +854,12 @@ const CAT_NAMES = {
 };
 const RANGO_NAMES = { economico:'Económico', intermedio:'Intermedio', premium:'Premium' };
 
-function renderTabla(lista) {
-  lista = lista || getProductos();
+// cache en memoria para la tabla actual (se recarga con renderTabla())
+let _tablaCache = [];
+
+async function renderTabla(lista) {
+  if (!lista) lista = await getProductos();
+  _tablaCache = lista;
   const tbody = document.getElementById('tabla-productos');
   const empty = document.getElementById('tabla-empty');
   if (!lista.length) {
@@ -846,13 +868,17 @@ function renderTabla(lista) {
     return;
   }
   empty.style.display = 'none';
-  tbody.innerHTML = lista.map(p => `
+  tbody.innerHTML = lista.map(p => {
+    const thumb = p.fotos && p.fotos.length
+      ? `<img src="/api/drive/imagen/${p.fotos[0]}" style="width:40px;height:40px;object-fit:cover;border-radius:6px">`
+      : (p.emoji || '📦');
+    return `
     <tr>
-      <td><div class="prod-thumb">${p.emoji || '📦'}</div></td>
+      <td><div class="prod-thumb">${thumb}</div></td>
       <td><span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--celeste)">${p.codigo}</span></td>
       <td><strong>${p.nombre}</strong>${p.proveedor ? `<br><span style="font-size:0.72rem;color:var(--texto-suave)">${p.proveedor}</span>` : ''}</td>
       <td>${CAT_NAMES[p.categoria] || p.categoria}</td>
-      <td><span class="badge badge-${p.rango === 'economico' ? 'eco' : p.rango === 'premium' ? 'premium' : 'inter'}">${RANGO_NAMES[p.rango]}</span></td>
+      <td><span class="badge badge-${p.rango === 'economico' ? 'eco' : p.rango === 'premium' ? 'premium' : 'inter'}">${RANGO_NAMES[p.rango] || p.rango}</span></td>
       <td>${p.minimo}</td>
       <td><span class="fotos-count">${p.fotos?.length || 0} 📷</span></td>
       <td><span class="badge badge-${p.estado === 'publicado' ? 'active' : 'draft'}">${p.estado === 'publicado' ? 'Publicado' : 'Borrador'}</span></td>
@@ -863,24 +889,26 @@ function renderTabla(lista) {
           <button class="btn btn-success btn-sm" onclick="toggleEstado(${p.id})">${p.estado === 'publicado' ? '⏸' : '▶'}</button>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
-function filtrarTabla(q, cat) {
-  let lista = getProductos();
+async function filtrarTabla(q, cat) {
+  let lista = await getProductos();
   if (q) lista = lista.filter(p => p.nombre.toLowerCase().includes(q.toLowerCase()) || p.codigo.toLowerCase().includes(q.toLowerCase()));
   if (cat) lista = lista.filter(p => p.categoria === cat);
   renderTabla(lista);
 }
 
-function filtrarTablaEstado(estado) {
-  let lista = getProductos();
+async function filtrarTablaEstado(estado) {
+  let lista = await getProductos();
   if (estado) lista = lista.filter(p => p.estado === estado);
   renderTabla(lista);
 }
 
-function editarProducto(id) {
-  const p = getProductos().find(x => x.id === id);
+async function editarProducto(id) {
+  const lista = _tablaCache.length ? _tablaCache : await getProductos();
+  const p = lista.find(x => x.id === id);
   if (!p) return;
   editandoId = id;
   document.getElementById('modal-prod-title').textContent = 'Editar producto';
@@ -896,8 +924,7 @@ function editarProducto(id) {
   document.getElementById('f-notas').value = p.notas || '';
   document.getElementById('f-proveedor').value = p.proveedor || '';
   document.getElementById('f-estado').value = p.estado || 'publicado';
-  document.getElementById('foto-drive-url').value = p.driveCode || '';
-  // chips
+  document.getElementById('foto-drive-url').value = p.drive_code || '';
   ['tecnicas-group','dest-group','occ-group'].forEach(gid => {
     const field = gid === 'tecnicas-group' ? 'tecnicas' : gid === 'dest-group' ? 'destinatarios' : 'ocasiones';
     document.querySelectorAll(`#${gid} .check-chip`).forEach(chip => {
@@ -910,31 +937,34 @@ function editarProducto(id) {
   showModal('modal-producto');
 }
 
-function eliminarProducto(id) {
+async function eliminarProducto(id) {
   if (!confirm('¿Eliminar este producto del catálogo?')) return;
-  const lista = getProductos().filter(p => p.id !== id);
-  saveProductos(lista);
-  renderTabla();
-  renderDashboard();
+  const res = await fetch(`/api/productos/admin/${id}`, { method: 'DELETE' });
+  if (!res.ok) { showToast('Error al eliminar', 'error'); return; }
+  await Promise.all([renderTabla(), renderDashboard()]);
   showToast('Producto eliminado');
 }
 
-function toggleEstado(id) {
-  const lista = getProductos();
+async function toggleEstado(id) {
+  const lista = _tablaCache.length ? _tablaCache : await getProductos();
   const p = lista.find(x => x.id === id);
   if (!p) return;
-  p.estado = p.estado === 'publicado' ? 'borrador' : 'publicado';
-  saveProductos(lista);
-  renderTabla();
-  renderDashboard();
-  showToast(p.estado === 'publicado' ? '✅ Publicado en el catálogo' : '⏸ Quitado del catálogo', p.estado === 'publicado' ? 'success' : '');
+  const nuevoEstado = p.estado === 'publicado' ? 'borrador' : 'publicado';
+  const res = await fetch(`/api/productos/admin/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...p, estado: nuevoEstado }),
+  });
+  if (!res.ok) { showToast('Error al actualizar estado', 'error'); return; }
+  await Promise.all([renderTabla(), renderDashboard()]);
+  showToast(nuevoEstado === 'publicado' ? '✅ Publicado en el catálogo' : '⏸ Quitado del catálogo', nuevoEstado === 'publicado' ? 'success' : '');
 }
 
 // ============================================================
 // DASHBOARD
 // ============================================================
-function renderDashboard() {
-  const lista = getProductos();
+async function renderDashboard() {
+  const lista = await getProductos();
   const pub = lista.filter(p => p.estado === 'publicado').length;
   document.getElementById('stat-total').textContent = lista.length;
   document.getElementById('stat-pub').textContent = pub;
@@ -951,7 +981,7 @@ function renderDashboard() {
       <td style="padding:0.5rem 0.5rem"><span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--celeste)">${p.codigo}</span></td>
       <td style="padding:0.5rem 0.5rem">${p.nombre}</td>
       <td style="padding:0.5rem 0.5rem"><span class="badge badge-${p.estado === 'publicado' ? 'active' : 'draft'}">${p.estado}</span></td>
-      <td style="padding:0.5rem 1rem;font-size:0.75rem;color:var(--texto-suave)">${new Date(p.fechaCarga).toLocaleDateString('es-AR')}</td>
+      <td style="padding:0.5rem 1rem;font-size:0.75rem;color:var(--texto-suave)">${new Date(p.fecha_carga).toLocaleDateString('es-AR')}</td>
     </tr>`).join('') + '</tbody></table>';
 }
 
@@ -991,74 +1021,58 @@ function renderCatAdmin() {
 }
 
 // ============================================================
-// IMPORTAR DESDE DRIVE (simulación — conectar con API real)
+// IMPORTAR DESDE DRIVE — API real
 // ============================================================
-const DEMO_ARCHIVOS = [
-  'Jarro Térmico G1603 a.jpg','Jarro Térmico G1603 b.jpg','Jarro Térmico G1603 c.png',
-  'Mochila Ejecutiva M220 a.jpg','Mochila Ejecutiva M220 b.jpg',
-  'Botella Deportiva BT560 a.png','Botella Deportiva BT560 b.png','Botella Deportiva BT560 c.jpg',
-  'Termo Acero TE220 a.jpg','Termo Acero TE220 b.jpg',
-  'Cuaderno Anillado NB500 a.jpg','Cuaderno Anillado NB500 b.jpg','Cuaderno Anillado NB500 c.jpg',
-  'Lapicera Metálica LP200 a.jpg','Lapicera Metálica LP200 b.jpg',
-  'Taza Cerámica TZ380 a.png','Taza Cerámica TZ380 b.jpg',
-  'Auriculares BT AU890 a.jpg','Auriculares BT AU890 b.png',
-  'Bolso Térmico EC450 a.jpg',
-];
-
 let importSeleccion = [];
 
-function extraerCodigo(nombre) {
-  const m = nombre.match(/([A-Z]{1,3}\d{3,4}[A-Z]?)/);
-  return m ? m[1] : null;
+function extraerFolderId(url) {
+  const m = url.match(/folders\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : url.trim();
 }
 
-function agruparArchivos(archivos) {
-  const grupos = {};
-  archivos.forEach(arch => {
-    const cod = extraerCodigo(arch);
-    if (!cod) return;
-    if (!grupos[cod]) {
-      const sinExt = arch.replace(/\.[^.]+$/, '');
-      const nombre = sinExt.replace(/\s+[A-Z]{1,3}\d{3,4}[A-Z]?\s+[a-z]$/, '').replace(/\s+[a-z]$/, '').trim();
-      grupos[cod] = { codigo: cod, nombre, archivos: [] };
-    }
-    grupos[cod].archivos.push(arch);
-  });
-  return Object.values(grupos);
-}
-
-function simularImport() {
+async function simularImport() {
   const url = document.getElementById('import-drive-url').value.trim();
   if (!url) { showToast('Pegá el link de tu carpeta de Drive', 'error'); return; }
-  importarDemoData();
-}
 
-function importarDemoData() {
+  const folderId = extraerFolderId(url);
   const prog = document.getElementById('import-progress');
   const fill = document.getElementById('import-prog-fill');
   const status = document.getElementById('import-status');
+
   prog.style.display = 'block';
   document.getElementById('import-results').style.display = 'none';
-  let pct = 0;
-  const interval = setInterval(() => {
-    pct += Math.random() * 20;
-    if (pct >= 100) { pct = 100; clearInterval(interval); mostrarResultados(); }
-    fill.style.width = pct + '%';
-    status.textContent = pct < 40 ? 'Conectando con Google Drive...' : pct < 70 ? 'Leyendo archivos...' : 'Agrupando por código...';
-  }, 200);
+  fill.style.width = '20%';
+  status.textContent = 'Conectando con Google Drive...';
+
+  const res = await fetch(`/api/drive/listar?folderId=${encodeURIComponent(folderId)}`);
+  fill.style.width = '80%';
+  status.textContent = 'Agrupando por código...';
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    showToast(err.error || 'Error al leer la carpeta de Drive', 'error');
+    prog.style.display = 'none';
+    return;
+  }
+
+  const data = await res.json();
+  fill.style.width = '100%';
+  status.textContent = 'Listo';
+
+  mostrarResultados(data.grupos, data.total);
 }
 
-function mostrarResultados() {
-  const grupos = agruparArchivos(DEMO_ARCHIVOS);
+function mostrarResultados(grupos, totalArchivos) {
   importSeleccion = grupos.map(g => ({ ...g, seleccionado: true }));
-  document.getElementById('import-results-title').textContent = `${grupos.length} productos detectados en ${DEMO_ARCHIVOS.length} archivos`;
+  document.getElementById('import-results-title').textContent =
+    `${grupos.length} productos detectados en ${totalArchivos} archivos`;
   document.getElementById('import-list').innerHTML = grupos.map((g, i) => `
     <div class="import-result-item">
       <div class="import-thumb">📦</div>
       <div>
         <div class="import-name">${g.nombre}</div>
         <div class="import-code">${g.codigo}</div>
-        <div class="import-count">${g.archivos.length} foto${g.archivos.length !== 1 ? 's' : ''}: ${g.archivos.join(', ')}</div>
+        <div class="import-count">${g.archivos.length} foto${g.archivos.length !== 1 ? 's' : ''}: ${g.archivos.map(a => a.nombre).join(', ')}</div>
       </div>
       <label class="check-chip checked" onclick="toggleImportItem(${i},this)">
         <input type="checkbox" checked> Importar
@@ -1076,58 +1090,46 @@ function toggleImportItem(i, el) {
 
 function toggleSelectAll() {
   const todos = importSeleccion.every(g => g.seleccionado);
-  importSeleccion.forEach((g, i) => g.seleccionado = !todos);
-  document.querySelectorAll('#import-list .check-chip').forEach((el, i) => {
-    const cb = el.querySelector('input');
-    cb.checked = !todos;
+  importSeleccion.forEach(g => g.seleccionado = !todos);
+  document.querySelectorAll('#import-list .check-chip').forEach(el => {
+    el.querySelector('input').checked = !todos;
     el.classList.toggle('checked', !todos);
   });
 }
 
-function importarSeleccionados() {
+async function importarSeleccionados() {
   const selec = importSeleccion.filter(g => g.seleccionado);
   if (!selec.length) { showToast('Seleccioná al menos un producto', 'error'); return; }
-  const lista = getProductos();
-  selec.forEach(g => {
-    if (!lista.find(p => p.codigo === g.codigo)) {
-      lista.unshift({
-        id: Date.now() + Math.random(),
-        codigo: g.codigo,
-        nombre: g.nombre,
-        categoria: '',
-        rango: 'intermedio',
-        minimo: 50,
-        tecnicas: [],
-        destinatarios: [],
-        ocasiones: [],
-        estado: 'borrador',
-        fotos: g.archivos,
-        emoji: '📦',
-        fechaCarga: new Date().toISOString(),
-        descripcion: '',
-        driveCode: g.codigo,
-      });
-    }
+
+  const res = await fetch('/api/drive/importar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ productos: selec }),
   });
-  saveProductos(lista);
-  renderTabla();
-  renderDashboard();
-  showToast(`✅ ${selec.length} productos importados como borradores. Completá los datos faltantes.`, 'success');
+
+  if (!res.ok) { showToast('Error al importar', 'error'); return; }
+  const { importados, omitidos } = await res.json();
+
+  await Promise.all([renderTabla(), renderDashboard()]);
+  const msg = omitidos.length
+    ? `✅ ${importados} importados. ${omitidos.length} ya existían (${omitidos.join(', ')}).`
+    : `✅ ${importados} productos importados como borradores. Completá los datos faltantes.`;
+  showToast(msg, 'success');
   showSection('productos', document.querySelectorAll('.nav-item')[1]);
 }
 
 // ============================================================
 // EXPORTAR
 // ============================================================
-function exportarJSON() {
-  const data = JSON.stringify(getProductos(), null, 2);
-  descargar('promoplanet-productos.json', data, 'application/json');
+async function exportarJSON() {
+  const lista = await getProductos();
+  descargar('promoplanet-productos.json', JSON.stringify(lista, null, 2), 'application/json');
   showToast('✅ JSON descargado', 'success');
 }
 
-function exportarCSV() {
-  const lista = getProductos();
-  const headers = ['id','codigo','nombre','categoria','rango','minimo','material','medidas','colores','descripcion','tecnicas','destinatarios','ocasiones','proveedor','estado','fechaCarga'];
+async function exportarCSV() {
+  const lista = await getProductos();
+  const headers = ['id','codigo','nombre','categoria','rango','minimo','material','medidas','colores','descripcion','tecnicas','destinatarios','ocasiones','proveedor','estado','fecha_carga'];
   const rows = lista.map(p => headers.map(h => {
     const v = Array.isArray(p[h]) ? p[h].join('|') : (p[h] || '');
     return `"${String(v).replace(/"/g,'""')}"`;
@@ -1136,17 +1138,12 @@ function exportarCSV() {
   showToast('✅ CSV descargado', 'success');
 }
 
-function generarCatalogo() {
-  const lista = getProductos();
+async function generarCatalogo() {
+  const lista = await getProductos();
   const publicados = lista.filter(p => p.estado === 'publicado').length;
-  if (!publicados) {
-    showToast('No hay productos publicados aún', 'error');
-    return;
-  }
-  // Los productos ya están en localStorage — el catálogo los lee automáticamente
-  // Solo necesitamos abrir el catálogo
-  window.open('index.html', '_blank');
-  showToast(`✅ Catálogo actualizado con ${publicados} productos publicados`, 'success');
+  if (!publicados) { showToast('No hay productos publicados aún', 'error'); return; }
+  window.open('/', '_blank');
+  showToast(`✅ Catálogo con ${publicados} productos publicados`, 'success');
 }
 
 function descargar(nombre, contenido, tipo) {
