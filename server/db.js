@@ -43,7 +43,6 @@ function queryOne(sql, params = []) {
 }
 
 async function initDb() {
-  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
   const SQL = await initSqlJs();
   db = fs.existsSync(DB_PATH)
     ? new SQL.Database(fs.readFileSync(DB_PATH))
