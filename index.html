@@ -1624,8 +1624,9 @@ document.addEventListener('keydown', e => {
       <button class="tecnicas-filtro-btn" data-filtro="Cuero"         onclick="filtrarTecnicas(this)">Cuero</button>
       <button class="tecnicas-filtro-btn" data-filtro="Marroquinería" onclick="filtrarTecnicas(this)">Marroquinería</button>
       <button class="tecnicas-filtro-btn" data-filtro="Papel"         onclick="filtrarTecnicas(this)">Papel</button>
+      <button class="tecnicas-filtro-btn" data-filtro="DTF"           onclick="filtrarTecnicas(this)">DTF</button>
     </div>
-    <p class="tecnicas-contador" id="tecnicas-contador">11 técnicas en total</p>
+    <p class="tecnicas-contador" id="tecnicas-contador">13 técnicas en total</p>
     <div class="tecnicas-grid" id="tecnicas-grid">
 
       <article class="tecnica-card" data-materiales="Plástico Metal Cuero Madera">
@@ -1757,6 +1758,30 @@ document.addEventListener('keydown', e => {
           <h3 class="tecnica-nombre">Impresión UV</h3>
           <div class="tecnica-desc"><p>La tinta se aplica digitalmente sobre el producto y se seca de forma instantánea mediante luz ultravioleta.</p><p>Permite reproducciones full color directamente sobre el artículo, sin soporte intermedio.</p><p>Compatible con plásticos, metales pintados y superficies de PU planas.</p></div>
           <div class="tecnica-tags"><span class="tecnica-tag">Plástico</span><span class="tecnica-tag">Metal pintado</span><span class="tecnica-tag">PU superficies planas</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Textiles Marroquinería DTF">
+        <div class="tecnica-img" style="background:#e8f5e9;color:#2e7d32">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="6" y="10" width="28" height="22" rx="2" fill="#c8e6c9" stroke="#2e7d32" stroke-width="1.5"/><rect x="10" y="14" width="20" height="14" rx="1" fill="#2e7d32" opacity="0.65"/><path d="M36 21 L46 21" stroke="#2e7d32" stroke-width="2"/><path d="M42 16 L47 21 L42 26" stroke="#2e7d32" stroke-width="1.5" fill="none"/><rect x="49" y="8" width="16" height="56" rx="2" fill="#c8e6c9" stroke="#2e7d32" stroke-width="1.5"/><text x="57" y="28" text-anchor="middle" fill="#2e7d32" font-size="7" font-weight="700" font-family="DM Sans, sans-serif">PET</text><text x="57" y="38" text-anchor="middle" fill="#2e7d32" font-size="7" font-weight="700" font-family="DM Sans, sans-serif">film</text><rect x="6" y="38" width="28" height="22" rx="2" fill="#a5d6a7" stroke="#2e7d32" stroke-width="1.5"/><rect x="10" y="42" width="20" height="14" rx="1" fill="#2e7d32" opacity="0.5"/><line x1="36" y1="49" x2="49" y2="49" stroke="#2e7d32" stroke-width="1" stroke-dasharray="3 2"/></svg>
+          <span class="tecnica-variante" style="color:#2e7d32">cualquier tipo de tela</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">DTF textil</h3>
+          <div class="tecnica-desc"><p>El diseño se imprime sobre un film de PET con tinta especial y se cubre con polvo adhesivo termofusible.</p><p>El film se transfiere al textil mediante calor y presión, adhiriendo la tinta directamente a las fibras.</p><p>A diferencia de la sublimación, funciona sobre cualquier tipo de tela, incluyendo algodón 100%.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Textiles</span><span class="tecnica-tag">Marroquinería</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Plástico Metal Madera Cuero DTF">
+        <div class="tecnica-img" style="background:#e8f4f8;color:#0277bd">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="6" y="10" width="28" height="22" rx="2" fill="#b3d9ee" stroke="#0277bd" stroke-width="1.5"/><rect x="10" y="14" width="20" height="14" rx="1" fill="#0277bd" opacity="0.65"/><path d="M36 21 L46 21" stroke="#0277bd" stroke-width="2"/><path d="M42 16 L47 21 L42 26" stroke="#0277bd" stroke-width="1.5" fill="none"/><rect x="49" y="8" width="16" height="56" rx="2" fill="#b3d9ee" stroke="#0277bd" stroke-width="1.5"/><text x="57" y="26" text-anchor="middle" fill="#0277bd" font-size="7" font-weight="700" font-family="DM Sans, sans-serif">PET</text><text x="57" y="34" text-anchor="middle" fill="#0277bd" font-size="7" font-weight="700" font-family="DM Sans, sans-serif">film</text><text x="57" y="42" text-anchor="middle" fill="#0277bd" font-size="6" font-weight="700" font-family="DM Sans, sans-serif">UV</text><rect x="6" y="38" width="28" height="22" rx="2" fill="#81c9e8" stroke="#0277bd" stroke-width="1.5"/><rect x="10" y="42" width="20" height="14" rx="1" fill="#0277bd" opacity="0.5"/><line x1="36" y1="49" x2="49" y2="49" stroke="#0277bd" stroke-width="1" stroke-dasharray="3 2"/></svg>
+          <span class="tecnica-variante" style="color:#0277bd">superficies rígidas y flexibles</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">DTF UV</h3>
+          <div class="tecnica-desc"><p>Variante del DTF en la que la tinta se cura mediante luz ultravioleta durante el proceso de impresión sobre el film.</p><p>El film transferible resultante puede aplicarse sobre superficies rígidas o semirígidas no porosas.</p><p>Amplía las posibilidades del DTF a materiales como madera, metal, plástico y cuero sintético.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Plástico</span><span class="tecnica-tag">Metal</span><span class="tecnica-tag">Madera</span><span class="tecnica-tag">Cuero</span></div>
         </div>
       </article>
 
