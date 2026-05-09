@@ -867,9 +867,9 @@ function cerrarMenu() {
 }
 document.addEventListener('click', e => {
   const menu = document.getElementById('nav-mobile');
-  if (menu.classList.contains('open') &&
-      !menu.contains(e.target) &&
-      !document.getElementById('nav-hamburger').contains(e.target)) {
+  const btn = document.getElementById('nav-hamburger');
+  const path = e.composedPath();
+  if (menu.classList.contains('open') && !path.includes(menu) && !path.includes(btn)) {
     cerrarMenu();
   }
 });
