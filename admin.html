@@ -187,6 +187,7 @@
   .check-chip { display: flex; align-items: center; gap: 5px; padding: 0.3rem 0.75rem; border: 1.5px solid var(--gris-borde); border-radius: 20px; cursor: pointer; font-size: 0.8rem; color: var(--texto-suave); transition: all 0.15s; }
   .check-chip input { display: none; }
   .check-chip.checked { border-color: var(--celeste); background: var(--celeste-light); color: var(--celeste); font-weight: 500; }
+  #badges-group .check-chip.checked { background: var(--chip-color, var(--celeste)); border-color: var(--chip-color, var(--celeste)); color: #fff; }
 
   /* FOTOS PANEL */
   .fotos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
@@ -286,6 +287,9 @@
       <button class="nav-item" onclick="showSection('productos', this)">
         <span class="icon">📦</span> Productos
       </button>
+      <button class="nav-item" onclick="showSection('proveedor', this)">
+        <span class="icon">✨</span> Importar de proveedor
+      </button>
       <button class="nav-item" onclick="showSection('importar', this)">
         <span class="icon">☁️</span> Importar de Drive
       </button>
@@ -375,20 +379,20 @@
             </div>
             <select class="filter-select" onchange="filtrarTabla('', this.value)">
               <option value="">Todas las categorías</option>
-              <option value="onboarding">Onboarding</option>
-              <option value="capacitacion">Capacitación</option>
-              <option value="reconocimiento">Reconocimiento</option>
+              <option value="bolsos_mochilas">Bolsos y Mochilas</option>
+              <option value="capacitacion">Capacitación y Eventos</option>
               <option value="drinkware">Drinkware</option>
-            <option value="drinkware">Drinkware</option>
-            <option value="cotidiano">Escritorio & Oficina</option>
-            <option value="escritura">Escritura</option>
-            <option value="tecnologia">Tecnología</option>
-            <option value="eco">Eco & Sustentable</option>
-            <option value="llaveros">Llaveros & Accesorios</option>
-              <option value="outdoors">Outdoors</option>
-              <option value="fechas">Fechas especiales</option>
-              <option value="indumentaria">Indumentaria</option>
-              <option value="packaging">Packaging</option>
+              <option value="eco">Eco y Sustentable</option>
+              <option value="escritorio">Escritorio y Oficina</option>
+              <option value="escritura">Escritura</option>
+              <option value="fechas">Fechas Especiales</option>
+              <option value="indumentaria">Indumentaria Corporativa</option>
+              <option value="llaveros">Llaveros y Accesorios</option>
+              <option value="onboarding">Onboarding y Bienvenida</option>
+              <option value="outdoors">Outdoors y Bienestar</option>
+              <option value="packaging">Packaging y Presentación</option>
+              <option value="reconocimiento">Reconocimiento y Premios</option>
+              <option value="tecnologia">Tecnología</option>
             </select>
             <select class="filter-select" onchange="filtrarTablaEstado(this.value)">
               <option value="">Todos los estados</option>
@@ -416,6 +420,33 @@
             <div class="empty-table" id="tabla-empty" style="display:none">
               <div class="icon">🔍</div>
               <p>No se encontraron productos con ese criterio.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMPORTAR DE PROVEEDOR -->
+      <div class="section" id="sec-proveedor">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">✨ Importar producto de proveedor con IA</span>
+          </div>
+          <div class="panel-body">
+            <p style="color:var(--texto-suave);font-size:0.88rem;margin-bottom:1.25rem">
+              Pegá el <strong>link del producto</strong> del proveedor o el texto de la ficha. Claude va a leer la página y adaptarlo al estilo PromoPlanet.
+            </p>
+            <div class="form-group" style="margin-bottom:1rem">
+              <label id="ia-label">Link o texto del producto del proveedor *</label>
+              <textarea id="ia-texto" style="min-height:80px;width:100%;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;resize:vertical" placeholder="https://proveedor.com/producto/..." oninput="iaDetectarTipo(this)"></textarea>
+              <div id="ia-tipo-badge" style="display:none;margin-top:0.4rem;font-size:0.78rem;font-weight:600;color:var(--celeste)"></div>
+            </div>
+            <button class="btn btn-celeste" id="btn-ia-adaptar" onclick="adaptarConIA()">
+              ✨ Adaptar con Claude
+            </button>
+            <div id="ia-resultado" style="display:none;margin-top:1.25rem;background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:10px;padding:1.25rem">
+              <div style="font-size:0.85rem;font-weight:600;color:var(--azul);margin-bottom:0.75rem">✅ Descripción adaptada — revisá y completá los datos que faltan</div>
+              <div id="ia-preview" style="font-size:0.85rem;color:var(--texto-suave);line-height:1.6;margin-bottom:1rem"></div>
+              <button class="btn btn-primary" onclick="cargarEnFormulario()">Cargar en formulario →</button>
             </div>
           </div>
         </div>
@@ -544,21 +575,28 @@
         </div>
         <div class="form-group">
           <label>Categoría *</label>
-          <select id="f-categoria">
+          <select id="f-categoria" onchange="actualizarSubcats(this.value)">
             <option value="">Seleccioná...</option>
-            <option value="onboarding">Onboarding & Bienvenida</option>
-            <option value="capacitacion">Capacitación & Eventos</option>
-            <option value="reconocimiento">Reconocimiento & Premios</option>
+            <option value="bolsos_mochilas">Bolsos y Mochilas</option>
+            <option value="capacitacion">Capacitación y Eventos</option>
             <option value="drinkware">Drinkware</option>
-            <option value="cotidiano">Escritorio & Oficina</option>
+            <option value="eco">Eco y Sustentable</option>
+            <option value="escritorio">Escritorio y Oficina</option>
             <option value="escritura">Escritura</option>
+            <option value="fechas">Fechas Especiales</option>
+            <option value="indumentaria">Indumentaria Corporativa</option>
+            <option value="llaveros">Llaveros y Accesorios</option>
+            <option value="onboarding">Onboarding y Bienvenida</option>
+            <option value="outdoors">Outdoors y Bienestar</option>
+            <option value="packaging">Packaging y Presentación</option>
+            <option value="reconocimiento">Reconocimiento y Premios</option>
             <option value="tecnologia">Tecnología</option>
-            <option value="eco">Eco & Sustentable</option>
-            <option value="llaveros">Llaveros & Accesorios</option>
-            <option value="outdoors">Outdoors & Bienestar</option>
-            <option value="fechas">Fechas especiales</option>
-            <option value="indumentaria">Indumentaria</option>
-            <option value="packaging">Packaging & Presentación</option>
+          </select>
+        </div>
+        <div class="form-group" id="f-subcategoria-group" style="display:none">
+          <label>Subcategoría</label>
+          <select id="f-subcategoria">
+            <option value="">Sin subcategoría</option>
           </select>
         </div>
         <div class="form-group">
@@ -589,6 +627,23 @@
         <div class="form-group full">
           <label>Descripción</label>
           <textarea id="f-descripcion" placeholder="Describí el producto: características, usos, ventajas..."></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Etiquetas del producto <span style="font-size:0.72rem;color:var(--texto-suave);font-weight:400">(se muestran sobre la imagen en el catálogo)</span></label>
+          <div class="check-group" id="badges-group">
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#ef4444"><input type="checkbox" value="sale"> 🏷️ SALE</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#f97316"><input type="checkbox" value="oportunidad"> 💥 Oportunidad</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#22c55e"><input type="checkbox" value="nuevo"> ✨ Nuevo</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#16a34a"><input type="checkbox" value="ecofriendly"> 🌱 Eco Friendly</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#0ea5e9"><input type="checkbox" value="termico"> 🌡️ Térmico</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#7c3aed"><input type="checkbox" value="premium"> ⭐ Premium</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#f59e0b"><input type="checkbox" value="popular"> 🔥 Popular</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#6366f1"><input type="checkbox" value="exclusivo"> 💎 Exclusivo</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#003471"><input type="checkbox" value="corporativo"> 🏢 Corporativo</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#64748b"><input type="checkbox" value="importado"> ✈️ Importado</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#00A8B4"><input type="checkbox" value="kit"> 🎁 Kit</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#be185d"><input type="checkbox" value="limitado"> 🔖 Edición ltd.</label>
+          </div>
         </div>
         <div class="form-group full">
           <label>Técnicas de personalización</label>
@@ -707,7 +762,7 @@ async function getProductos() {
 // ============================================================
 // NAVEGACIÓN
 // ============================================================
-const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', importar:'Importar de Drive', categorias:'Categorías', exportar:'Exportar datos' };
+const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', proveedor:'Importar de proveedor', importar:'Importar de Drive', categorias:'Categorías', exportar:'Exportar datos' };
 
 function showSection(id, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -717,6 +772,11 @@ function showSection(id, btn) {
   document.getElementById('topbar-title').textContent = SEC_TITLES[id] || id;
   if (id === 'productos') renderTabla();
   if (id === 'dashboard') renderDashboard();
+}
+
+async function verCategoria(catId) {
+  showSection('productos', document.querySelectorAll('.nav-item')[1]);
+  await filtrarTabla('', catId);
 }
 
 // ============================================================
@@ -744,10 +804,12 @@ function limpiarForm() {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
+  actualizarSubcats('');
   document.getElementById('f-minimo').value = '';
   document.getElementById('f-estado').value = 'publicado';
   document.querySelectorAll('.check-chip').forEach(c => c.classList.remove('checked'));
   document.querySelectorAll('.check-chip input').forEach(c => c.checked = false);
+  _fotosMap.clear();
   document.getElementById('fotos-preview').innerHTML = `<div class="foto-placeholder" onclick="document.getElementById('foto-input').click()"><span style="font-size:1.2rem">📷</span><span>Agregar foto</span></div>`;
 }
 
@@ -764,22 +826,29 @@ function toggleChip(el) {
 // ============================================================
 // FOTOS PREVIEW
 // ============================================================
+const _fotosMap = new Map(); // uid -> File
+
 function previewFotos(input) {
   const files = Array.from(input.files);
   const grid = document.getElementById('fotos-preview');
-  const existing = grid.querySelectorAll('.foto-item');
+  const hayItems = grid.querySelectorAll('.foto-item').length > 0;
   files.forEach((file, i) => {
+    const uid = `n${Date.now()}-${i}`;
+    _fotosMap.set(uid, file);
     const url = URL.createObjectURL(file);
+    const esPrincipal = !hayItems && i === 0;
     const div = document.createElement('div');
-    div.className = 'foto-item' + (existing.length === 0 && i === 0 ? ' principal' : '');
+    div.className = 'foto-item' + (esPrincipal ? ' principal' : '');
+    div.dataset.nueva = uid;
     div.innerHTML = `<img src="${url}">
-      ${existing.length === 0 && i === 0 ? '<span class="foto-badge-principal">Principal</span>' : ''}
+      ${esPrincipal ? '<span class="foto-badge-principal">Principal</span>' : ''}
       <div class="foto-overlay">
         <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
-        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
+        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="_fotosMap.delete('${uid}');this.closest('.foto-item').remove()">✕</button>
       </div>`;
     grid.insertBefore(div, grid.querySelector('.foto-placeholder'));
   });
+  input.value = '';
 }
 
 function setPrincipal(el) {
@@ -790,6 +859,30 @@ function setPrincipal(el) {
   });
   el.classList.add('principal');
   el.insertAdjacentHTML('afterbegin', '<span class="foto-badge-principal">Principal</span>');
+}
+
+// Retorna los IDs/paths de fotos ya guardadas (no las nuevas pendientes)
+function fotosExistentes() {
+  return Array.from(document.querySelectorAll('#fotos-preview .foto-item:not([data-nueva]) img'))
+    .map(img => img.dataset.fotoid)
+    .filter(Boolean);
+}
+
+function mostrarFotosExistentes(fotos) {
+  if (!fotos || !fotos.length) return;
+  const grid = document.getElementById('fotos-preview');
+  fotos.forEach((fotoId, i) => {
+    const src = fotoId.startsWith('/uploads/') ? fotoId : `/api/drive/imagen/${fotoId}`;
+    const div = document.createElement('div');
+    div.className = 'foto-item' + (i === 0 ? ' principal' : '');
+    div.innerHTML = `<img src="${src}" data-fotoid="${fotoId}">
+      ${i === 0 ? '<span class="foto-badge-principal">Principal</span>' : ''}
+      <div class="foto-overlay">
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
+        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
+      </div>`;
+    grid.insertBefore(div, grid.querySelector('.foto-placeholder'));
+  });
 }
 
 // ============================================================
@@ -815,15 +908,30 @@ async function guardarProducto(estado) {
     tecnicas: getChecked('tecnicas-group'),
     destinatarios: getChecked('dest-group'),
     ocasiones: getChecked('occ-group'),
+    badges: getChecked('badges-group'),
     proveedor: document.getElementById('f-proveedor').value,
     notas: document.getElementById('f-notas').value,
     drive_code: document.getElementById('foto-drive-url').value,
     estado: estado || document.getElementById('f-estado').value,
     emoji: '📦',
-    fotos: [],
+    fotos: fotosExistentes(),
   };
 
-  const url = editandoId ? `/api/productos/admin/${editandoId}` : '/api/admin/productos/admin';
+  // Subir fotos nuevas en orden DOM (principal primero)
+  if (_fotosMap.size) {
+    const items = Array.from(document.querySelectorAll('#fotos-preview .foto-item[data-nueva]'));
+    items.sort((a, b) => (b.classList.contains('principal') ? 1 : 0) - (a.classList.contains('principal') ? 1 : 0));
+    const files = items.map(el => _fotosMap.get(el.dataset.nueva)).filter(Boolean);
+    const fd = new FormData();
+    files.forEach(f => fd.append('fotos', f));
+    const upRes = await fetch('/api/uploads', { method: 'POST', body: fd });
+    if (!upRes.ok) { showToast('Error al subir las imágenes', 'error'); return; }
+    const { paths } = await upRes.json();
+    // Principal al frente si no hay fotos existentes
+    prod.fotos = prod.fotos.length ? [...prod.fotos, ...paths] : paths;
+  }
+
+  const url = editandoId ? `/api/productos/admin/${editandoId}` : '/api/productos/admin';
   const method = editandoId ? 'PUT' : 'POST';
   const res = await fetch(url, {
     method,
@@ -846,11 +954,12 @@ async function guardarProducto(estado) {
 // TABLA PRODUCTOS
 // ============================================================
 const CAT_NAMES = {
-  kits:'Kits & Bienvenida', drinkware:'Drinkware', escritura:'Escritura',
-  papeleria:'Papelería & Escritorio', bolsos:'Bolsos & Marroquinería',
-  tecnologia:'Tecnología', llaveros:'Llaveros & Accesorios',
-  indumentaria:'Indumentaria', outdoors:'Outdoors & Bienestar',
-  eco:'Eco & Sustentable', premium:'Premium & Ejecutivo', packaging:'Packaging & Presentación'
+  bolsos_mochilas:'Bolsos y Mochilas', capacitacion:'Capacitación y Eventos',
+  drinkware:'Drinkware', eco:'Eco y Sustentable', escritorio:'Escritorio y Oficina',
+  escritura:'Escritura', fechas:'Fechas Especiales', indumentaria:'Indumentaria Corporativa',
+  llaveros:'Llaveros y Accesorios', onboarding:'Onboarding y Bienvenida',
+  outdoors:'Outdoors y Bienestar', packaging:'Packaging y Presentación',
+  reconocimiento:'Reconocimiento y Premios', tecnologia:'Tecnología'
 };
 const RANGO_NAMES = { economico:'Económico', intermedio:'Intermedio', premium:'Premium' };
 
@@ -869,8 +978,9 @@ async function renderTabla(lista) {
   }
   empty.style.display = 'none';
   tbody.innerHTML = lista.map(p => {
+    const fotoSrc = id => id.startsWith('/uploads/') ? id : `/api/drive/imagen/${id}`;
     const thumb = p.fotos && p.fotos.length
-      ? `<img src="/api/drive/imagen/${p.fotos[0]}" style="width:40px;height:40px;object-fit:cover;border-radius:6px">`
+      ? `<img src="${fotoSrc(p.fotos[0])}" style="width:40px;height:40px;object-fit:cover;border-radius:6px">`
       : (p.emoji || '📦');
     return `
     <tr>
@@ -910,11 +1020,14 @@ async function editarProducto(id) {
   const lista = _tablaCache.length ? _tablaCache : await getProductos();
   const p = lista.find(x => x.id === id);
   if (!p) return;
+  limpiarForm();
   editandoId = id;
   document.getElementById('modal-prod-title').textContent = 'Editar producto';
   document.getElementById('f-codigo').value = p.codigo;
   document.getElementById('f-nombre').value = p.nombre;
   document.getElementById('f-categoria').value = p.categoria;
+  actualizarSubcats(p.categoria);
+  document.getElementById('f-subcategoria').value = p.subcategoria || '';
   document.getElementById('f-rango').value = p.rango;
   document.getElementById('f-minimo').value = p.minimo;
   document.getElementById('f-material').value = p.material || '';
@@ -925,8 +1038,8 @@ async function editarProducto(id) {
   document.getElementById('f-proveedor').value = p.proveedor || '';
   document.getElementById('f-estado').value = p.estado || 'publicado';
   document.getElementById('foto-drive-url').value = p.drive_code || '';
-  ['tecnicas-group','dest-group','occ-group'].forEach(gid => {
-    const field = gid === 'tecnicas-group' ? 'tecnicas' : gid === 'dest-group' ? 'destinatarios' : 'ocasiones';
+  ['tecnicas-group','dest-group','occ-group','badges-group'].forEach(gid => {
+    const field = gid === 'tecnicas-group' ? 'tecnicas' : gid === 'dest-group' ? 'destinatarios' : gid === 'badges-group' ? 'badges' : 'ocasiones';
     document.querySelectorAll(`#${gid} .check-chip`).forEach(chip => {
       const val = chip.querySelector('input').value;
       const checked = (p[field] || []).includes(val);
@@ -934,7 +1047,8 @@ async function editarProducto(id) {
       chip.querySelector('input').checked = checked;
     });
   });
-  showModal('modal-producto');
+  mostrarFotosExistentes(p.fotos || []);
+  document.getElementById('modal-producto').classList.add('open');
 }
 
 async function eliminarProducto(id) {
@@ -989,33 +1103,86 @@ async function renderDashboard() {
 // CATEGORÍAS ADMIN
 // ============================================================
 const CATS = [
-  { id:'kits', nombre:'Kits & Bienvenida', icon:'🎁' },
-  { id:'drinkware', nombre:'Drinkware', icon:'🥤' },
-  { id:'escritura', nombre:'Escritura', icon:'✏️' },
-  { id:'papeleria', nombre:'Papelería & Escritorio', icon:'📓' },
-  { id:'bolsos', nombre:'Bolsos & Marroquinería', icon:'👜' },
-  { id:'tecnologia', nombre:'Tecnología', icon:'💻' },
-  { id:'llaveros', nombre:'Llaveros & Accesorios', icon:'🔑' },
-  { id:'indumentaria', nombre:'Indumentaria', icon:'👕' },
-  { id:'outdoors', nombre:'Outdoors & Bienestar', icon:'🌿' },
-  { id:'eco', nombre:'Eco & Sustentable', icon:'♻️' },
-  { id:'premium', nombre:'Premium & Ejecutivo', icon:'⭐' },
-  { id:'packaging', nombre:'Packaging & Presentación', icon:'📦' },
+  { id:'bolsos_mochilas', nombre:'Bolsos y Mochilas', icon:'👜', subcats:['Bolsos','Maletines y portfolios','Mochilas','Neceseres y accesorios','Viaje'] },
+  { id:'capacitacion', nombre:'Capacitación y Eventos', icon:'📚', subcats:[] },
+  { id:'drinkware', nombre:'Drinkware', icon:'🥤', subcats:['Botellas standard','Botellas térmicas','Tazas mugs y jarros','Termos y mates'] },
+  { id:'eco', nombre:'Eco y Sustentable', icon:'♻️', subcats:['Bambu y madera','Reciclados','Tote bags y bolsas'] },
+  { id:'escritorio', nombre:'Escritorio y Oficina', icon:'📓', subcats:['Cuadernos y agendas','Organizadores'] },
+  { id:'escritura', nombre:'Escritura', icon:'✏️', subcats:['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'] },
+  { id:'fechas', nombre:'Fechas Especiales', icon:'🎉', subcats:[] },
+  { id:'indumentaria', nombre:'Indumentaria Corporativa', icon:'👕', subcats:['Abrigos','Camisas','Delantales y pecheras','Gorras','Remeras y chombas'] },
+  { id:'llaveros', nombre:'Llaveros y Accesorios', icon:'🔑', subcats:['Llaveros de madera','Llaveros metálicos','Llaveros plásticos','Multipropósito'] },
+  { id:'onboarding', nombre:'Onboarding y Bienvenida', icon:'🎁', subcats:[] },
+  { id:'outdoors', nombre:'Outdoors y Bienestar', icon:'🌿', subcats:['Coolers y loncheras','Cuidado personal','Deporte y fitness','Gastronomía','Paraguas'] },
+  { id:'packaging', nombre:'Packaging y Presentación', icon:'📦', subcats:['Bolsas y papel','Cajas'] },
+  { id:'reconocimiento', nombre:'Reconocimiento y Premios', icon:'🏆', subcats:[] },
+  { id:'tecnologia', nombre:'Tecnología', icon:'💻', subcats:['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'] },
 ];
 
-function renderCatAdmin() {
-  const lista = getProductos();
+// Mapa automático subcategoría → categorías
+const SUBCAT_MAP = {};
+for (const cat of CATS) {
+  for (const sub of cat.subcats) {
+    if (!SUBCAT_MAP[sub]) SUBCAT_MAP[sub] = [];
+    SUBCAT_MAP[sub].push(cat.id);
+  }
+}
+
+function normalizar(str) {
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+const CAT_FOLDER_MAP = {
+  'capacitacion y eventos': 'capacitacion',
+  'fechas especiales': 'fechas',
+  'onboarding y bienvenida': 'onboarding',
+  'reconocimiento y premios': 'reconocimiento',
+};
+
+function resolverCategoria(folderName) {
+  const norm = normalizar(folderName);
+  // Primero buscar en subcategorías
+  for (const [sub, cats] of Object.entries(SUBCAT_MAP)) {
+    if (normalizar(sub) === norm) return { subcategoria: sub, categorias: cats };
+  }
+  // Después buscar en categorías directas
+  if (CAT_FOLDER_MAP[norm]) {
+    return { subcategoria: '', categorias: [CAT_FOLDER_MAP[norm]] };
+  }
+  return null;
+}
+
+function actualizarSubcats(catId) {
+  const cat = CATS.find(c => c.id === catId);
+  const group = document.getElementById('f-subcategoria-group');
+  const sel = document.getElementById('f-subcategoria');
+  if (!cat || !cat.subcats.length) { group.style.display = 'none'; sel.value = ''; return; }
+  group.style.display = '';
+  sel.innerHTML = '<option value="">Sin subcategoría</option>' +
+    cat.subcats.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+async function renderCatAdmin() {
+  const lista = await getProductos();
   document.getElementById('cat-admin-list').innerHTML = CATS.map(c => {
     const count = lista.filter(p => p.categoria === c.id).length;
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;border-radius:8px;background:var(--gris);margin-bottom:0.5rem">
-      <div style="display:flex;align-items:center;gap:0.75rem">
-        <span style="font-size:1.25rem">${c.icon}</span>
-        <div>
-          <div style="font-weight:600;font-size:0.9rem">${c.nombre}</div>
-          <div style="font-size:0.75rem;color:var(--texto-suave)">${count} producto${count !== 1 ? 's' : ''}</div>
+    const subcatsHtml = c.subcats.length
+      ? `<div style="margin-top:0.4rem;display:flex;flex-wrap:wrap;gap:0.3rem">
+          ${c.subcats.map(s => `<span style="font-size:0.7rem;background:var(--gris-borde);border-radius:4px;padding:2px 7px;color:var(--texto-suave)">${s}</span>`).join('')}
+         </div>`
+      : '';
+    return `<div style="padding:0.85rem 1rem;border-radius:8px;background:var(--gris);margin-bottom:0.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <span style="font-size:1.25rem">${c.icon}</span>
+          <div>
+            <div style="font-weight:600;font-size:0.9rem">${c.nombre}</div>
+            <div style="font-size:0.75rem;color:var(--texto-suave)">${count} producto${count !== 1 ? 's' : ''}</div>
+          </div>
         </div>
+        <button class="btn btn-outline btn-sm" onclick="verCategoria('${c.id}')">Ver productos →</button>
       </div>
-      <button class="btn btn-outline btn-sm" onclick="filtrarTabla('','${c.id}');showSection('productos',document.querySelectorAll('.nav-item')[1])">Ver productos →</button>
+      ${subcatsHtml}
     </div>`;
   }).join('');
 }
@@ -1059,14 +1226,30 @@ async function simularImport() {
   fill.style.width = '100%';
   status.textContent = 'Listo';
 
-  mostrarResultados(data.grupos, data.total);
+  mostrarResultados(data.grupos, data.total, data.folderName);
 }
 
-function mostrarResultados(grupos, totalArchivos) {
+let _categoriaImport = null;
+
+function mostrarResultados(grupos, totalArchivos, folderName) {
+  _categoriaImport = folderName ? resolverCategoria(folderName) : null;
   importSeleccion = grupos.map(g => ({ ...g, seleccionado: true }));
+
+  let catBanner = '';
+  if (_categoriaImport) {
+    const cats = _categoriaImport.categorias.map(id => CAT_NAMES[id]).join(', ');
+    catBanner = `<div style="background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:8px;padding:0.65rem 1rem;margin-bottom:0.875rem;font-size:0.85rem;color:var(--azul)">
+      📂 Carpeta: <strong>${folderName}</strong> → se asignará a <strong>${cats}</strong>
+    </div>`;
+  } else if (folderName) {
+    catBanner = `<div style="background:var(--amarillo-light);border:1.5px solid var(--amarillo);border-radius:8px;padding:0.65rem 1rem;margin-bottom:0.875rem;font-size:0.85rem;color:var(--amarillo)">
+      ⚠️ La carpeta "<strong>${folderName}</strong>" no coincide con ninguna subcategoría conocida. Asigná la categoría manualmente en cada producto.
+    </div>`;
+  }
+
   document.getElementById('import-results-title').textContent =
     `${grupos.length} productos detectados en ${totalArchivos} archivos`;
-  document.getElementById('import-list').innerHTML = grupos.map((g, i) => `
+  document.getElementById('import-list').innerHTML = catBanner + grupos.map((g, i) => `
     <div class="import-result-item">
       <div class="import-thumb">📦</div>
       <div>
@@ -1101,10 +1284,16 @@ async function importarSeleccionados() {
   const selec = importSeleccion.filter(g => g.seleccionado);
   if (!selec.length) { showToast('Seleccioná al menos un producto', 'error'); return; }
 
+  const conCat = selec.map(g => ({
+    ...g,
+    categoria: _categoriaImport ? _categoriaImport.categorias[0] : '',
+    subcategoria: _categoriaImport ? _categoriaImport.subcategoria : '',
+  }));
+
   const res = await fetch('/api/drive/importar', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ productos: selec }),
+    body: JSON.stringify({ productos: conCat }),
   });
 
   if (!res.ok) { showToast('Error al importar', 'error'); return; }
@@ -1151,6 +1340,99 @@ function descargar(nombre, contenido, tipo) {
   a.href = URL.createObjectURL(new Blob([contenido], { type: tipo }));
   a.download = nombre;
   a.click();
+}
+
+// ============================================================
+// IMPORTAR DE PROVEEDOR CON IA
+// ============================================================
+let _iaData = null;
+
+function iaDetectarTipo(el) {
+  const val = el.value.trim();
+  const badge = document.getElementById('ia-tipo-badge');
+  const label = document.getElementById('ia-label');
+  if (/^https?:\/\//i.test(val)) {
+    badge.textContent = '🔗 Se va a leer la página automáticamente';
+    badge.style.display = 'block';
+    label.textContent = 'Link del producto del proveedor *';
+    el.style.minHeight = '50px';
+  } else if (val.length > 0) {
+    badge.textContent = '📝 Modo texto';
+    badge.style.display = 'block';
+    label.textContent = 'Texto del producto del proveedor *';
+    el.style.minHeight = '140px';
+  } else {
+    badge.style.display = 'none';
+    label.textContent = 'Link o texto del producto del proveedor *';
+    el.style.minHeight = '80px';
+  }
+}
+
+async function adaptarConIA() {
+  const valor = document.getElementById('ia-texto').value.trim();
+  if (!valor) { showToast('Pegá el link o el texto del producto primero', 'error'); return; }
+
+  const esURL = /^https?:\/\//i.test(valor);
+  const body = esURL ? { url: valor } : { texto: valor };
+
+  const btn = document.getElementById('btn-ia-adaptar');
+  btn.disabled = true;
+  btn.textContent = esURL ? '⏳ Leyendo página...' : '⏳ Procesando con Claude...';
+  document.getElementById('ia-resultado').style.display = 'none';
+
+  try {
+    const res = await fetch('/api/ia/adaptar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { const e = await res.json(); showToast(e.error || 'Error al procesar', 'error'); return; }
+    _iaData = await res.json();
+
+    const tecnicasLabel = { laser:'Grabado láser', dtf:'DTF / Full color', tampografia:'Tampografía', bordado:'Bordado', sublimacion:'Sublimación', hotstamping:'Hot stamping', serigrafia:'Serigrafía', 'dtf-textil':'DTF Textil' };
+    document.getElementById('ia-preview').innerHTML = `
+      <strong>${_iaData.nombre}</strong><br>
+      <em style="color:var(--celeste);font-size:0.8rem">${CAT_NAMES[_iaData.categoria] || _iaData.categoria} · ${_iaData.rango || ''}</em><br><br>
+      ${_iaData.descripcion}<br><br>
+      ${_iaData.material ? `<strong>Material:</strong> ${_iaData.material}<br>` : ''}
+      ${_iaData.medidas ? `<strong>Medidas:</strong> ${_iaData.medidas}<br>` : ''}
+      ${_iaData.colores ? `<strong>Colores:</strong> ${_iaData.colores}<br>` : ''}
+      ${_iaData.tecnicas?.length ? `<strong>Técnicas:</strong> ${_iaData.tecnicas.map(t => tecnicasLabel[t] || t).join(', ')}<br>` : ''}
+    `;
+    document.getElementById('ia-resultado').style.display = 'block';
+  } catch { showToast('Error de conexión', 'error'); }
+  finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ Adaptar con Claude';
+  }
+}
+
+function cargarEnFormulario() {
+  if (!_iaData) return;
+  limpiarForm();
+  editandoId = null;
+  document.getElementById('modal-prod-title').textContent = 'Nuevo producto';
+  document.getElementById('f-nombre').value = _iaData.nombre || '';
+  document.getElementById('f-descripcion').value = _iaData.descripcion || '';
+  document.getElementById('f-material').value = _iaData.material || '';
+  document.getElementById('f-medidas').value = _iaData.medidas || '';
+  document.getElementById('f-colores').value = _iaData.colores || '';
+  document.getElementById('f-categoria').value = _iaData.categoria || '';
+  actualizarSubcats(_iaData.categoria || '');
+  document.getElementById('f-rango').value = _iaData.rango || '';
+
+  ['tecnicas-group','badges-group'].forEach(gid => {
+    const field = gid === 'tecnicas-group' ? 'tecnicas' : 'badges';
+    document.querySelectorAll(`#${gid} .check-chip`).forEach(chip => {
+      const val = chip.querySelector('input').value;
+      const checked = (_iaData[field] || []).includes(val);
+      chip.classList.toggle('checked', checked);
+      chip.querySelector('input').checked = checked;
+    });
+  });
+
+  document.getElementById('modal-producto').classList.add('open');
+  showToast('✅ Formulario pre-completado — revisá y completá los datos que faltan', 'success');
 }
 
 // ============================================================

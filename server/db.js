@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DB_PATH = path.join(__dirname, '..', 'promoplanet.db');
-const JSON_FIELDS = ['tecnicas', 'destinatarios', 'ocasiones', 'fotos'];
+const JSON_FIELDS = ['tecnicas', 'destinatarios', 'ocasiones', 'fotos', 'badges'];
 
 let db;
 
@@ -66,6 +66,7 @@ async function initDb() {
       proveedor     TEXT DEFAULT '',
       notas         TEXT DEFAULT '',
       drive_code    TEXT DEFAULT '',
+      subcategoria  TEXT DEFAULT '',
       estado        TEXT NOT NULL DEFAULT 'borrador',
       fecha_carga   TEXT NOT NULL,
       emoji         TEXT DEFAULT '📦',
@@ -73,6 +74,22 @@ async function initDb() {
       fotos         TEXT DEFAULT '[]'
     )
   `);
+  // Migraciones: agregar columnas si la DB ya existía sin ellas
+  try { db.run("ALTER TABLE productos ADD COLUMN subcategoria TEXT DEFAULT ''"); } catch {}
+  try { db.run("ALTER TABLE productos ADD COLUMN badges TEXT DEFAULT '[]'"); } catch {}
+
+  // Migración: renombrar IDs de categoría viejos a los nuevos
+  const migracionCats = [
+    ['kits',      'onboarding'],
+    ['papeleria',  'escritorio'],
+    ['bolsos',     'bolsos_mochilas'],
+    ['cotidiano',  'escritorio'],
+    ['premium',    'reconocimiento'],
+  ];
+  for (const [viejo, nuevo] of migracionCats) {
+    db.run('UPDATE productos SET categoria = ? WHERE categoria = ?', [nuevo, viejo]);
+  }
+
   save();
 }
 

@@ -48,13 +48,18 @@ router.get('/listar', requireAdmin, async (req, res) => {
 
   try {
     const drive = getDriveClient();
-    const response = await drive.files.list({
-      q: `'${folderId}' in parents and trashed = false and mimeType contains 'image/'`,
-      fields: 'files(id, name, mimeType)',
-      pageSize: 1000,
-    });
+
+    const [folderMeta, response] = await Promise.all([
+      drive.files.get({ fileId: folderId, fields: 'name' }),
+      drive.files.list({
+        q: `'${folderId}' in parents and trashed = false and mimeType contains 'image/'`,
+        fields: 'files(id, name, mimeType)',
+        pageSize: 1000,
+      }),
+    ]);
+
     const grupos = agruparArchivos(response.data.files || []);
-    res.json({ total: response.data.files.length, grupos });
+    res.json({ total: response.data.files.length, grupos, folderName: folderMeta.data.name });
   } catch (err) {
     console.error('Drive listar error:', err.message);
     res.status(500).json({ error: 'Error al leer la carpeta de Drive. Verificá las credenciales y los permisos.' });
@@ -62,7 +67,7 @@ router.get('/listar', requireAdmin, async (req, res) => {
 });
 
 // POST /api/drive/importar — requiere admin
-// Body: { productos: [{ codigo, nombre, archivos: [{fileId, nombre}] }] }
+// Body: { productos: [{ codigo, nombre, categoria, subcategoria, archivos: [{fileId, nombre}] }] }
 router.post('/importar', requireAdmin, (req, res) => {
   const { productos } = req.body;
   if (!Array.isArray(productos) || !productos.length) {
@@ -77,9 +82,10 @@ router.post('/importar', requireAdmin, (req, res) => {
       const nuevo = db.insertProducto({
         codigo: p.codigo,
         nombre: p.nombre,
-        categoria: '',
-        rango: 'intermedio',
-        minimo: 50,
+        categoria: p.categoria || '',
+        subcategoria: p.subcategoria || '',
+        rango: '',
+        minimo: 0,
         tecnicas: [],
         destinatarios: [],
         ocasiones: [],

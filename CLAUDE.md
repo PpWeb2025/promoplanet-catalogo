@@ -8,17 +8,23 @@ Empresa de Buenos Aires especializada en productos promocionales corporativos. E
 
 | Archivo | Rol |
 |---|---|
-| `index.html` | Catálogo público (~1 072 líneas) |
-| `admin.html` | Panel de administración (~1 171 líneas) |
+| `index.html` | Catálogo público |
+| `admin.html` | Panel de administración |
+| `server/index.js` | Servidor Express (punto de entrada) |
+| `server/db.js` | Base de datos SQLite con sql.js |
+| `server/routes/auth.js` | Login / logout / sesión |
+| `server/routes/productos.js` | CRUD de productos |
+| `server/routes/drive.js` | Integración Google Drive |
 | `aplicar_cambios.py` | Script Python para actualizaciones masivas de nomenclatura |
 
 ## Stack tecnológico
 
-- **100% HTML/CSS/JavaScript vanilla** — sin frameworks, sin npm, sin build tools
-- **Sin backend** — toda la persistencia usa `localStorage` (clave `pp_productos`, JSON)
-- **Sin base de datos** — los datos solo existen en el navegador donde se cargaron
+- **HTML/CSS/JavaScript vanilla** — sin frameworks, sin build tools
+- **Backend Node.js + Express** — servidor en `server/`
+- **Base de datos SQLite** — `promoplanet.db` vía `sql.js`
+- **Autenticación por sesión** — `express-session`, contraseña en `.env`
 - **Google Fonts** — DM Sans (variable 300–600), DM Serif Display, DM Mono
-- **No hay dependencias externas** — corre directo en el navegador
+- **Correr localmente:** `node server/index.js` → http://localhost:3000
 
 ## Diseño visual
 
@@ -27,11 +33,30 @@ Empresa de Buenos Aires especializada en productos promocionales corporativos. E
 - Grid CSS responsivo, mobile-first con `@media` queries
 - Nav con glassmorphism (`backdrop-filter: blur(8px)`)
 
+## Categorías y subcategorías
+
+| Categoría | ID | Subcategorías |
+|---|---|---|
+| Bolsos y Mochilas | `bolsos_mochilas` | Bolsos, Maletines y portfolios, Mochilas, Neceseres y accesorios, Viaje |
+| Capacitación y Eventos | `capacitacion` | — |
+| Drinkware | `drinkware` | Botellas standard, Botellas térmicas, Tazas mugs y jarros, Termos y mates |
+| Eco y Sustentable | `eco` | Bambu y madera, Reciclados, Tote bags y bolsas |
+| Escritorio y Oficina | `escritorio` | Cuadernos y agendas, Organizadores |
+| Escritura | `escritura` | Bolígrafos ecológicos, Bolígrafos metálicos, Bolígrafos plásticos, Escritura fina, Lápices, Marcadores y resaltadores |
+| Fechas Especiales | `fechas` | — |
+| Indumentaria Corporativa | `indumentaria` | Abrigos, Camisas, Delantales y pecheras, Gorras, Remeras y chombas |
+| Llaveros y Accesorios | `llaveros` | Llaveros de madera, Llaveros metálicos, Llaveros plásticos, Multipropósito |
+| Onboarding y Bienvenida | `onboarding` | — |
+| Outdoors y Bienestar | `outdoors` | Coolers y loncheras, Cuidado personal, Deporte y fitness, Gastronomía, Paraguas |
+| Packaging y Presentación | `packaging` | Bolsas y papel, Cajas |
+| Reconocimiento y Premios | `reconocimiento` | — |
+| Tecnología | `tecnologia` | Accesorios de escritorio, Accesorios para celular, Audio, Carga y conectividad |
+
 ## Catálogo público (`index.html`)
 
 ### Filtros disponibles
 
-1. **Categoría** — tabs superiores, 12 categorías (Onboarding, Drinkware, Reconocimiento, etc.)
+1. **Categoría** — sidebar con 14 categorías
 2. **Búsqueda de texto** — coincidencia parcial case-insensitive sobre nombre, código y descripción
 3. **Destinatario** — Colaborador / Cliente / Directivo
 4. **Ocasión** — Onboarding / Capacitación / Reconocimiento / Eventos / Fechas especiales
@@ -42,7 +67,7 @@ Todos los filtros son combinables; el resultado se pasa a `renderProductos(visib
 
 ## Panel de administración (`admin.html`)
 
-**Acceso:** contraseña hardcodeada como `promoplanet2026` (línea ~662). Muestra/oculta `.login-screen` y `.app.visible`.
+**Acceso:** contraseña configurada en `.env` (`ADMIN_PASSWORD`). Autenticación via API `/api/auth/login`.
 
 ### Secciones
 
@@ -69,12 +94,10 @@ Formato objetivo: `PP-XXXX` (ej: `PP-1234`). El script Python `aplicar_cambios.p
 
 ## Limitaciones actuales (pendientes para producción)
 
-- **Sin persistencia multi-dispositivo** — datos aislados en un navegador
-- **Contraseña hardcodeada** — no apta para producción
-- **Sin autenticación real** — cualquiera con la URL accede al admin
-- **Importación de Drive simulada** — requiere implementar Google Drive API + OAuth
-- **Sin almacenamiento de imágenes** — pendiente integrar Cloudinary, S3 o similar
-- **Sin backend** — para multi-usuario se necesitaría Node/Express, Python/Flask u otro
+- **Sin deploy** — el servidor solo corre localmente en `localhost:3000`
+- **Importación de Drive** — la ruta `/api/drive` existe; verificar si las llamadas son reales o simuladas
+- **Sin almacenamiento de imágenes externo** — las fotos se sirven vía Drive; pendiente evaluar Cloudinary/S3
+- **MemoryStore de sesión** — las sesiones se pierden al reiniciar el servidor (aceptable para uso de un solo usuario local)
 
 ## Comandos útiles
 
