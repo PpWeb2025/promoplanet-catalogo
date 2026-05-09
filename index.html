@@ -88,6 +88,22 @@
     gap: 0.25rem;
   }
   .nav-mobile.open { display: flex; }
+  .nav-mobile { max-height: calc(100vh - 64px); overflow-y: auto; }
+  .nav-mobile-cats-label {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--texto-suave);
+    padding: 0.75rem 0 0.25rem;
+    border-bottom: 1px solid var(--gris-borde);
+  }
+  .nav-mobile-cat-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0.65rem 0; border: none; background: none;
+    width: 100%; text-align: left;
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--texto);
+    cursor: pointer; border-bottom: 1px solid var(--gris-borde);
+    transition: color 0.15s;
+  }
+  .nav-mobile-cat-btn:hover { color: var(--celeste); }
   .nav-mobile a {
     color: var(--texto); text-decoration: none;
     font-size: 1rem; font-weight: 500;
@@ -482,12 +498,14 @@
 
   @media (max-width: 768px) {
     .main { grid-template-columns: 1fr; }
-    .sidebar { position: static; }
+    .sidebar { position: static; display: none; }
     .form-row { grid-template-columns: 1fr; }
     .footer-inner { grid-template-columns: 1fr; }
     .nav-links { display: none; }
     .nav-hamburger { display: flex; }
     .hero { padding: 3rem 1.25rem; }
+    .banda-confianza { display: none; }
+    .cats-grid { grid-template-columns: repeat(4, 1fr); }
   }
 </style>
 </head>
@@ -514,9 +532,10 @@
 
 <div class="nav-mobile" id="nav-mobile">
   <a href="#catalogo" onclick="scrollToCat(); cerrarMenu()">Catálogo</a>
-  <a href="#categorias" onclick="cerrarMenu()">Categorías</a>
   <a href="#como-funciona" onclick="cerrarMenu()">Cómo funciona</a>
   <a href="mailto:hola@promoplanet.ar">Contacto</a>
+  <div class="nav-mobile-cats-label">Categorías</div>
+  <div id="nav-mobile-cats"></div>
   <a href="#" class="btn-consulta-nav" onclick="abrirConsulta(); cerrarMenu(); return false;">Solicitar cotización</a>
 </div>
 
@@ -535,7 +554,7 @@
 
 
 <!-- BANDA DE CONFIANZA -->
-<div style="background:var(--blanco);border-bottom:1px solid var(--gris-borde);padding:0.875rem 2rem">
+<div class="banda-confianza" style="background:var(--blanco);border-bottom:1px solid var(--gris-borde);padding:0.875rem 2rem">
   <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:1.25rem;flex-wrap:nowrap;overflow:hidden">
     <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;white-space:nowrap;color:var(--texto-suave)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--celeste)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span><strong style="color:var(--azul)">Logo personalizado</strong> en cada producto</span></div>
     <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;white-space:nowrap;color:var(--texto-suave)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--celeste)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg><span><strong style="color:var(--azul)">Entrega</strong> en CABA y GBA sin costo</span></div>
@@ -775,6 +794,20 @@
 </footer>
 
 <script>
+function renderNavMobileCats() {
+  const el = document.getElementById('nav-mobile-cats');
+  if (!el) return;
+  let html = `<button class="nav-mobile-cat-btn" onclick="setCat('todos',null);scrollToCat();cerrarMenu()">
+    <span class="cat-dot" style="background:var(--celeste)"></span> Todos los productos
+  </button>`;
+  CATEGORIAS.forEach(c => {
+    html += `<button class="nav-mobile-cat-btn" onclick="setCat('${c.id}',null);scrollToCat();cerrarMenu()">
+      <span class="cat-dot" style="background:${c.color}"></span> ${c.nombre}
+    </button>`;
+  });
+  el.innerHTML = html;
+}
+
 function toggleMenu() {
   const btn = document.getElementById('nav-hamburger');
   const menu = document.getElementById('nav-mobile');
@@ -1256,6 +1289,7 @@ async function init() {
     PRODUCTOS = [];
   }
   renderCatSidebar();
+  renderNavMobileCats();
   renderCatGrid();
   renderSubcatSidebar();
   filtrar();
