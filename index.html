@@ -615,8 +615,8 @@
         <p class="section-sub">Productos para cada momento, equipo y ocasión.</p>
       </div>
       <div class="search-wrap cats-search">
-        <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
-        <input type="text" id="search-input" placeholder="Buscar producto, código..." oninput="filtrar()">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" style="cursor:pointer" onclick="buscarYScrollear()"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
+        <input type="text" id="search-input" placeholder="Buscar producto, código..." oninput="filtrar()" onkeydown="if(event.key==='Enter') buscarYScrollear()">
       </div>
     </div>
     <div class="cats-grid" id="cats-grid"></div>
@@ -1387,6 +1387,7 @@ function setView(tipo, btn) {
 }
 
 function scrollToCat() { document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' }); }
+function buscarYScrollear() { filtrar(); document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' }); }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
