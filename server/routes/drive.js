@@ -10,11 +10,13 @@ const CODIGO_REGEX = /([A-Z]{1,3}\d{3,4}[A-Z]?)/;
 const imageCache = new Map();
 
 function getDriveClient() {
-  const keyFile = path.resolve(process.env.GOOGLE_SA_KEY_FILE || './service-account.json');
-  const auth = new google.auth.GoogleAuth({
-    keyFile,
-    scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-  });
+  const authOptions = { scopes: ['https://www.googleapis.com/auth/drive.readonly'] };
+  if (process.env.GOOGLE_SA_CREDENTIALS) {
+    authOptions.credentials = JSON.parse(process.env.GOOGLE_SA_CREDENTIALS);
+  } else {
+    authOptions.keyFile = path.resolve(process.env.GOOGLE_SA_KEY_FILE || './service-account.json');
+  }
+  const auth = new google.auth.GoogleAuth(authOptions);
   return google.drive({ version: 'v3', auth });
 }
 
