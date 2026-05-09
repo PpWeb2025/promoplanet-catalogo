@@ -631,6 +631,144 @@
   .tecnicas-titulo { font-size: 18px; }
   .tecnicas-grid   { grid-template-columns: 1fr; }
 }
+
+/* ── Overlay cómo funciona ────────────────────────────── */
+#modal-como-funciona {
+  position: fixed;
+  inset: 0;
+  background: var(--blanco);
+  z-index: 200;
+  overflow-y: auto;
+  display: none;
+}
+.como-body {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 32px 72px;
+}
+.como-intro {
+  font-size: 15px;
+  color: var(--texto-suave);
+  max-width: 580px;
+  line-height: 1.7;
+  margin: 0 0 48px;
+}
+.como-pasos {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  position: relative;
+  margin-bottom: 56px;
+}
+.como-pasos::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: calc(10% + 12px);
+  right: calc(10% + 12px);
+  height: 2px;
+  background: var(--gris-borde);
+  z-index: 0;
+}
+.como-paso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 12px;
+  position: relative;
+  z-index: 1;
+}
+.como-paso-num {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--azul);
+  color: var(--blanco);
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 6px var(--blanco);
+}
+.como-paso:nth-child(3) .como-paso-num { background: var(--celeste); }
+.como-paso:nth-child(5) .como-paso-num { background: var(--celeste); }
+.como-paso-icono { width: 24px; height: 24px; }
+.como-paso-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto);
+  margin: 0 0 6px;
+  line-height: 1.3;
+}
+.como-paso-desc {
+  font-size: 12px;
+  color: var(--texto-suave);
+  line-height: 1.6;
+  margin: 0;
+}
+.como-condiciones-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  margin: 0 0 16px;
+}
+.como-condiciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.como-condicion {
+  background: var(--gris);
+  border-radius: var(--radio);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.como-condicion-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--celeste);
+}
+.como-condicion-valor {
+  font-size: 13px;
+  color: var(--texto);
+  line-height: 1.55;
+}
+.como-archivos {
+  background: var(--azul-light);
+  border-radius: var(--radio);
+  border-left: 3px solid var(--azul);
+  padding: 16px 20px;
+  font-size: 13px;
+  color: var(--texto);
+  line-height: 1.65;
+}
+.como-archivos strong { font-weight: 700; color: var(--azul); }
+@media (max-width: 720px) {
+  .como-body { padding: 20px 16px 56px; }
+  .como-pasos { grid-template-columns: 1fr; gap: 0; }
+  .como-pasos::before { display: none; }
+  .como-paso {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    padding: 0 0 28px 0;
+    gap: 16px;
+  }
+  .como-paso:last-child { padding-bottom: 0; }
+  .como-paso-num { margin-bottom: 0; flex-shrink: 0; }
+  .como-paso-texto { display: flex; flex-direction: column; }
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
 </head>
@@ -646,7 +784,7 @@
   <div class="nav-links">
     <a href="#catalogo" onclick="scrollToCat()">Catálogo</a>
     <a href="#categorias">Categorías</a>
-    <a href="#como-funciona">Cómo funciona</a>
+    <a href="#" onclick="abrirComoFunciona(); return false;">Cómo funciona</a>
     <a href="#" onclick="abrirTecnicas(); return false;">Personalización</a>
     <a href="mailto:hola@promoplanet.ar">Contacto</a>
     <a href="#" class="btn-consulta-nav" onclick="abrirConsulta(); return false;">Solicitar cotización</a>
@@ -658,7 +796,7 @@
 
 <div class="nav-mobile" id="nav-mobile">
   <a href="#catalogo" onclick="scrollToCat(); cerrarMenu()">Catálogo</a>
-  <a href="#como-funciona" onclick="cerrarMenu()">Cómo funciona</a>
+  <a href="#" onclick="abrirComoFunciona(); cerrarMenu(); return false;">Cómo funciona</a>
   <a href="mailto:hola@promoplanet.ar">Contacto</a>
   <div class="nav-mobile-cats-label">Categorías</div>
   <div id="nav-mobile-cats"></div>
@@ -1577,6 +1715,19 @@ function filtrarTecnicas(btn) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('modal-tecnicas').style.display !== 'none') cerrarTecnicas();
 });
+
+function abrirComoFunciona() {
+  document.getElementById('modal-como-funciona').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  document.getElementById('modal-como-funciona').scrollTop = 0;
+}
+function cerrarComoFunciona() {
+  document.getElementById('modal-como-funciona').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('modal-como-funciona').style.display !== 'none') cerrarComoFunciona();
+});
 </script>
 
 <!-- WHATSAPP FLOTANTE -->
@@ -1790,6 +1941,118 @@ document.addEventListener('keydown', e => {
       La disponibilidad de cada técnica depende del artículo específico.
       Cada ficha de producto indica las opciones de personalización compatibles.
       Ante cualquier consulta sobre combinaciones o mínimos de producción, podés escribirnos por WhatsApp o usar el formulario de consulta.
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CÓMO FUNCIONA -->
+<div id="modal-como-funciona">
+  <div class="tecnicas-header">
+    <div class="tecnicas-header-left">
+      <p class="tecnicas-kicker">El proceso</p>
+      <h2 class="tecnicas-titulo">Cómo funciona</h2>
+    </div>
+    <button class="tecnicas-close" onclick="cerrarComoFunciona()" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="como-body">
+    <p class="como-intro">
+      De la idea al producto con tu marca en cinco pasos.
+      Trabajamos con vos en cada etapa para que el resultado sea exactamente lo que necesitás.
+    </p>
+    <div class="como-pasos">
+      <div class="como-paso">
+        <div class="como-paso-num">
+          <svg class="como-paso-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+        </div>
+        <div class="como-paso-texto">
+          <p class="como-paso-titulo">Elegís el producto</p>
+          <p class="como-paso-desc">Navegás el catálogo por categoría, ocasión o búsqueda libre y encontrás el artículo ideal.</p>
+        </div>
+      </div>
+      <div class="como-paso">
+        <div class="como-paso-num">
+          <svg class="como-paso-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        <div class="como-paso-texto">
+          <p class="como-paso-titulo">Pedís cotización</p>
+          <p class="como-paso-desc">Completás el formulario con el producto, la cantidad y la técnica. Recibís el presupuesto en menos de 24 horas, con validez de 7 días hábiles.</p>
+        </div>
+      </div>
+      <div class="como-paso">
+        <div class="como-paso-num">
+          <svg class="como-paso-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5" rx="1"/>
+            <line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+            <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+          </svg>
+        </div>
+        <div class="como-paso-texto">
+          <p class="como-paso-titulo">Confirmás y mandás el arte</p>
+          <p class="como-paso-desc">Aprobás el presupuesto, abonás el 50% de anticipo y nos enviás el archivo de tu logo en formato vectorial.</p>
+        </div>
+      </div>
+      <div class="como-paso">
+        <div class="como-paso-num">
+          <svg class="como-paso-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+          </svg>
+        </div>
+        <div class="como-paso-texto">
+          <p class="como-paso-titulo">Aprobás la prueba digital</p>
+          <p class="como-paso-desc">Te enviamos una muestra digital del producto con tu marca aplicada, sin costo. La producción comienza una vez aprobada.</p>
+        </div>
+      </div>
+      <div class="como-paso">
+        <div class="como-paso-num">
+          <svg class="como-paso-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+        </div>
+        <div class="como-paso-texto">
+          <p class="como-paso-titulo">Producción y entrega</p>
+          <p class="como-paso-desc">El plazo depende del producto, la cantidad y la técnica, y se confirma en el presupuesto. Entrega sin costo en CABA y Provincia de Buenos Aires.</p>
+        </div>
+      </div>
+    </div>
+    <p class="como-condiciones-titulo">Condiciones generales</p>
+    <div class="como-condiciones">
+      <div class="como-condicion">
+        <span class="como-condicion-label">Precios</span>
+        <span class="como-condicion-valor">En pesos argentinos, netos de IVA (21%). Actualizables según el tipo de cambio oficial BCRA al momento del pago.</span>
+      </div>
+      <div class="como-condicion">
+        <span class="como-condicion-label">Validez del presupuesto</span>
+        <span class="como-condicion-valor">7 días hábiles desde la emisión.</span>
+      </div>
+      <div class="como-condicion">
+        <span class="como-condicion-label">Condiciones de pago</span>
+        <span class="como-condicion-valor">50% de anticipo al confirmar el pedido. Saldo restante contra entrega.</span>
+      </div>
+      <div class="como-condicion">
+        <span class="como-condicion-label">Cantidades</span>
+        <span class="como-condicion-valor">Los precios aplican solo a las cantidades cotizadas. En producción personalizada puede registrarse una variación de ±5%. La facturación se realiza sobre el total producido.</span>
+      </div>
+      <div class="como-condicion">
+        <span class="como-condicion-label">Plazo de entrega</span>
+        <span class="como-condicion-valor">Depende del producto, la cantidad y la técnica de personalización. Se confirma en cada presupuesto.</span>
+      </div>
+      <div class="como-condicion">
+        <span class="como-condicion-label">Envío</span>
+        <span class="como-condicion-valor">Un único envío sin costo adicional dentro de CABA y la Provincia de Buenos Aires.</span>
+      </div>
+    </div>
+    <div class="como-archivos">
+      <strong>Archivos para identidad visual —</strong>
+      Los logotipos y diseños deben entregarse en formato vectorial editable (ai, cdr, eps, psd o pdf) con tipografías convertidas a curvas.
+      Cualquier trabajo adicional de diseño se presupuesta de forma independiente.
     </div>
   </div>
 </div>
