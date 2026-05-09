@@ -470,8 +470,11 @@
     padding: 2rem 2rem 2.25rem;
   }
   .cats-inner { max-width: 1100px; margin: 0 auto; }
+  .cats-header { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-bottom: 1.25rem; }
+  .cats-header-text { flex: 1; }
+  .cats-search { flex: 0 0 260px; }
   .section-title { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--azul); margin-bottom: 0.3rem; }
-  .section-sub { color: var(--texto-suave); margin-bottom: 1.25rem; font-size: 0.9rem; }
+  .section-sub { color: var(--texto-suave); font-size: 0.9rem; }
   .cats-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.65rem; }
   .cat-card {
     background: var(--blanco); border-radius: 10px;
@@ -541,6 +544,8 @@
     .hero { padding: 3rem 1.25rem; }
     .banda-confianza { display: none; }
     .cats-grid { grid-template-columns: repeat(2, 1fr); }
+    .cats-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    .cats-search { flex: 1 1 auto; width: 100%; }
   }
 </style>
 </head>
@@ -604,8 +609,16 @@
 <!-- CATEGORÍAS GRID -->
 <section class="cats-section" id="categorias">
   <div class="cats-inner">
-    <h2 class="section-title">Explorá por categoría</h2>
-    <p class="section-sub">Productos para cada momento, equipo y ocasión.</p>
+    <div class="cats-header">
+      <div class="cats-header-text">
+        <h2 class="section-title">Explorá por categoría</h2>
+        <p class="section-sub">Productos para cada momento, equipo y ocasión.</p>
+      </div>
+      <div class="search-wrap cats-search">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
+        <input type="text" id="search-input" placeholder="Buscar producto, código..." oninput="filtrar()">
+      </div>
+    </div>
     <div class="cats-grid" id="cats-grid"></div>
   </div>
 </section>
@@ -614,10 +627,6 @@
 <div class="filter-bar-wrap" id="catalogo">
   <div class="filter-bar">
     <div class="filter-bar-top">
-      <div class="search-wrap">
-        <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
-        <input type="text" id="search-input" placeholder="Buscar producto, código, material..." oninput="filtrar()">
-      </div>
       <span class="smart-label">Filtros rápidos:</span>
       <button class="filter-chip active" data-dest="todos" onclick="toggleDest(this)">Todos</button>
       <button class="filter-chip" data-dest="colaborador" onclick="toggleDest(this)">👤 Colaborador</button>
