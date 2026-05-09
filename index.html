@@ -547,6 +547,90 @@
     .cats-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
     .cats-search { flex: 1 1 auto; width: 100%; }
   }
+
+/* ── Overlay técnicas ─────────────────────────────────── */
+#modal-tecnicas {
+  position: fixed;
+  inset: 0;
+  background: var(--blanco);
+  z-index: 200;
+  overflow-y: auto;
+  display: none;
+}
+.tecnicas-header {
+  position: sticky;
+  top: 0;
+  background: var(--blanco);
+  border-bottom: 1px solid var(--gris-borde);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+}
+.tecnicas-header-left { display: flex; flex-direction: column; gap: 2px; }
+.tecnicas-kicker {
+  font-size: 11px; font-weight: 600; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--celeste); margin: 0;
+}
+.tecnicas-titulo {
+  font-family: 'DM Serif Display', serif; font-size: 22px;
+  color: var(--azul); margin: 0; line-height: 1.2;
+}
+.tecnicas-close {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--gris-borde); background: transparent;
+  font-size: 16px; color: var(--texto-suave); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.tecnicas-close:hover { background: var(--gris); color: var(--texto); }
+.tecnicas-body { max-width: 1100px; margin: 0 auto; padding: 32px 32px 64px; }
+.tecnicas-intro { font-size: 15px; color: var(--texto-suave); max-width: 620px; line-height: 1.7; margin: 0 0 28px; }
+.tecnicas-filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.tecnicas-filtro-btn {
+  padding: 6px 16px; border-radius: var(--radio-lg);
+  border: 1px solid var(--gris-borde); background: transparent;
+  color: var(--texto-suave); font-size: 13px; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.15s;
+}
+.tecnicas-filtro-btn:hover { border-color: var(--celeste); color: var(--celeste); }
+.tecnicas-filtro-btn.activo { background: var(--azul); border-color: var(--azul); color: var(--blanco); font-weight: 600; }
+.tecnicas-contador { font-size: 13px; color: var(--texto-suave); margin-bottom: 20px; }
+.tecnicas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.tecnica-card {
+  background: var(--blanco); border: 1px solid var(--gris-borde);
+  border-radius: var(--radio); overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s; cursor: default;
+}
+.tecnica-card:hover { box-shadow: var(--sombra-hover); transform: translateY(-2px); }
+.tecnica-img {
+  height: 148px; display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.tecnica-img-placeholder { width: 72px; height: 72px; opacity: 0.85; }
+.tecnica-variante { position: absolute; bottom: 8px; right: 10px; font-size: 10px; font-style: italic; color: inherit; opacity: 0.55; }
+.tecnica-body { padding: 16px 18px 18px; }
+.tecnica-nombre { font-size: 15px; font-weight: 700; color: var(--texto); margin: 0 0 8px; }
+.tecnica-desc { font-size: 13px; color: var(--texto-suave); line-height: 1.65; margin: 0 0 12px; }
+.tecnica-desc p { margin: 0 0 3px; }
+.tecnica-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tecnica-tag {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 500;
+  background: var(--azul-light); color: var(--azul); border: 1px solid rgba(0,52,113,0.12);
+}
+.tecnicas-nota {
+  margin-top: 48px; padding: 18px 22px; background: var(--gris);
+  border-radius: var(--radio); border-left: 3px solid var(--celeste);
+  font-size: 13px; color: var(--texto-suave); line-height: 1.65;
+}
+@media (max-width: 600px) {
+  .tecnicas-header { padding: 12px 16px; }
+  .tecnicas-body   { padding: 20px 16px 48px; }
+  .tecnicas-titulo { font-size: 18px; }
+  .tecnicas-grid   { grid-template-columns: 1fr; }
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
 </head>
@@ -563,6 +647,7 @@
     <a href="#catalogo" onclick="scrollToCat()">Catálogo</a>
     <a href="#categorias">Categorías</a>
     <a href="#como-funciona">Cómo funciona</a>
+    <a href="#" onclick="abrirTecnicas(); return false;">Técnicas</a>
     <a href="mailto:hola@promoplanet.ar">Contacto</a>
     <a href="#" class="btn-consulta-nav" onclick="abrirConsulta(); return false;">Solicitar cotización</a>
   </div>
@@ -839,7 +924,7 @@
     <div class="footer-col">
       <h4>Empresa</h4>
       <a href="#">Cómo funciona</a>
-      <a href="#">Técnicas de personalización</a>
+      <a href="#" onclick="abrirTecnicas(); return false;">Técnicas de personalización</a>
       <a href="#">Solicitar cotización</a>
       <a href="mailto:hola@promoplanet.ar">Contacto</a>
       <a href="https://www.promoplanet.ar">www.promoplanet.ar</a>
@@ -1463,6 +1548,35 @@ async function init() {
   filtrar();
 }
 init();
+
+function abrirTecnicas() {
+  document.getElementById('modal-tecnicas').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  document.getElementById('modal-tecnicas').scrollTop = 0;
+}
+function cerrarTecnicas() {
+  document.getElementById('modal-tecnicas').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function filtrarTecnicas(btn) {
+  document.querySelectorAll('.tecnicas-filtro-btn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  const filtro = btn.dataset.filtro;
+  const cards = document.querySelectorAll('#tecnicas-grid .tecnica-card');
+  let visibles = 0;
+  cards.forEach(card => {
+    const mostrar = filtro === 'todas' || (card.dataset.materiales || '').includes(filtro);
+    card.style.display = mostrar ? 'block' : 'none';
+    if (mostrar) visibles++;
+  });
+  const contador = document.getElementById('tecnicas-contador');
+  contador.textContent = filtro === 'todas'
+    ? `${visibles} técnicas en total`
+    : `${visibles} técnica${visibles !== 1 ? 's' : ''} compatible${visibles !== 1 ? 's' : ''} con ${filtro.toLowerCase()}`;
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('modal-tecnicas').style.display !== 'none') cerrarTecnicas();
+});
 </script>
 
 <!-- WHATSAPP FLOTANTE -->
@@ -1486,6 +1600,174 @@ init();
   </svg>
   WhatsApp
 </a>
+
+<!-- MODAL TÉCNICAS DE IMPRESIÓN -->
+<div id="modal-tecnicas">
+  <div class="tecnicas-header">
+    <div class="tecnicas-header-left">
+      <p class="tecnicas-kicker">Personalización</p>
+      <h2 class="tecnicas-titulo">Técnicas de impresión</h2>
+    </div>
+    <button class="tecnicas-close" onclick="cerrarTecnicas()" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="tecnicas-body">
+    <p class="tecnicas-intro">
+      Cada producto del catálogo admite una o más técnicas de personalización según su material y geometría.
+      A continuación se describen todos los procesos disponibles.
+    </p>
+    <div class="tecnicas-filtros" id="tecnicas-filtros">
+      <button class="tecnicas-filtro-btn activo" data-filtro="todas" onclick="filtrarTecnicas(this)">Todas</button>
+      <button class="tecnicas-filtro-btn" data-filtro="Plástico"      onclick="filtrarTecnicas(this)">Plástico</button>
+      <button class="tecnicas-filtro-btn" data-filtro="Metal"         onclick="filtrarTecnicas(this)">Metal</button>
+      <button class="tecnicas-filtro-btn" data-filtro="Textiles"      onclick="filtrarTecnicas(this)">Textiles</button>
+      <button class="tecnicas-filtro-btn" data-filtro="Madera"        onclick="filtrarTecnicas(this)">Madera</button>
+      <button class="tecnicas-filtro-btn" data-filtro="Cuero"         onclick="filtrarTecnicas(this)">Cuero</button>
+      <button class="tecnicas-filtro-btn" data-filtro="Marroquinería" onclick="filtrarTecnicas(this)">Marroquinería</button>
+      <button class="tecnicas-filtro-btn" data-filtro="Papel"         onclick="filtrarTecnicas(this)">Papel</button>
+    </div>
+    <p class="tecnicas-contador" id="tecnicas-contador">11 técnicas en total</p>
+    <div class="tecnicas-grid" id="tecnicas-grid">
+
+      <article class="tecnica-card" data-materiales="Plástico Metal Cuero Madera">
+        <div class="tecnica-img" style="background:#e8eef6;color:#003471">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="8" y="10" width="56" height="52" rx="4" fill="#c5d9f0" stroke="#003471" stroke-width="1.5"/><line x1="8" y1="22" x2="64" y2="22" stroke="#003471" stroke-width="0.8" stroke-dasharray="3 2" opacity="0.5"/><line x1="8" y1="30" x2="64" y2="30" stroke="#003471" stroke-width="0.8" stroke-dasharray="3 2" opacity="0.5"/><line x1="8" y1="38" x2="64" y2="38" stroke="#003471" stroke-width="0.8" stroke-dasharray="3 2" opacity="0.5"/><line x1="8" y1="46" x2="64" y2="46" stroke="#003471" stroke-width="0.8" stroke-dasharray="3 2" opacity="0.5"/><rect x="18" y="26" width="36" height="18" rx="2" fill="#003471" opacity="0.75"/><rect x="24" y="54" width="24" height="4" rx="1" fill="#003471" opacity="0.3"/></svg>
+          <span class="tecnica-variante" style="color:#003471">superficies planas</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Serigrafía</h3>
+          <div class="tecnica-desc"><p>Transferencia de tinta a través de una malla tensada sobre un marco metálico.</p><p>Una emulsión fotosensible bloquea las zonas no impresoras, permitiendo el paso de tinta únicamente en el área del diseño.</p><p>Indicada para grandes superficies con colores sólidos y tiradas de mediano o alto volumen.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Plástico</span><span class="tecnica-tag">Metal</span><span class="tecnica-tag">Cuero</span><span class="tecnica-tag">Madera</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Plástico Metal Cuero Madera">
+        <div class="tecnica-img" style="background:#e8eef6;color:#003471">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><ellipse cx="36" cy="16" rx="18" ry="6" fill="#c5d9f0" stroke="#003471" stroke-width="1.5"/><rect x="18" y="16" width="36" height="36" fill="#c5d9f0" stroke="#003471" stroke-width="1.5"/><ellipse cx="36" cy="52" rx="18" ry="6" fill="#b0cceb" stroke="#003471" stroke-width="1.5"/><ellipse cx="36" cy="34" rx="10" ry="3.5" fill="#003471" opacity="0.6"/><path d="M50 20 Q60 14 50 8" stroke="#003471" stroke-width="1.5" fill="none"/><path d="M50 8 L54 12 M50 8 L46 11" stroke="#003471" stroke-width="1.5"/></svg>
+          <span class="tecnica-variante" style="color:#003471">objetos cilíndricos</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Serigrafía rotativa</h3>
+          <div class="tecnica-desc"><p>Variante de la serigrafía adaptada para objetos de superficie cilíndrica.</p><p>La pieza rota durante la aplicación para lograr cobertura uniforme alrededor del cuerpo del producto.</p><p>Apta para botellas, termos, vasos y artículos de forma cilíndrica.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Plástico</span><span class="tecnica-tag">Metal</span><span class="tecnica-tag">Cuero</span><span class="tecnica-tag">Madera</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Plástico Metal Cuero Madera">
+        <div class="tecnica-img" style="background:#e0f7f9;color:#00A8B4">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><ellipse cx="36" cy="20" rx="16" ry="10" fill="#a0dfe4" stroke="#00A8B4" stroke-width="1.5"/><rect x="30" y="10" width="12" height="14" rx="2" fill="#00A8B4" opacity="0.7"/><path d="M20 20 Q36 42 52 20" fill="#b8e8ec" stroke="#00A8B4" stroke-width="1.5"/><rect x="12" y="50" width="48" height="10" rx="3" fill="#a0dfe4" stroke="#00A8B4" stroke-width="1.2"/><rect x="22" y="52" width="28" height="6" rx="1" fill="#00A8B4" opacity="0.45"/></svg>
+          <span class="tecnica-variante" style="color:#00A8B4">superficies irregulares</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Tampografía</h3>
+          <div class="tecnica-desc"><p>Un tampón de silicona recoge la tinta desde una matriz grabada y la transfiere al producto mediante presión.</p><p>La flexibilidad del tampón permite adaptarse a superficies curvas e irregulares sin deformar el diseño.</p><p>Es la técnica más versátil para artículos pequeños con geometría compleja.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Plástico</span><span class="tecnica-tag">Metal</span><span class="tecnica-tag">Cuero</span><span class="tecnica-tag">Madera</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Textiles Marroquinería">
+        <div class="tecnica-img" style="background:#fef3e2;color:#b8670a">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="6" y="12" width="26" height="22" rx="2" fill="#fce0b0" stroke="#b8670a" stroke-width="1.5"/><rect x="12" y="18" width="14" height="10" rx="1" fill="#b8670a" opacity="0.65"/><path d="M34 23 L44 23" stroke="#b8670a" stroke-width="2"/><path d="M40 18 L45 23 L40 28" stroke="#b8670a" stroke-width="1.5" fill="none"/><rect x="46" y="10" width="18" height="52" rx="2" fill="#fce0b0" stroke="#b8670a" stroke-width="1.5"/><rect x="6" y="40" width="26" height="18" rx="2" fill="#f5d09a" stroke="#b8670a" stroke-width="1.5"/><rect x="12" y="44" width="14" height="10" rx="1" fill="#b8670a" opacity="0.35"/><line x1="34" y1="49" x2="46" y2="49" stroke="#b8670a" stroke-width="1" stroke-dasharray="3 2"/></svg>
+          <span class="tecnica-variante" style="color:#b8670a">textiles y marroquinería</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Transfer serigráfico</h3>
+          <div class="tecnica-desc"><p>El diseño se imprime con tinta termoadhesiva sobre un papel o film especial mediante serigrafía.</p><p>La imagen se transfiere al producto final aplicando calor y presión directamente sobre el material.</p><p>Aplicable sobre superficies planas o levemente curvadas, como gorros.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Textiles</span><span class="tecnica-tag">Marroquinería</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Textiles Marroquinería">
+        <div class="tecnica-img" style="background:#fef3e2;color:#935209">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="6" y="12" width="28" height="22" rx="2" fill="#fce0b0" stroke="#935209" stroke-width="1.5"/><rect x="10" y="16" width="10" height="14" rx="1" fill="#e74c3c" opacity="0.7"/><rect x="22" y="16" width="8" height="14" rx="1" fill="#3498db" opacity="0.7"/><path d="M36 23 L46 23" stroke="#935209" stroke-width="2"/><path d="M42 18 L47 23 L42 28" stroke="#935209" stroke-width="1.5" fill="none"/><rect x="49" y="10" width="16" height="52" rx="2" fill="#fce0b0" stroke="#935209" stroke-width="1.5"/><rect x="6" y="40" width="28" height="18" rx="2" fill="#f5d09a" stroke="#935209" stroke-width="1.5"/><rect x="10" y="44" width="10" height="10" rx="1" fill="#e74c3c" opacity="0.45"/><rect x="22" y="44" width="8" height="10" rx="1" fill="#3498db" opacity="0.45"/></svg>
+          <span class="tecnica-variante" style="color:#935209">full color, sin límite de tintas</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Transfer digital</h3>
+          <div class="tecnica-desc"><p>La imagen se imprime digitalmente sobre un papel termotransferible y se adhiere al producto mediante calor y presión.</p><p>Permite reproducciones full color con degradados y múltiples tintas sin costo adicional por cantidad de colores.</p><p>Aplicable en plano o sobre superficies curvadas, como gorros.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Textiles</span><span class="tecnica-tag">Marroquinería</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Metal Plástico Papel">
+        <div class="tecnica-img" style="background:#f0ebfa;color:#6c3db5">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="8" y="18" width="42" height="30" rx="3" fill="#ddd0f5" stroke="#6c3db5" stroke-width="1.5"/><rect x="14" y="24" width="30" height="18" rx="2" fill="#6c3db5" opacity="0.65"/><path d="M52 33 L62 33" stroke="#6c3db5" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M58 27 L64 33 L58 39" stroke="#6c3db5" stroke-width="1.5" fill="none"/><rect x="8" y="52" width="42" height="5" rx="1" fill="#6c3db5" opacity="0.15"/><path d="M8 52 Q29 47 50 52" stroke="#6c3db5" stroke-width="1" fill="none" stroke-dasharray="2 2"/></svg>
+          <span class="tecnica-variante" style="color:#6c3db5">superficies lisas</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Vinilo autoadhesivo</h3>
+          <div class="tecnica-desc"><p>El diseño se imprime digitalmente o se corta sobre un vinilo autoadhesivo que se aplica directamente al producto.</p><p>Requiere que la superficie sea plana, lisa y libre de porosidades para garantizar la adherencia.</p><p>Disponible en colores sólidos o impresión full color según el proceso utilizado.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Metal</span><span class="tecnica-tag">Plástico</span><span class="tecnica-tag">Papel</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Metal Madera">
+        <div class="tecnica-img" style="background:#fdf8e1;color:#9a7d0a">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="8" y="38" width="56" height="22" rx="3" fill="#faeea3" stroke="#9a7d0a" stroke-width="1.5"/><rect x="16" y="44" width="10" height="10" rx="1" fill="#9a7d0a" opacity="0.5"/><rect x="30" y="44" width="6" height="10" rx="1" fill="#9a7d0a" opacity="0.5"/><rect x="40" y="44" width="14" height="10" rx="1" fill="#9a7d0a" opacity="0.5"/><circle cx="36" cy="14" r="6" fill="#faeea3" stroke="#9a7d0a" stroke-width="1.5"/><line x1="36" y1="20" x2="36" y2="38" stroke="#f1c40f" stroke-width="2.5"/><circle cx="36" cy="38" r="2.5" fill="#f1c40f"/><line x1="30" y1="10" x2="24" y2="6" stroke="#9a7d0a" stroke-width="1" opacity="0.5"/><line x1="42" y1="10" x2="48" y2="6" stroke="#9a7d0a" stroke-width="1" opacity="0.5"/><line x1="36" y1="8" x2="36" y2="4" stroke="#9a7d0a" stroke-width="1" opacity="0.5"/></svg>
+          <span class="tecnica-variante" style="color:#9a7d0a">metal y madera</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Grabado láser</h3>
+          <div class="tecnica-desc"><p>Un haz de luz de alta precisión graba el diseño sobre la superficie del producto por diferenciación de tono, sin añadir tinta ni relieve.</p><p>El resultado es una marca permanente y resistente con un acabado premium.</p><p>Especialmente efectivo en metales y maderas.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Metal plano</span><span class="tecnica-tag">Madera plana</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Cuero Marroquinería">
+        <div class="tecnica-img" style="background:#fdf5e0;color:#b8860b">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="18" y="8" width="36" height="14" rx="2" fill="#faeab0" stroke="#b8860b" stroke-width="1.5"/><rect x="24" y="12" width="24" height="6" rx="1" fill="#b8860b" opacity="0.55"/><line x1="28" y1="22" x2="28" y2="34" stroke="#b8860b" stroke-width="1.5"/><line x1="44" y1="22" x2="44" y2="34" stroke="#b8860b" stroke-width="1.5"/><rect x="10" y="34" width="52" height="22" rx="3" fill="#faeab0" stroke="#b8860b" stroke-width="1.5"/><rect x="18" y="40" width="36" height="10" rx="2" fill="#b8860b" opacity="0.25"/><rect x="24" y="42" width="14" height="6" rx="1" fill="#b8860b" opacity="0.75"/></svg>
+          <span class="tecnica-variante" style="color:#b8860b">estampado en caliente</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Hot stamping</h3>
+          <div class="tecnica-desc"><p>Una matriz de metal aplica una lámina metálica o pigmentada sobre el producto mediante presión y calor controlados.</p><p>Genera un acabado brillante o mate con efecto de bajo relieve característico.</p><p>Habitual en artículos de eco cuero y superficies planas de PU.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Eco cuero</span><span class="tecnica-tag">PU superficies planas</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Textiles">
+        <div class="tecnica-img" style="background:#e6f4fb;color:#1a6a9a">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="6" y="12" width="26" height="22" rx="2" fill="#bfdeee" stroke="#1a6a9a" stroke-width="1.5"/><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#e74c3c" stop-opacity="0.8"/><stop offset="50%" stop-color="#2ecc71" stop-opacity="0.8"/><stop offset="100%" stop-color="#3498db" stop-opacity="0.8"/></linearGradient></defs><rect x="10" y="16" width="18" height="14" rx="1" fill="url(#g1)"/><path d="M34 23 L46 23" stroke="#1a6a9a" stroke-width="1.5"/><path d="M42 18 L47 23 L42 28" stroke="#1a6a9a" stroke-width="1.5" fill="none"/><rect x="49" y="10" width="16" height="52" rx="2" fill="#bfdeee" stroke="#1a6a9a" stroke-width="1.5"/><rect x="52" y="14" width="10" height="44" rx="1" fill="url(#g1)" opacity="0.85"/></svg>
+          <span class="tecnica-variante" style="color:#1a6a9a">textiles sintéticos</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Sublimación</h3>
+          <div class="tecnica-desc"><p>La tinta sublimable se imprime sobre un papel especial y se transfiere al producto mediante calor y presión.</p><p>Al sublimarse, la tinta se funde con las fibras del material sin generar relieve ni afectar la textura.</p><p>Permite calidad fotográfica con alta durabilidad y resistencia al lavado.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Textiles sintéticos</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Textiles Marroquinería">
+        <div class="tecnica-img" style="background:#fdecea;color:#c0392b">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="8" y="14" width="56" height="44" rx="3" fill="#f5c6c1" stroke="#c0392b" stroke-width="1.5"/><path d="M16 36 Q20 24 26 36 Q32 48 38 36 Q44 24 50 36 Q54 44 58 36" stroke="#c0392b" stroke-width="2.2" fill="none"/><path d="M16 42 Q20 30 26 42 Q32 54 38 42 Q44 30 50 42 Q54 50 58 42" stroke="#c0392b" stroke-width="1.5" fill="none" opacity="0.45"/><circle cx="16" cy="36" r="2" fill="#c0392b"/><circle cx="26" cy="36" r="2" fill="#c0392b"/><circle cx="38" cy="36" r="2" fill="#c0392b"/><circle cx="50" cy="36" r="2" fill="#c0392b"/><circle cx="58" cy="36" r="2" fill="#c0392b"/></svg>
+          <span class="tecnica-variante" style="color:#c0392b">textiles y marroquinería</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Bordado</h3>
+          <div class="tecnica-desc"><p>El diseño se confecciona directamente sobre el material mediante agujas que generan puntadas continuas de hilo de colores.</p><p>Produce una textura tridimensional característica con alta resistencia al uso y al lavado.</p><p>Aplicable en plano o sobre superficies curvadas como gorros.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Textiles</span><span class="tecnica-tag">Marroquinería</span></div>
+        </div>
+      </article>
+
+      <article class="tecnica-card" data-materiales="Plástico Metal">
+        <div class="tecnica-img" style="background:#f2eaf8;color:#6d28d9">
+          <svg class="tecnica-img-placeholder" viewBox="0 0 72 72" fill="none"><rect x="8" y="36" width="56" height="24" rx="3" fill="#dcc9f5" stroke="#6d28d9" stroke-width="1.5"/><rect x="16" y="42" width="14" height="12" rx="1" fill="#6d28d9" opacity="0.65"/><rect x="34" y="42" width="8" height="12" rx="1" fill="#6d28d9" opacity="0.45"/><rect x="46" y="42" width="10" height="12" rx="1" fill="#6d28d9" opacity="0.25"/><ellipse cx="36" cy="20" rx="20" ry="9" fill="#dcc9f5" stroke="#6d28d9" stroke-width="1.5"/><text x="36" y="23" text-anchor="middle" fill="#6d28d9" font-size="10" font-weight="700" font-family="DM Sans, sans-serif">UV</text><line x1="20" y1="29" x2="16" y2="36" stroke="#8b5cf6" stroke-width="1.3" opacity="0.6"/><line x1="28" y1="29" x2="26" y2="36" stroke="#8b5cf6" stroke-width="1.3" opacity="0.6"/><line x1="36" y1="29" x2="36" y2="36" stroke="#8b5cf6" stroke-width="1.3" opacity="0.6"/><line x1="44" y1="29" x2="46" y2="36" stroke="#8b5cf6" stroke-width="1.3" opacity="0.6"/><line x1="52" y1="29" x2="56" y2="36" stroke="#8b5cf6" stroke-width="1.3" opacity="0.6"/></svg>
+          <span class="tecnica-variante" style="color:#6d28d9">full color, secado inmediato</span>
+        </div>
+        <div class="tecnica-body">
+          <h3 class="tecnica-nombre">Impresión UV</h3>
+          <div class="tecnica-desc"><p>La tinta se aplica digitalmente sobre el producto y se seca de forma instantánea mediante luz ultravioleta.</p><p>Permite reproducciones full color directamente sobre el artículo, sin soporte intermedio.</p><p>Compatible con plásticos, metales pintados y superficies de PU planas.</p></div>
+          <div class="tecnica-tags"><span class="tecnica-tag">Plástico</span><span class="tecnica-tag">Metal pintado</span><span class="tecnica-tag">PU superficies planas</span></div>
+        </div>
+      </article>
+
+    </div>
+    <div class="tecnicas-nota">
+      La disponibilidad de cada técnica depende del artículo específico.
+      Cada ficha de producto indica las opciones de personalización compatibles.
+      Ante cualquier consulta sobre combinaciones o mínimos de producción, podés escribirnos por WhatsApp o usar el formulario de consulta.
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
