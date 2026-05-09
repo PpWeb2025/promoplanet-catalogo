@@ -559,19 +559,19 @@
         <div style="font-size:0.72rem;color:var(--texto-suave)">La primera imagen será la principal. Podés agregar varias.</div>
         <div style="margin-top:0.5rem">
           <label style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:0.3rem">O pegá el link de Drive de las fotos de este producto:</label>
-          <input type="text" id="foto-drive-url" placeholder="Código del producto (ej: G1603) — se buscan las fotos automáticamente" style="width:100%;padding:0.5rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem">
+          <input type="text" id="foto-drive-url" style="width:100%;padding:0.5rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem">
         </div>
       </div>
 
       <div class="form-grid">
         <div class="form-group">
           <label>Código *</label>
-          <input type="text" id="f-codigo" placeholder="G1603">
+          <input type="text" id="f-codigo">
           <span class="form-hint">Debe coincidir con el código en el nombre de las fotos</span>
         </div>
         <div class="form-group">
           <label>Nombre del producto *</label>
-          <input type="text" id="f-nombre" placeholder="Jarro Térmico Premium">
+          <input type="text" id="f-nombre">
         </div>
         <div class="form-group">
           <label>Categoría *</label>
@@ -610,23 +610,23 @@
         </div>
         <div class="form-group">
           <label>Cantidad mínima</label>
-          <input type="number" id="f-minimo" placeholder="50" min="1">
+          <input type="number" id="f-minimo" min="1">
         </div>
         <div class="form-group">
           <label>Material</label>
-          <input type="text" id="f-material" placeholder="Acero inoxidable 304">
+          <input type="text" id="f-material">
         </div>
         <div class="form-group">
           <label>Medidas</label>
-          <input type="text" id="f-medidas" placeholder="22 cm alto × 7 cm diám.">
+          <input type="text" id="f-medidas">
         </div>
         <div class="form-group">
           <label>Colores disponibles</label>
-          <input type="text" id="f-colores" placeholder="Negro, plateado, blanco">
+          <input type="text" id="f-colores">
         </div>
         <div class="form-group full">
           <label>Descripción</label>
-          <textarea id="f-descripcion" placeholder="Describí el producto: características, usos, ventajas..."></textarea>
+          <textarea id="f-descripcion"></textarea>
         </div>
         <div class="form-group full">
           <label>Etiquetas del producto <span style="font-size:0.72rem;color:var(--texto-suave);font-weight:400">(se muestran sobre la imagen en el catálogo)</span></label>
@@ -696,7 +696,7 @@
         </div>
         <div class="form-group full">
           <label>Notas internas (no se muestran al cliente)</label>
-          <textarea id="f-notas" placeholder="Código de proveedor, observaciones, variantes..." style="min-height:60px"></textarea>
+          <textarea id="f-notas" style="min-height:60px"></textarea>
         </div>
       </div>
     </div>
