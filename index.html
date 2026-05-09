@@ -1687,10 +1687,19 @@ async function init() {
 }
 init();
 
+function _inyectarFooter(modalId) {
+  const placeholder = document.querySelector('#' + modalId + ' footer-interno');
+  if (placeholder && !placeholder.dataset.inyectado) {
+    placeholder.innerHTML = document.querySelector('body > footer').innerHTML;
+    placeholder.style.cssText = 'display:block;margin-top:48px';
+    placeholder.dataset.inyectado = '1';
+  }
+}
 function abrirTecnicas() {
   document.getElementById('modal-tecnicas').style.display = 'block';
   document.body.style.overflow = 'hidden';
   document.getElementById('modal-tecnicas').scrollTop = 0;
+  _inyectarFooter('modal-tecnicas');
 }
 function cerrarTecnicas() {
   document.getElementById('modal-tecnicas').style.display = 'none';
@@ -1720,6 +1729,7 @@ function abrirComoFunciona() {
   document.getElementById('modal-como-funciona').style.display = 'block';
   document.body.style.overflow = 'hidden';
   document.getElementById('modal-como-funciona').scrollTop = 0;
+  _inyectarFooter('modal-como-funciona');
 }
 function cerrarComoFunciona() {
   document.getElementById('modal-como-funciona').style.display = 'none';
@@ -1947,6 +1957,7 @@ document.addEventListener('keydown', e => {
       Los logotipos y diseños deben entregarse en formato vectorial editable (ai, cdr, eps, psd o pdf) con tipografías convertidas a curvas.
       Cualquier trabajo adicional de diseño se presupuesta de forma independiente.
     </div>
+    <footer-interno></footer-interno>
   </div>
 </div>
 
@@ -2027,6 +2038,7 @@ document.addEventListener('keydown', e => {
         </div>
       </div>
     </div>
+    <footer-interno></footer-interno>
   </div>
 </div>
 
