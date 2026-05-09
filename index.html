@@ -996,17 +996,8 @@ function setCatFromGrid(id) {
     el.classList.toggle('active', el.dataset.cat === id);
   });
   renderSubcatSidebar();
-  renderNavMobileCats();
   filtrar();
-  if (window.innerWidth <= 768) {
-    const menu = document.getElementById('nav-mobile');
-    const btn = document.getElementById('nav-hamburger');
-    menu.classList.add('open');
-    btn.classList.add('open');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } else {
-    document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
-  }
+  document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
 }
 
 // ============================================================
