@@ -624,35 +624,49 @@
   </div>
 </section>
 
-<!-- FILTER BAR -->
-<div class="filter-bar-wrap" id="catalogo">
-  <div class="filter-bar">
-    <div class="filter-bar-top">
-      <span class="smart-label">Filtros rápidos:</span>
-      <button class="filter-chip active" data-dest="todos" onclick="toggleDest(this)">Todos</button>
-      <button class="filter-chip" data-dest="colaborador" onclick="toggleDest(this)">👤 Colaborador</button>
-      <button class="filter-chip" data-dest="cliente" onclick="toggleDest(this)">🤝 Cliente</button>
-      <button class="filter-chip" data-dest="directivo" onclick="toggleDest(this)">⭐ Directivo</button>
-    </div>
-    <div class="filter-chips" id="occasion-chips">
-      <span style="font-size:0.78rem;color:var(--texto-suave);font-weight:500">Ocasión:</span>
-      <button class="filter-chip active azul" data-occ="todos" onclick="toggleOcc(this)">Todas</button>
-      <button class="filter-chip azul" data-occ="onboarding" onclick="toggleOcc(this)">Onboarding</button>
-      <button class="filter-chip azul" data-occ="capacitacion" onclick="toggleOcc(this)">Capacitación</button>
-      <button class="filter-chip azul" data-occ="reconocimiento" onclick="toggleOcc(this)">Reconocimiento</button>
-      <button class="filter-chip azul" data-occ="evento" onclick="toggleOcc(this)">Eventos</button>
-      <button class="filter-chip azul" data-occ="fechas" onclick="toggleOcc(this)">Fechas especiales</button>
-    </div>
-  </div>
-</div>
-
 <!-- MAIN CONTENT -->
-<div class="main">
+<div class="main" id="catalogo">
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-title">Categoría</div>
       <div id="cat-list"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Destinatario</div>
+      <button class="cat-item active" data-dest="todos" onclick="toggleDest(this)">
+        <span class="cat-dot" style="background:var(--celeste)"></span> Todos
+      </button>
+      <button class="cat-item" data-dest="colaborador" onclick="toggleDest(this)">
+        <span class="cat-dot" style="background:#6366f1"></span> 👤 Colaborador
+      </button>
+      <button class="cat-item" data-dest="cliente" onclick="toggleDest(this)">
+        <span class="cat-dot" style="background:#22c55e"></span> 🤝 Cliente
+      </button>
+      <button class="cat-item" data-dest="directivo" onclick="toggleDest(this)">
+        <span class="cat-dot" style="background:#f59e0b"></span> ⭐ Directivo
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Ocasión</div>
+      <button class="cat-item active" data-occ="todos" onclick="toggleOcc(this)">
+        <span class="cat-dot" style="background:var(--azul)"></span> Todas
+      </button>
+      <button class="cat-item" data-occ="onboarding" onclick="toggleOcc(this)">
+        <span class="cat-dot" style="background:#003471"></span> Onboarding
+      </button>
+      <button class="cat-item" data-occ="capacitacion" onclick="toggleOcc(this)">
+        <span class="cat-dot" style="background:#0284c7"></span> Capacitación
+      </button>
+      <button class="cat-item" data-occ="reconocimiento" onclick="toggleOcc(this)">
+        <span class="cat-dot" style="background:#b45309"></span> Reconocimiento
+      </button>
+      <button class="cat-item" data-occ="evento" onclick="toggleOcc(this)">
+        <span class="cat-dot" style="background:#7c3aed"></span> Eventos
+      </button>
+      <button class="cat-item" data-occ="fechas" onclick="toggleOcc(this)">
+        <span class="cat-dot" style="background:#ec4899"></span> Fechas especiales
+      </button>
     </div>
   </aside>
 
