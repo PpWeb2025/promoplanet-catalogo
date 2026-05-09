@@ -104,6 +104,18 @@
     transition: color 0.15s;
   }
   .nav-mobile-cat-btn:hover { color: var(--celeste); }
+  .nav-mobile-cat-btn.active { color: var(--azul); font-weight: 600; }
+  .nav-mobile-subcat-list { display: flex; flex-direction: column; padding: 0.2rem 0 0.4rem 1.5rem; }
+  .nav-mobile-subcat-btn {
+    display: block; width: 100%; text-align: left;
+    padding: 0.5rem 0; border: none; background: none;
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--texto-suave);
+    cursor: pointer; border-bottom: 1px solid var(--gris-borde);
+    transition: color 0.15s;
+  }
+  .nav-mobile-subcat-btn:last-child { border-bottom: none; }
+  .nav-mobile-subcat-btn:hover { color: var(--celeste); }
+  .nav-mobile-subcat-btn.active { color: var(--celeste); font-weight: 600; }
   .nav-mobile a {
     color: var(--texto); text-decoration: none;
     font-size: 1rem; font-weight: 500;
@@ -505,7 +517,7 @@
     .nav-hamburger { display: flex; }
     .hero { padding: 3rem 1.25rem; }
     .banda-confianza { display: none; }
-    .cats-grid { grid-template-columns: repeat(4, 1fr); }
+    .cats-grid { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -797,15 +809,50 @@
 function renderNavMobileCats() {
   const el = document.getElementById('nav-mobile-cats');
   if (!el) return;
-  let html = `<button class="nav-mobile-cat-btn" onclick="setCat('todos',null);scrollToCat();cerrarMenu()">
+  let html = `<button class="nav-mobile-cat-btn ${catActiva === 'todos' ? 'active' : ''}" onclick="setMobileCat('todos')">
     <span class="cat-dot" style="background:var(--celeste)"></span> Todos los productos
   </button>`;
   CATEGORIAS.forEach(c => {
-    html += `<button class="nav-mobile-cat-btn" onclick="setCat('${c.id}',null);scrollToCat();cerrarMenu()">
+    const isActive = catActiva === c.id;
+    html += `<button class="nav-mobile-cat-btn ${isActive ? 'active' : ''}" onclick="setMobileCat('${c.id}')">
       <span class="cat-dot" style="background:${c.color}"></span> ${c.nombre}
     </button>`;
+    if (isActive) {
+      const subcats = [...new Set(
+        PRODUCTOS.filter(p => p.categoria === c.id && p.subcategoria).map(p => p.subcategoria)
+      )].sort();
+      if (subcats.length) {
+        html += `<div class="nav-mobile-subcat-list">
+          <button class="nav-mobile-subcat-btn ${subcatActiva === 'todos' ? 'active' : ''}" onclick="setMobileSubcat('todos')">Todas</button>`;
+        subcats.forEach(s => {
+          html += `<button class="nav-mobile-subcat-btn ${subcatActiva === s ? 'active' : ''}" onclick="setMobileSubcat('${s.replace(/'/g, "\\'")}')">${s}</button>`;
+        });
+        html += `</div>`;
+      }
+    }
   });
   el.innerHTML = html;
+}
+
+function setMobileCat(id) {
+  catActiva = id;
+  subcatActiva = 'todos';
+  renderCatSidebar();
+  renderNavMobileCats();
+  filtrar();
+  scrollToCat();
+  const subcats = id === 'todos' ? [] : [...new Set(
+    PRODUCTOS.filter(p => p.categoria === id && p.subcategoria).map(p => p.subcategoria)
+  )];
+  if (!subcats.length) cerrarMenu();
+}
+
+function setMobileSubcat(id) {
+  subcatActiva = id;
+  renderNavMobileCats();
+  filtrar();
+  scrollToCat();
+  cerrarMenu();
 }
 
 function toggleMenu() {
