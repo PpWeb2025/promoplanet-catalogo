@@ -548,6 +548,7 @@
     .cats-search { flex: 1 1 auto; width: 100%; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
 </head>
 <body>
 
@@ -1072,15 +1073,45 @@ function toggleOcc(el) {
 
 
 
-function filtrar() {
-  const q = document.getElementById('search-input').value.toLowerCase();
+function normalizar(str) {
+  return (str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
 
-  const visible = PRODUCTOS.filter(p => {
+let _fuse = null;
+function buildFuse() {
+  const data = PRODUCTOS.map(p => ({
+    id: p.id,
+    _nombre:      normalizar(p.nombre),
+    _codigo:      normalizar(p.codigo),
+    _descripcion: normalizar(p.descripcion),
+    _material:    normalizar(p.material),
+    _subcat:      normalizar(p.subcategoria),
+  }));
+  _fuse = new Fuse(data, {
+    threshold: 0.35,
+    minMatchCharLength: 2,
+    keys: ['_nombre', '_codigo', '_descripcion', '_material', '_subcat'],
+  });
+}
+
+function filtrar() {
+  const q = normalizar(document.getElementById('search-input').value);
+
+  let base = PRODUCTOS;
+  if (q.length >= 2 && _fuse) {
+    const ids = new Set(_fuse.search(q).map(r => r.item.id));
+    base = PRODUCTOS.filter(p => ids.has(p.id));
+  } else if (q.length === 1) {
+    base = PRODUCTOS.filter(p =>
+      normalizar(p.nombre).includes(q) || normalizar(p.codigo).includes(q)
+    );
+  }
+
+  const visible = base.filter(p => {
     if (catActiva !== 'todos' && p.categoria !== catActiva) return false;
     if (subcatActiva !== 'todos' && p.subcategoria !== subcatActiva) return false;
     if (destActivo !== 'todos' && !p.destinatarios.includes(destActivo)) return false;
     if (occActiva !== 'todos' && !p.ocasiones.includes(occActiva)) return false;
-    if (q && !p.nombre.toLowerCase().includes(q) && !p.codigo.toLowerCase().includes(q) && !p.descripcion.toLowerCase().includes(q)) return false;
     return true;
   });
 
@@ -1410,6 +1441,7 @@ async function init() {
   } catch {
     PRODUCTOS = [];
   }
+  buildFuse();
   renderCatSidebar();
   renderNavMobileCats();
   renderCatGrid();
