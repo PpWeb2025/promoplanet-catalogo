@@ -302,6 +302,29 @@
   }
   .product-img img { width: 100%; height: 100%; object-fit: cover; }
   .product-img .placeholder-icon { font-size: 2.5rem; opacity: 0.3; }
+  .card-carousel-track { display: flex; width: 100%; height: 100%; transition: transform 0.3s ease; }
+  .card-carousel-slide { min-width: 100%; width: 100%; height: 100%; object-fit: cover; flex-shrink: 0; }
+  .card-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.88); border: none; border-radius: 50%;
+    width: 26px; height: 26px; font-size: 1rem; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.18s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18); z-index: 3; padding: 0;
+  }
+  .card-arrow-prev { left: 5px; }
+  .card-arrow-next { right: 5px; }
+  .product-img:hover .card-arrow { opacity: 1; }
+  .card-carousel-dots {
+    position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 4px; z-index: 3;
+  }
+  .card-carousel-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(255,255,255,0.5); transition: background 0.2s;
+  }
+  .card-carousel-dot.active { background: #fff; }
+  @media (max-width: 768px) { .card-arrow { opacity: 0.75; } }
   /* BADGES */
   .prod-badges {
     position: absolute; top: 6px; left: 6px;
@@ -1087,11 +1110,22 @@ function renderProductos(lista) {
 
   grid.innerHTML = lista.map(p => {
     const enSeleccion = seleccion.find(s => s.id === p.id);
+
+    const fotos = p.fotos && p.fotos.length > 0 ? p.fotos : null;
+    const multiImg = fotos && fotos.length > 1;
     return `<div class="product-card" onclick="verProducto(${p.id})">
-      <div class="product-img">
-        ${p.fotos && p.fotos.length > 0
-          ? `<img src="${imgSrc(p.fotos[0])}" alt="${p.nombre}" style="width:100%;height:100%;object-fit:cover">`
+      <div class="product-img" id="card-img-${p.id}" data-idx="0">
+        ${fotos
+          ? `<div class="card-carousel-track" id="card-track-${p.id}">
+              ${fotos.map(f => `<img class="card-carousel-slide" src="${imgSrc(f)}" alt="${p.nombre}">`).join('')}
+             </div>`
           : `<span class="placeholder-icon">${p.emoji || '📦'}</span>`}
+        ${multiImg ? `
+          <button class="card-arrow card-arrow-prev" onclick="event.stopPropagation();cardNav(${p.id},-1)">&#8249;</button>
+          <button class="card-arrow card-arrow-next" onclick="event.stopPropagation();cardNav(${p.id},1)">&#8250;</button>
+          <div class="card-carousel-dots">
+            ${fotos.map((_,i) => `<span class="card-carousel-dot${i===0?' active':''}"></span>`).join('')}
+          </div>` : ''}
         ${badgesHtml(p.badges)}
       </div>
       <div class="product-info">
@@ -1111,6 +1145,37 @@ function renderProductos(lista) {
       </div>
     </div>`;
   }).join('');
+  initCardSwipes(lista);
+}
+
+// ============================================================
+// CARRUSEL DE TARJETAS
+// ============================================================
+function cardNav(productId, dir) {
+  const container = document.getElementById(`card-img-${productId}`);
+  if (!container) return;
+  const track = container.querySelector('.card-carousel-track');
+  const slides = container.querySelectorAll('.card-carousel-slide');
+  const dots = container.querySelectorAll('.card-carousel-dot');
+  let idx = parseInt(container.dataset.idx) || 0;
+  idx = (idx + dir + slides.length) % slides.length;
+  container.dataset.idx = idx;
+  track.style.transform = `translateX(-${idx * 100}%)`;
+  dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+}
+
+function initCardSwipes(lista) {
+  lista.forEach(p => {
+    if (!p.fotos || p.fotos.length <= 1) return;
+    const container = document.getElementById(`card-img-${p.id}`);
+    if (!container) return;
+    let startX = 0;
+    container.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    container.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 40) { e.stopPropagation(); cardNav(p.id, dx < 0 ? 1 : -1); }
+    });
+  });
 }
 
 // ============================================================
