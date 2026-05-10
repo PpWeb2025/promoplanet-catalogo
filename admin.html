@@ -238,6 +238,13 @@
   .empty-table { text-align: center; padding: 3rem; color: var(--texto-suave); }
   .empty-table .icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
 
+  /* AGREGAR PRODUCTO — dropzone */
+  .agregar-dropzone { border: 2px dashed var(--gris-borde); border-radius: var(--radio); padding: 2.5rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; text-align: center; color: var(--texto-suave); font-size: 0.85rem; cursor: pointer; transition: all 0.15s; background: var(--gris); }
+  .agregar-dropzone:hover, .agregar-dropzone.dragover { border-color: var(--celeste); background: var(--celeste-light); color: var(--celeste); }
+  .agregar-dropzone-icon { font-size: 2rem; margin-bottom: 0.25rem; }
+  .agregar-ia-loading { display:flex; align-items:center; gap:0.75rem; padding:1rem; background:var(--celeste-light); border:1.5px solid var(--celeste); border-radius:8px; font-size:0.85rem; color:var(--azul); }
+  .agregar-nombres-box { background:var(--gris); border-radius:8px; padding:0.875rem 1rem; font-size:0.8rem; font-family:'DM Mono',monospace; color:var(--texto-suave); line-height:1.7; }
+
   /* SECCION HIDDEN */
   .section { display: none; }
   .section.active { display: block; }
@@ -284,6 +291,9 @@
       </button>
       <button class="nav-item" onclick="showSection('productos', this)">
         <span class="icon">📦</span> Productos
+      </button>
+      <button class="nav-item" onclick="showSection('agregar', this)">
+        <span class="icon">📸</span> Agregar producto
       </button>
       <button class="nav-item" onclick="showSection('proveedor', this)">
         <span class="icon">✨</span> Importar de proveedor
@@ -421,6 +431,107 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- AGREGAR PRODUCTO -->
+      <div class="section" id="sec-agregar">
+
+        <!-- STEP 1: Subir fotos -->
+        <div id="agregar-step1">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📸 Agregar producto nuevo</span>
+              <div style="display:flex;align-items:center;gap:0.75rem">
+                <span style="font-size:0.8rem;color:var(--texto-suave)">Próximo código:</span>
+                <span id="agregar-codigo" style="font-family:'DM Mono',monospace;font-size:1rem;font-weight:700;color:var(--celeste)">…</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="agregar-dropzone" id="agregar-dropzone"
+                ondragover="event.preventDefault();this.classList.add('dragover')"
+                ondragleave="this.classList.remove('dragover')"
+                ondrop="onDropFiles(event);this.classList.remove('dragover')"
+                onclick="document.getElementById('agregar-file-input').click()">
+                <div class="agregar-dropzone-icon">📷</div>
+                <div style="font-weight:500">Arrastrá las fotos acá</div>
+                <div style="font-size:0.78rem;margin:0.2rem 0">o hacé click para seleccionar</div>
+                <div style="font-size:0.72rem;color:var(--texto-suave)">JPG, PNG, WEBP — hasta 20 MB por foto</div>
+              </div>
+              <input type="file" id="agregar-file-input" accept="image/*" multiple style="display:none" onchange="onSelectFiles(this)">
+
+              <div class="fotos-grid" id="agregar-preview" style="margin-top:1rem;display:none"></div>
+
+              <div id="agregar-ia-wrap" style="margin-top:1.25rem;display:none;align-items:center;gap:0.75rem">
+                <button class="btn btn-celeste" onclick="analizarConIA(this)">✨ Analizar con IA →</button>
+                <span style="font-size:0.78rem;color:var(--texto-suave)">La IA analiza hasta 4 fotos y sugiere nombre y categoría</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: Confirmar -->
+        <div id="agregar-step2" style="display:none">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Confirmar y crear producto</span>
+              <button class="btn btn-outline btn-sm" onclick="resetAgregar()">← Volver</button>
+            </div>
+            <div class="panel-body">
+              <div style="background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:8px;padding:0.65rem 1rem;margin-bottom:1.25rem;font-size:0.85rem;color:var(--azul)">
+                ✨ La IA sugirió los datos abajo. Podés editarlos antes de confirmar.
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Código</label>
+                  <input type="text" id="agregar-f-codigo" readonly style="background:var(--gris);font-family:'DM Mono',monospace;font-weight:600;color:var(--celeste)">
+                </div>
+                <div class="form-group">
+                  <label>Nombre del producto *</label>
+                  <input type="text" id="agregar-f-nombre" oninput="actualizarNombresPreview()">
+                </div>
+                <div class="form-group">
+                  <label>Categoría *</label>
+                  <select id="agregar-f-categoria" onchange="actualizarSubcatsAgregar(this.value)">
+                    <option value="">Seleccioná...</option>
+                    <option value="bolsos_mochilas">Bolsos y Mochilas</option>
+                    <option value="capacitacion">Capacitación y Eventos</option>
+                    <option value="drinkware">Drinkware</option>
+                    <option value="eco">Eco y Sustentable</option>
+                    <option value="escritorio">Escritorio y Oficina</option>
+                    <option value="escritura">Escritura</option>
+                    <option value="fechas">Fechas Especiales</option>
+                    <option value="indumentaria">Indumentaria Corporativa</option>
+                    <option value="llaveros">Llaveros y Accesorios</option>
+                    <option value="onboarding">Onboarding y Bienvenida</option>
+                    <option value="outdoors">Outdoors y Bienestar</option>
+                    <option value="packaging">Packaging y Presentación</option>
+                    <option value="reconocimiento">Reconocimiento y Premios</option>
+                    <option value="tecnologia">Tecnología</option>
+                  </select>
+                </div>
+                <div class="form-group" id="agregar-subcat-group" style="display:none">
+                  <label>Subcategoría</label>
+                  <select id="agregar-f-subcategoria" onchange="actualizarNombresPreview()"></select>
+                </div>
+              </div>
+
+              <div style="margin-top:1.5rem">
+                <div style="font-size:0.78rem;font-weight:600;margin-bottom:0.75rem;color:var(--texto)">
+                  Fotos — hacé click en ⭐ para marcar la principal
+                </div>
+                <div class="fotos-grid" id="agregar-fotos-confirm"></div>
+              </div>
+
+              <div id="agregar-nombres-preview" class="agregar-nombres-box" style="margin-top:1.25rem;display:none"></div>
+            </div>
+            <div style="padding:1rem 1.25rem;border-top:1px solid var(--gris-borde);display:flex;justify-content:flex-end;gap:0.75rem;align-items:center">
+              <span id="agregar-drive-hint" style="font-size:0.75rem;color:var(--texto-suave);margin-right:auto"></span>
+              <button class="btn btn-outline" onclick="resetAgregar()">Cancelar</button>
+              <button class="btn btn-celeste" onclick="confirmarAgregarProducto(this)">✅ Crear producto en borrador</button>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- IMPORTAR DE PROVEEDOR -->
@@ -762,7 +873,7 @@ async function getProductos() {
 // ============================================================
 // NAVEGACIÓN
 // ============================================================
-const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', proveedor:'Importar de proveedor', importar:'Importar de Drive', categorias:'Categorías', exportar:'Exportar datos' };
+const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', agregar:'Agregar producto', proveedor:'Importar de proveedor', importar:'Importar de Drive', categorias:'Categorías', exportar:'Exportar datos' };
 
 function showSection(id, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -772,6 +883,7 @@ function showSection(id, btn) {
   document.getElementById('topbar-title').textContent = SEC_TITLES[id] || id;
   if (id === 'productos') renderTabla();
   if (id === 'dashboard') renderDashboard();
+  if (id === 'agregar') initAgregarSection();
 }
 
 async function verCategoria(catId) {
@@ -1323,6 +1435,251 @@ function descargar(nombre, contenido, tipo) {
   a.href = URL.createObjectURL(new Blob([contenido], { type: tipo }));
   a.download = nombre;
   a.click();
+}
+
+// ============================================================
+// AGREGAR PRODUCTO — flujo completo con IA y Drive
+// ============================================================
+let _agregarFiles = [];
+let _agregarPrincipalIdx = 0;
+let _agregarCodigo = '';
+
+async function initAgregarSection() {
+  _agregarCodigo = '';
+  document.getElementById('agregar-codigo').textContent = '…';
+  try {
+    const res = await fetch('/api/productos/admin/next-code');
+    if (res.ok) {
+      const { codigo } = await res.json();
+      _agregarCodigo = codigo;
+      document.getElementById('agregar-codigo').textContent = codigo;
+      document.getElementById('agregar-f-codigo').value = codigo;
+    }
+  } catch {}
+}
+
+function onDropFiles(event) {
+  event.preventDefault();
+  const files = Array.from(event.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  if (files.length) agregarFilesAlPreview(files);
+}
+
+function onSelectFiles(input) {
+  const files = Array.from(input.files);
+  agregarFilesAlPreview(files);
+  input.value = '';
+}
+
+function agregarFilesAlPreview(newFiles) {
+  _agregarFiles = [..._agregarFiles, ...newFiles];
+  renderAgregarPreview();
+}
+
+function renderAgregarPreview() {
+  const grid = document.getElementById('agregar-preview');
+  const wrap = document.getElementById('agregar-ia-wrap');
+  if (!_agregarFiles.length) {
+    grid.style.display = 'none';
+    wrap.style.display = 'none';
+    return;
+  }
+  grid.style.display = 'grid';
+  wrap.style.display = 'flex';
+  grid.innerHTML = _agregarFiles.map((file, i) => {
+    const url = URL.createObjectURL(file);
+    const esPrincipal = i === _agregarPrincipalIdx;
+    return `<div class="foto-item${esPrincipal ? ' principal' : ''}">
+      <img src="${url}">
+      ${esPrincipal ? '<span class="foto-badge-principal">Principal</span>' : ''}
+      <div class="foto-overlay">
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipalAgregar(${i})">⭐</button>
+        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="removeAgregarFile(${i})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setPrincipalAgregar(idx) {
+  _agregarPrincipalIdx = idx;
+  renderAgregarPreview();
+  actualizarNombresPreview();
+}
+
+function removeAgregarFile(idx) {
+  _agregarFiles.splice(idx, 1);
+  if (_agregarPrincipalIdx >= _agregarFiles.length) _agregarPrincipalIdx = 0;
+  renderAgregarPreview();
+}
+
+async function analizarConIA(btn) {
+  if (!_agregarFiles.length) return;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Analizando fotos…';
+
+  const fotos = await Promise.all(
+    _agregarFiles.slice(0, 4).map(file => new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => resolve({ base64: e.target.result.split(',')[1], mimeType: file.type });
+      reader.readAsDataURL(file);
+    }))
+  );
+
+  try {
+    const res = await fetch('/api/ia/analizar-fotos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fotos }),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Error IA');
+    const data = await res.json();
+
+    document.getElementById('agregar-f-nombre').value = data.nombre || '';
+    document.getElementById('agregar-f-categoria').value = data.categoria || '';
+    actualizarSubcatsAgregar(data.categoria || '', data.subcategoria || '');
+
+    document.getElementById('agregar-step1').style.display = 'none';
+    document.getElementById('agregar-step2').style.display = 'block';
+    renderConfirmFotos();
+    actualizarNombresPreview();
+
+    document.getElementById('agregar-drive-hint').textContent =
+      '📁 Las fotos se subirán a la carpeta configurada en Drive';
+  } catch (err) {
+    showToast(err.message || 'Error al analizar con IA', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ Analizar con IA →';
+  }
+}
+
+function actualizarSubcatsAgregar(catId, subcatPreset = '') {
+  const cat = CATS.find(c => c.id === catId);
+  const group = document.getElementById('agregar-subcat-group');
+  const sel = document.getElementById('agregar-f-subcategoria');
+  if (!cat || !cat.subcats.length) { group.style.display = 'none'; sel.value = ''; }
+  else {
+    group.style.display = '';
+    sel.innerHTML = '<option value="">Sin subcategoría</option>' +
+      cat.subcats.map(s => `<option value="${s}"${s === subcatPreset ? ' selected' : ''}>${s}</option>`).join('');
+  }
+  actualizarNombresPreview();
+}
+
+function renderConfirmFotos() {
+  const grid = document.getElementById('agregar-fotos-confirm');
+  grid.innerHTML = _agregarFiles.map((file, i) => {
+    const url = URL.createObjectURL(file);
+    const esPrincipal = i === _agregarPrincipalIdx;
+    return `<div class="foto-item${esPrincipal ? ' principal' : ''}">
+      <img src="${url}">
+      ${esPrincipal ? '<span class="foto-badge-principal">Principal</span>' : ''}
+      <div class="foto-overlay">
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipalAgregar(${i})">⭐</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function actualizarNombresPreview() {
+  const nombre = (document.getElementById('agregar-f-nombre')?.value || '').trim() || 'Producto';
+  const codigo = _agregarCodigo || 'PP-XXX';
+  const box = document.getElementById('agregar-nombres-preview');
+  if (!box || !_agregarFiles.length) return;
+
+  const ordered = [
+    _agregarPrincipalIdx,
+    ..._agregarFiles.map((_, i) => i).filter(i => i !== _agregarPrincipalIdx),
+  ];
+  const lineas = ordered.map((origIdx, i) => {
+    const ext = _agregarFiles[origIdx].name.split('.').pop();
+    const sufijo = i === 0 ? '' : ` ${String.fromCharCode(97 + i)}`;
+    return `• ${nombre} ${codigo}${sufijo}.${ext}`;
+  });
+  box.style.display = 'block';
+  box.innerHTML = `<span style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--texto)">Archivos que se subirán a Drive:</span><br>${lineas.join('<br>')}`;
+}
+
+function resetAgregar() {
+  _agregarFiles = [];
+  _agregarPrincipalIdx = 0;
+  document.getElementById('agregar-step1').style.display = 'block';
+  document.getElementById('agregar-step2').style.display = 'none';
+  document.getElementById('agregar-preview').innerHTML = '';
+  document.getElementById('agregar-preview').style.display = 'none';
+  document.getElementById('agregar-ia-wrap').style.display = 'none';
+  document.getElementById('agregar-f-nombre').value = '';
+  document.getElementById('agregar-f-categoria').value = '';
+  document.getElementById('agregar-subcat-group').style.display = 'none';
+  document.getElementById('agregar-fotos-confirm').innerHTML = '';
+  document.getElementById('agregar-nombres-preview').style.display = 'none';
+  document.getElementById('agregar-nombres-preview').innerHTML = '';
+}
+
+async function confirmarAgregarProducto(btn) {
+  const nombre = document.getElementById('agregar-f-nombre').value.trim();
+  const categoria = document.getElementById('agregar-f-categoria').value;
+  const subcategoria = document.getElementById('agregar-f-subcategoria').value;
+  if (!nombre || !categoria) { showToast('Completá nombre y categoría', 'error'); return; }
+  if (!_agregarFiles.length) { showToast('No hay fotos cargadas', 'error'); return; }
+
+  // Reordenar: principal primero
+  const orderedFiles = [
+    _agregarFiles[_agregarPrincipalIdx],
+    ..._agregarFiles.filter((_, i) => i !== _agregarPrincipalIdx),
+  ];
+
+  // Generar nombres de archivo
+  const nombres = orderedFiles.map((file, i) => {
+    const ext = file.name.split('.').pop();
+    const sufijo = i === 0 ? '' : ` ${String.fromCharCode(97 + i)}`;
+    return `${nombre} ${_agregarCodigo}${sufijo}.${ext}`;
+  });
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Subiendo a Drive…';
+
+  try {
+    // Subir fotos a Drive
+    const fd = new FormData();
+    orderedFiles.forEach(f => fd.append('fotos', f));
+    fd.append('subcategoria', subcategoria);
+    fd.append('nombres', JSON.stringify(nombres));
+
+    const uploadRes = await fetch('/api/drive/subir', { method: 'POST', body: fd });
+    if (!uploadRes.ok) {
+      const err = await uploadRes.json().catch(() => ({}));
+      throw new Error(err.error || 'Error al subir a Drive');
+    }
+    const { fileIds } = await uploadRes.json();
+
+    btn.innerHTML = '⏳ Creando producto…';
+
+    // Crear producto en DB
+    const prodRes = await fetch('/api/productos/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        codigo: _agregarCodigo, nombre, categoria, subcategoria,
+        estado: 'borrador', fotos: fileIds, emoji: '📦',
+        rango: '', minimo: 0, tecnicas: [], destinatarios: [],
+        ocasiones: [], badges: [], descripcion: '',
+      }),
+    });
+    if (!prodRes.ok) {
+      const err = await prodRes.json().catch(() => ({}));
+      throw new Error(err.error || 'Error al crear producto');
+    }
+
+    await Promise.all([renderTabla(), renderDashboard()]);
+    showToast(`✅ ${nombre} (${_agregarCodigo}) creado como borrador`, 'success');
+    resetAgregar();
+    initAgregarSection();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✅ Crear producto en borrador';
+  }
 }
 
 // ============================================================

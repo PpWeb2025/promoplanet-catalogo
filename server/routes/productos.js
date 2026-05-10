@@ -15,6 +15,15 @@ router.get('/:id', async (req, res) => {
 });
 
 // Admin — todos los productos
+router.get('/admin/next-code', requireAdmin, async (req, res) => {
+  const todos = await db.getProductos();
+  const maxNum = todos.reduce((max, p) => {
+    const m = p.codigo.match(/^PP-?(\d+)$/i);
+    return m ? Math.max(max, parseInt(m[1])) : max;
+  }, 0);
+  res.json({ codigo: `PP-${String(maxNum + 1).padStart(3, '0')}` });
+});
+
 router.get('/admin/list', requireAdmin, async (req, res) => {
   const { cat, q, estado } = req.query;
   let lista = await db.getProductos({ cat, q });

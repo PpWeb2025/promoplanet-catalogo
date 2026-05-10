@@ -108,4 +108,59 @@ Respondé SOLO con el JSON, sin texto adicional antes ni después.`;
   }
 });
 
+const SUBCATEGORIAS = {
+  bolsos_mochilas: ['Bolsos','Maletines y portfolios','Mochilas','Neceseres y accesorios','Viaje'],
+  drinkware: ['Botellas standard','Botellas térmicas','Tazas mugs y jarros','Termos y mates'],
+  eco: ['Bambu y madera','Reciclados','Tote bags y bolsas'],
+  escritorio: ['Cuadernos y agendas','Organizadores'],
+  escritura: ['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'],
+  indumentaria: ['Abrigos','Camisas','Delantales y pecheras','Gorras','Remeras y chombas'],
+  llaveros: ['Llaveros de madera','Llaveros metálicos','Llaveros plásticos','Multipropósito'],
+  outdoors: ['Coolers y loncheras','Cuidado personal','Deporte y fitness','Gastronomía','Paraguas'],
+  packaging: ['Bolsas y papel','Cajas'],
+  tecnologia: ['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'],
+};
+
+router.post('/analizar-fotos', requireAdmin, async (req, res) => {
+  const { fotos } = req.body;
+  if (!Array.isArray(fotos) || !fotos.length) {
+    return res.status(400).json({ error: 'Se esperaba un array de fotos' });
+  }
+
+  const catList = Object.entries(CATEGORIAS)
+    .map(([id, nombre]) => {
+      const subs = SUBCATEGORIAS[id];
+      return subs?.length ? `${id} (${nombre}): subcats → ${subs.join(', ')}` : `${id} (${nombre})`;
+    })
+    .join('\n');
+
+  const imageContent = fotos.slice(0, 4).map(f => ({
+    type: 'image',
+    source: { type: 'base64', media_type: f.mimeType, data: f.base64 },
+  }));
+
+  const prompt = `Estas son fotos de un producto promocional corporativo argentino. Analizá las imágenes y respondé con un JSON:
+{
+  "nombre": "Nombre descriptivo y comercial del producto, sin código ni marca de proveedor, en español",
+  "categoria": "ID de categoría de esta lista:\n${catList}",
+  "subcategoria": "Nombre exacto de subcategoría de la lista de arriba, o cadena vacía si no aplica"
+}
+Respondé SOLO con el JSON, sin texto adicional.`;
+
+  try {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      messages: [{ role: 'user', content: [...imageContent, { type: 'text', text: prompt }] }],
+    });
+    const raw = message.content[0].text.trim();
+    const json = JSON.parse(raw.replace(/^```json\n?/, '').replace(/\n?```$/, ''));
+    res.json(json);
+  } catch (err) {
+    console.error('Error IA analizar-fotos:', err.message);
+    res.status(500).json({ error: 'No se pudo analizar con IA. Intentá de nuevo.' });
+  }
+});
+
 module.exports = router;

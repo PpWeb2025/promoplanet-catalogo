@@ -1,8 +1,12 @@
 const router = require('express').Router();
 const { google } = require('googleapis');
+const { Readable } = require('stream');
 const path = require('path');
+const multer = require('multer');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
+
+const uploadMem = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 // Detecta PP-1234 (nuevo formato) y G1603 / M220 (formato legacy)
 const CODIGO_REGEX = /(PP-\d{3,5}|[A-Z]{1,3}\d{3,4}[A-Z]?)/;
@@ -10,8 +14,12 @@ const CODIGO_REGEX = /(PP-\d{3,5}|[A-Z]{1,3}\d{3,4}[A-Z]?)/;
 // Cache en memoria para metadatos de Drive (TTL 1h)
 const imageCache = new Map();
 
-function getDriveClient() {
-  const authOptions = { scopes: ['https://www.googleapis.com/auth/drive.readonly'] };
+function getDriveClient(write = false) {
+  const authOptions = {
+    scopes: [write
+      ? 'https://www.googleapis.com/auth/drive'
+      : 'https://www.googleapis.com/auth/drive.readonly'],
+  };
   if (process.env.GOOGLE_SA_CREDENTIALS) {
     authOptions.credentials = JSON.parse(process.env.GOOGLE_SA_CREDENTIALS);
   } else {
@@ -152,6 +160,61 @@ router.post('/importar', requireAdmin, async (req, res) => {
   }
 
   res.json({ importados: importados.length, omitidos, actualizados });
+});
+
+// POST /api/drive/subir — requiere admin + DRIVE_ROOT_FOLDER_ID en .env
+// FormData: fotos[] (archivos), subcategoria (string), nombres (JSON array de strings)
+router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, res) => {
+  const rootFolderId = process.env.DRIVE_ROOT_FOLDER_ID;
+  if (!rootFolderId) {
+    return res.status(503).json({ error: 'DRIVE_ROOT_FOLDER_ID no está configurado en el .env. Agregá el ID de la carpeta raíz de Drive.' });
+  }
+  if (!req.files?.length) {
+    return res.status(400).json({ error: 'No se recibieron archivos' });
+  }
+
+  const subcategoria = req.body.subcategoria || '';
+  const nombres = JSON.parse(req.body.nombres || '[]');
+
+  try {
+    const drive = getDriveClient(true);
+
+    // Resolver carpeta destino: subcarpeta por nombre o raíz
+    let targetFolderId = rootFolderId;
+    if (subcategoria) {
+      const searchRes = await drive.files.list({
+        q: `'${rootFolderId}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder' and name = '${subcategoria.replace(/'/g, "\\'")}'`,
+        fields: 'files(id)',
+        pageSize: 1,
+      });
+      if (searchRes.data.files?.length) {
+        targetFolderId = searchRes.data.files[0].id;
+      } else {
+        const created = await drive.files.create({
+          requestBody: { name: subcategoria, parents: [rootFolderId], mimeType: 'application/vnd.google-apps.folder' },
+          fields: 'id',
+        });
+        targetFolderId = created.data.id;
+      }
+    }
+
+    const fileIds = [];
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const nombre = nombres[i] || file.originalname;
+      const created = await drive.files.create({
+        requestBody: { name: nombre, parents: [targetFolderId] },
+        media: { mimeType: file.mimetype, body: Readable.from(file.buffer) },
+        fields: 'id',
+      });
+      fileIds.push(created.data.id);
+    }
+
+    res.json({ fileIds, folderId: targetFolderId });
+  } catch (err) {
+    console.error('Drive subir error:', err.message);
+    res.status(500).json({ error: 'Error al subir a Drive: ' + err.message });
+  }
 });
 
 // GET /api/drive/imagen/:fileId — público, proxy con cache
