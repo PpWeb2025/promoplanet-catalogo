@@ -1511,18 +1511,34 @@ function removeAgregarFile(idx) {
   renderAgregarPreview();
 }
 
+function _resizarParaIA(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      if (width > 1024) {
+        height = Math.round(height * 1024 / width);
+        width = 1024;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+    };
+    img.src = url;
+  });
+}
+
 async function analizarConIA(btn) {
   if (!_agregarFiles.length) return;
   btn.disabled = true;
   btn.innerHTML = '⏳ Analizando fotos…';
 
-  const fotos = await Promise.all(
-    _agregarFiles.slice(0, 4).map(file => new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = e => resolve({ base64: e.target.result.split(',')[1], mimeType: file.type });
-      reader.readAsDataURL(file);
-    }))
-  );
+  const fotos = await Promise.all(_agregarFiles.slice(0, 4).map(_resizarParaIA));
 
   try {
     const res = await fetch('/api/ia/analizar-fotos', {
