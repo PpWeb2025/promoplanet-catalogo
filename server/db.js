@@ -134,4 +134,8 @@ async function deleteProducto(id) {
   await client.execute({ sql: 'DELETE FROM productos WHERE id = ?', args: [id] });
 }
 
-module.exports = { initDb, getProductos, getProductoById, insertProducto, updateProducto, deleteProducto };
+async function getProductoByCodigo(codigo) {
+  return queryOne('SELECT * FROM productos WHERE codigo = ?', [codigo]);
+}
+
+module.exports = { initDb, getProductos, getProductoById, insertProducto, updateProducto, deleteProducto, getProductoByCodigo };

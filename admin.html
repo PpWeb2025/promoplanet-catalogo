@@ -465,6 +465,15 @@
               <span class="form-hint">La carpeta debe ser pública o compartida con acceso de lectura</span>
             </div>
 
+            <div style="display:flex;gap:1.5rem;margin-bottom:0.75rem;font-size:0.85rem;color:var(--texto)">
+              <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer">
+                <input type="checkbox" id="opt-recursive"> Incluir subcarpetas
+              </label>
+              <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer">
+                <input type="checkbox" id="opt-actualizar"> Actualizar fotos si ya existe
+              </label>
+            </div>
+
             <div style="display:flex;gap:0.75rem;margin-bottom:1.5rem">
               <button class="btn btn-primary" onclick="simularImport()">🔍 Leer carpeta de Drive</button>
               <button class="btn btn-outline" onclick="importarDemoData()">Usar datos de ejemplo</button>
@@ -1089,14 +1098,15 @@ const CAT_FOLDER_MAP = {
 
 function resolverCategoria(folderName) {
   const norm = normalizar(folderName);
-  // Primero buscar en subcategorías
   for (const [sub, cats] of Object.entries(SUBCAT_MAP)) {
     if (normalizar(sub) === norm) return { subcategoria: sub, categorias: cats };
   }
-  // Después buscar en categorías directas
   if (CAT_FOLDER_MAP[norm]) {
     return { subcategoria: '', categorias: [CAT_FOLDER_MAP[norm]] };
   }
+  // Fallback: match por id o nombre normalizado de categoría
+  const cat = CATS.find(c => c.id === norm || normalizar(c.nombre) === norm);
+  if (cat) return { subcategoria: '', categorias: [cat.id] };
   return null;
 }
 
@@ -1150,6 +1160,7 @@ async function simularImport() {
   if (!url) { showToast('Pegá el link de tu carpeta de Drive', 'error'); return; }
 
   const folderId = extraerFolderId(url);
+  const recursive = document.getElementById('opt-recursive').checked;
   const prog = document.getElementById('import-progress');
   const fill = document.getElementById('import-prog-fill');
   const status = document.getElementById('import-status');
@@ -1157,9 +1168,9 @@ async function simularImport() {
   prog.style.display = 'block';
   document.getElementById('import-results').style.display = 'none';
   fill.style.width = '20%';
-  status.textContent = 'Conectando con Google Drive...';
+  status.textContent = recursive ? 'Escaneando carpetas y subcarpetas...' : 'Conectando con Google Drive...';
 
-  const res = await fetch(`/api/drive/listar?folderId=${encodeURIComponent(folderId)}`);
+  const res = await fetch(`/api/drive/listar?folderId=${encodeURIComponent(folderId)}&recursive=${recursive}`);
   fill.style.width = '80%';
   status.textContent = 'Agrupando por código...';
 
@@ -1183,8 +1194,17 @@ function mostrarResultados(grupos, totalArchivos, folderName) {
   _categoriaImport = folderName ? resolverCategoria(folderName) : null;
   importSeleccion = grupos.map(g => ({ ...g, seleccionado: true }));
 
+  const esRecursivo = document.getElementById('opt-recursive')?.checked;
+
   let catBanner = '';
-  if (_categoriaImport) {
+  if (esRecursivo) {
+    const subcarpetas = [...new Set(grupos.map(g => g.subcarpeta).filter(Boolean))];
+    const sinCat = grupos.filter(g => !resolverCategoria(g.subcarpeta || '')).length;
+    catBanner = `<div style="background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:8px;padding:0.65rem 1rem;margin-bottom:0.875rem;font-size:0.85rem;color:var(--azul)">
+      📂 Escaneo recursivo — <strong>${subcarpetas.length} subcarpeta${subcarpetas.length !== 1 ? 's' : ''}</strong>: ${subcarpetas.join(', ')}
+      ${sinCat ? `<br><span style="color:#b45309">⚠️ ${sinCat} producto${sinCat !== 1 ? 's' : ''} sin categoría reconocida — asignala manualmente luego.</span>` : ''}
+    </div>`;
+  } else if (_categoriaImport) {
     const cats = _categoriaImport.categorias.map(id => CAT_NAMES[id]).join(', ');
     catBanner = `<div style="background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:8px;padding:0.65rem 1rem;margin-bottom:0.875rem;font-size:0.85rem;color:var(--azul)">
       📂 Carpeta: <strong>${folderName}</strong> → se asignará a <strong>${cats}</strong>
@@ -1197,18 +1217,28 @@ function mostrarResultados(grupos, totalArchivos, folderName) {
 
   document.getElementById('import-results-title').textContent =
     `${grupos.length} productos detectados en ${totalArchivos} archivos`;
-  document.getElementById('import-list').innerHTML = catBanner + grupos.map((g, i) => `
+  document.getElementById('import-list').innerHTML = catBanner + grupos.map((g, i) => {
+    let catLine = '';
+    if (esRecursivo && g.subcarpeta) {
+      const catInfo = resolverCategoria(g.subcarpeta);
+      catLine = catInfo
+        ? `<div style="font-size:0.7rem;color:var(--celeste);margin-top:2px">${CAT_NAMES[catInfo.categorias[0]] || catInfo.categorias[0]}${catInfo.subcategoria ? ' › ' + catInfo.subcategoria : ''}</div>`
+        : `<div style="font-size:0.7rem;color:var(--texto-suave);margin-top:2px">📂 ${g.subcarpeta}</div>`;
+    }
+    return `
     <div class="import-result-item">
       <div class="import-thumb">📦</div>
       <div>
         <div class="import-name">${g.nombre}</div>
         <div class="import-code">${g.codigo}</div>
+        ${catLine}
         <div class="import-count">${g.archivos.length} foto${g.archivos.length !== 1 ? 's' : ''}: ${g.archivos.map(a => a.nombre).join(', ')}</div>
       </div>
       <label class="check-chip checked" onclick="toggleImportItem(${i},this)">
         <input type="checkbox" checked> Importar
       </label>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   document.getElementById('import-results').style.display = 'block';
 }
 
@@ -1232,26 +1262,31 @@ async function importarSeleccionados() {
   const selec = importSeleccion.filter(g => g.seleccionado);
   if (!selec.length) { showToast('Seleccioná al menos un producto', 'error'); return; }
 
-  const conCat = selec.map(g => ({
-    ...g,
-    categoria: _categoriaImport ? _categoriaImport.categorias[0] : '',
-    subcategoria: _categoriaImport ? _categoriaImport.subcategoria : '',
-  }));
+  const actualizarExistentes = document.getElementById('opt-actualizar').checked;
+
+  const conCat = selec.map(g => {
+    const catInfo = g.subcarpeta ? resolverCategoria(g.subcarpeta) : _categoriaImport;
+    return {
+      ...g,
+      categoria: catInfo ? catInfo.categorias[0] : '',
+      subcategoria: catInfo ? catInfo.subcategoria : '',
+    };
+  });
 
   const res = await fetch('/api/drive/importar', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ productos: conCat }),
+    body: JSON.stringify({ productos: conCat, actualizarExistentes }),
   });
 
   if (!res.ok) { showToast('Error al importar', 'error'); return; }
-  const { importados, omitidos } = await res.json();
+  const { importados, omitidos, actualizados } = await res.json();
 
   await Promise.all([renderTabla(), renderDashboard()]);
-  const msg = omitidos.length
-    ? `✅ ${importados} importados. ${omitidos.length} ya existían (${omitidos.join(', ')}).`
-    : `✅ ${importados} productos importados como borradores. Completá los datos faltantes.`;
-  showToast(msg, 'success');
+  let msg = importados ? `✅ ${importados} producto${importados !== 1 ? 's' : ''} importado${importados !== 1 ? 's' : ''} como borrador${importados !== 1 ? 'es' : ''}.` : '';
+  if (actualizados?.length) msg += ` 🔄 ${actualizados.length} actualizado${actualizados.length !== 1 ? 's' : ''} con fotos nuevas.`;
+  if (omitidos.length) msg += ` ${omitidos.length} ya existían y se saltearon.`;
+  showToast(msg || '✅ Listo', 'success');
   showSection('productos', document.querySelectorAll('.nav-item')[1]);
 }
 

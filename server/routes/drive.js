@@ -4,7 +4,8 @@ const path = require('path');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
 
-const CODIGO_REGEX = /([A-Z]{1,3}\d{3,4}[A-Z]?)/;
+// Detecta PP-1234 (nuevo formato) y G1603 / M220 (formato legacy)
+const CODIGO_REGEX = /(PP-\d{3,5}|[A-Z]{1,3}\d{3,4}[A-Z]?)/;
 
 // Cache en memoria para metadatos de Drive (TTL 1h)
 const imageCache = new Map();
@@ -36,32 +37,64 @@ function agruparArchivos(files) {
         .replace(/\s+[A-Z]{1,3}\d{3,4}[A-Z]?\s+[a-z]$/, '')
         .replace(/\s+[a-z]$/, '')
         .trim();
-      grupos[cod] = { codigo: cod, nombre, archivos: [] };
+      grupos[cod] = { codigo: cod, nombre, archivos: [], subcarpeta: file._subfolder || '' };
     }
     grupos[cod].archivos.push({ fileId: file.id, nombre: file.name });
   }
   return Object.values(grupos);
 }
 
-// GET /api/drive/listar?folderId=XXX — requiere admin
+// Escaneo recursivo: retorna imágenes con _subfolder = nombre de la carpeta que las contiene
+async function listFilesRecursive(drive, folderId, folderName, depth = 0) {
+  if (depth > 3) return [];
+
+  const [foldersRes, filesRes] = await Promise.all([
+    drive.files.list({
+      q: `'${folderId}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'`,
+      fields: 'files(id, name)',
+      pageSize: 100,
+    }),
+    drive.files.list({
+      q: `'${folderId}' in parents and trashed = false and mimeType contains 'image/'`,
+      fields: 'files(id, name, mimeType)',
+      pageSize: 1000,
+    }),
+  ]);
+
+  const subfolders = foldersRes.data.files || [];
+  const images = (filesRes.data.files || []).map(f => ({ ...f, _subfolder: folderName }));
+
+  const subImages = (await Promise.all(
+    subfolders.map(sf => listFilesRecursive(drive, sf.id, sf.name, depth + 1))
+  )).flat();
+
+  return [...images, ...subImages];
+}
+
+// GET /api/drive/listar?folderId=XXX[&recursive=true] — requiere admin
 router.get('/listar', requireAdmin, async (req, res) => {
-  const { folderId } = req.query;
+  const { folderId, recursive } = req.query;
   if (!folderId) return res.status(400).json({ error: 'Falta el parámetro folderId' });
 
   try {
     const drive = getDriveClient();
+    const folderMeta = await drive.files.get({ fileId: folderId, fields: 'name' });
+    const folderName = folderMeta.data.name;
 
-    const [folderMeta, response] = await Promise.all([
-      drive.files.get({ fileId: folderId, fields: 'name' }),
-      drive.files.list({
+    let files;
+    if (recursive === 'true') {
+      files = await listFilesRecursive(drive, folderId, folderName);
+    } else {
+      const response = await drive.files.list({
         q: `'${folderId}' in parents and trashed = false and mimeType contains 'image/'`,
         fields: 'files(id, name, mimeType)',
         pageSize: 1000,
-      }),
-    ]);
+      });
+      files = response.data.files || [];
+    }
 
-    const grupos = agruparArchivos(response.data.files || []);
-    res.json({ total: response.data.files.length, grupos, folderName: folderMeta.data.name });
+    const grupos = agruparArchivos(files);
+    res.json({ total: files.length, grupos, folderName });
   } catch (err) {
     console.error('Drive listar error:', err.message);
     res.status(500).json({ error: 'Error al leer la carpeta de Drive. Verificá las credenciales y los permisos.' });
@@ -69,15 +102,16 @@ router.get('/listar', requireAdmin, async (req, res) => {
 });
 
 // POST /api/drive/importar — requiere admin
-// Body: { productos: [{ codigo, nombre, categoria, subcategoria, archivos: [{fileId, nombre}] }] }
+// Body: { productos: [...], actualizarExistentes?: boolean }
 router.post('/importar', requireAdmin, async (req, res) => {
-  const { productos } = req.body;
+  const { productos, actualizarExistentes = false } = req.body;
   if (!Array.isArray(productos) || !productos.length) {
     return res.status(400).json({ error: 'Se esperaba un array de productos' });
   }
 
   const importados = [];
   const omitidos = [];
+  const actualizados = [];
 
   for (const p of productos) {
     try {
@@ -100,14 +134,24 @@ router.post('/importar', requireAdmin, async (req, res) => {
       importados.push(nuevo);
     } catch (err) {
       if (err.message.includes('UNIQUE')) {
-        omitidos.push(p.codigo);
+        if (actualizarExistentes) {
+          const existing = await db.getProductoByCodigo(p.codigo);
+          if (existing) {
+            const nuevosIds = p.archivos.map(a => a.fileId);
+            const fotosActualizadas = [...new Set([...existing.fotos, ...nuevosIds])];
+            await db.updateProducto(existing.id, { fotos: fotosActualizadas });
+            actualizados.push(p.codigo);
+          }
+        } else {
+          omitidos.push(p.codigo);
+        }
       } else {
         throw err;
       }
     }
   }
 
-  res.json({ importados: importados.length, omitidos });
+  res.json({ importados: importados.length, omitidos, actualizados });
 });
 
 // GET /api/drive/imagen/:fileId — público, proxy con cache
@@ -117,13 +161,11 @@ router.get('/imagen/:fileId', async (req, res) => {
   try {
     const drive = getDriveClient();
 
-    // Obtener metadata para el content-type (cacheado)
     let meta = imageCache.get(fileId);
     if (!meta) {
       const metaRes = await drive.files.get({ fileId, fields: 'mimeType,name' });
       meta = metaRes.data;
       imageCache.set(fileId, meta);
-      // Limpiar cache después de 1h
       setTimeout(() => imageCache.delete(fileId), 3600_000);
     }
 
