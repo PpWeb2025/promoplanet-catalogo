@@ -197,8 +197,6 @@
   .foto-item .foto-overlay { position: absolute; inset: 0; background: rgba(0,36,78,0.5); display: flex; align-items: center; justify-content: center; gap: 4px; opacity: 0; transition: opacity 0.15s; }
   .foto-item:hover .foto-overlay { opacity: 1; }
   .foto-badge-principal { position: absolute; top: 4px; left: 4px; background: var(--celeste); color: var(--blanco); font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 4px; }
-  .foto-placeholder { aspect-ratio: 1; border-radius: 8px; border: 2px dashed var(--gris-borde); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--texto-suave); font-size: 0.75rem; gap: 4px; transition: all 0.15s; }
-  .foto-placeholder:hover { border-color: var(--celeste); color: var(--celeste); }
 
   /* DRIVE IMPORT */
   .drive-import-box { background: var(--azul-light); border: 1.5px solid rgba(0,52,113,0.2); border-radius: var(--radio); padding: 1.25rem; }
@@ -549,14 +547,7 @@
       <!-- FOTOS -->
       <div style="margin-bottom:1.5rem">
         <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:0.5rem">Imágenes del producto</label>
-        <div class="fotos-grid" id="fotos-preview">
-          <div class="foto-placeholder" onclick="document.getElementById('foto-input').click()">
-            <span style="font-size:1.2rem">📷</span>
-            <span>Agregar foto</span>
-          </div>
-        </div>
-        <input type="file" id="foto-input" accept="image/*" multiple style="display:none" onchange="previewFotos(this)">
-        <div style="font-size:0.72rem;color:var(--texto-suave)">La primera imagen será la principal. Podés agregar varias.</div>
+        <div class="fotos-grid" id="fotos-preview"></div>
         <div style="margin-top:0.5rem">
           <label style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:0.3rem">O pegá el link de Drive de las fotos de este producto:</label>
           <input type="text" id="foto-drive-url" style="width:100%;padding:0.5rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem">
@@ -809,8 +800,7 @@ function limpiarForm() {
   document.getElementById('f-estado').value = 'publicado';
   document.querySelectorAll('.check-chip').forEach(c => c.classList.remove('checked'));
   document.querySelectorAll('.check-chip input').forEach(c => c.checked = false);
-  _fotosMap.clear();
-  document.getElementById('fotos-preview').innerHTML = `<div class="foto-placeholder" onclick="document.getElementById('foto-input').click()"><span style="font-size:1.2rem">📷</span><span>Agregar foto</span></div>`;
+  document.getElementById('fotos-preview').innerHTML = '';
 }
 
 // ============================================================
@@ -824,33 +814,8 @@ function toggleChip(el) {
 }
 
 // ============================================================
-// FOTOS PREVIEW
+// FOTOS (solo Drive)
 // ============================================================
-const _fotosMap = new Map(); // uid -> File
-
-function previewFotos(input) {
-  const files = Array.from(input.files);
-  const grid = document.getElementById('fotos-preview');
-  const hayItems = grid.querySelectorAll('.foto-item').length > 0;
-  files.forEach((file, i) => {
-    const uid = `n${Date.now()}-${i}`;
-    _fotosMap.set(uid, file);
-    const url = URL.createObjectURL(file);
-    const esPrincipal = !hayItems && i === 0;
-    const div = document.createElement('div');
-    div.className = 'foto-item' + (esPrincipal ? ' principal' : '');
-    div.dataset.nueva = uid;
-    div.innerHTML = `<img src="${url}">
-      ${esPrincipal ? '<span class="foto-badge-principal">Principal</span>' : ''}
-      <div class="foto-overlay">
-        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
-        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="_fotosMap.delete('${uid}');this.closest('.foto-item').remove()">✕</button>
-      </div>`;
-    grid.insertBefore(div, grid.querySelector('.foto-placeholder'));
-  });
-  input.value = '';
-}
-
 function setPrincipal(el) {
   document.querySelectorAll('.foto-item').forEach(f => {
     f.classList.remove('principal');
@@ -861,9 +826,8 @@ function setPrincipal(el) {
   el.insertAdjacentHTML('afterbegin', '<span class="foto-badge-principal">Principal</span>');
 }
 
-// Retorna los IDs/paths de fotos ya guardadas (no las nuevas pendientes)
 function fotosExistentes() {
-  return Array.from(document.querySelectorAll('#fotos-preview .foto-item:not([data-nueva]) img'))
+  return Array.from(document.querySelectorAll('#fotos-preview .foto-item img'))
     .map(img => img.dataset.fotoid)
     .filter(Boolean);
 }
@@ -872,16 +836,15 @@ function mostrarFotosExistentes(fotos) {
   if (!fotos || !fotos.length) return;
   const grid = document.getElementById('fotos-preview');
   fotos.forEach((fotoId, i) => {
-    const src = fotoId.startsWith('/uploads/') ? fotoId : `/api/drive/imagen/${fotoId}`;
     const div = document.createElement('div');
     div.className = 'foto-item' + (i === 0 ? ' principal' : '');
-    div.innerHTML = `<img src="${src}" data-fotoid="${fotoId}">
+    div.innerHTML = `<img src="/api/drive/imagen/${fotoId}" data-fotoid="${fotoId}">
       ${i === 0 ? '<span class="foto-badge-principal">Principal</span>' : ''}
       <div class="foto-overlay">
         <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
         <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
       </div>`;
-    grid.insertBefore(div, grid.querySelector('.foto-placeholder'));
+    grid.appendChild(div);
   });
 }
 
@@ -916,20 +879,6 @@ async function guardarProducto(estado) {
     emoji: '📦',
     fotos: fotosExistentes(),
   };
-
-  // Subir fotos nuevas en orden DOM (principal primero)
-  if (_fotosMap.size) {
-    const items = Array.from(document.querySelectorAll('#fotos-preview .foto-item[data-nueva]'));
-    items.sort((a, b) => (b.classList.contains('principal') ? 1 : 0) - (a.classList.contains('principal') ? 1 : 0));
-    const files = items.map(el => _fotosMap.get(el.dataset.nueva)).filter(Boolean);
-    const fd = new FormData();
-    files.forEach(f => fd.append('fotos', f));
-    const upRes = await fetch('/api/uploads', { method: 'POST', body: fd });
-    if (!upRes.ok) { showToast('Error al subir las imágenes', 'error'); return; }
-    const { paths } = await upRes.json();
-    // Principal al frente si no hay fotos existentes
-    prod.fotos = prod.fotos.length ? [...prod.fotos, ...paths] : paths;
-  }
 
   const url = editandoId ? `/api/productos/admin/${editandoId}` : '/api/productos/admin';
   const method = editandoId ? 'PUT' : 'POST';
@@ -978,9 +927,8 @@ async function renderTabla(lista) {
   }
   empty.style.display = 'none';
   tbody.innerHTML = lista.map(p => {
-    const fotoSrc = id => id.startsWith('/uploads/') ? id : `/api/drive/imagen/${id}`;
     const thumb = p.fotos && p.fotos.length
-      ? `<img src="${fotoSrc(p.fotos[0])}" style="width:40px;height:40px;object-fit:cover;border-radius:6px">`
+      ? `<img src="/api/drive/imagen/${p.fotos[0]}" style="width:40px;height:40px;object-fit:cover;border-radius:6px">`
       : (p.emoji || '📦');
     return `
     <tr>

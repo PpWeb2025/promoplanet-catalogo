@@ -22,10 +22,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/productos', require('./routes/productos'));
 app.use('/api/drive', require('./routes/drive'));
-app.use('/api/uploads', require('./routes/uploads'));
 app.use('/api/consultas', require('./routes/consultas'));
 app.use('/api/ia', require('./routes/ia'));
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.use(express.static(path.join(__dirname, '..')));
 
