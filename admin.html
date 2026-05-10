@@ -953,13 +953,17 @@ function fotosExistentes() {
     .filter(Boolean);
 }
 
+function fotoSrc(id) {
+  return id && id.startsWith('http') ? id : `/api/drive/imagen/${id}`;
+}
+
 function mostrarFotosExistentes(fotos) {
   if (!fotos || !fotos.length) return;
   const grid = document.getElementById('fotos-preview');
   fotos.forEach((fotoId, i) => {
     const div = document.createElement('div');
     div.className = 'foto-item' + (i === 0 ? ' principal' : '');
-    div.innerHTML = `<img src="/api/drive/imagen/${fotoId}" data-fotoid="${fotoId}">
+    div.innerHTML = `<img src="${fotoSrc(fotoId)}" data-fotoid="${fotoId}">
       ${i === 0 ? '<span class="foto-badge-principal">Principal</span>' : ''}
       <div class="foto-overlay">
         <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
@@ -1049,7 +1053,7 @@ async function renderTabla(lista) {
   empty.style.display = 'none';
   tbody.innerHTML = lista.map(p => {
     const thumb = p.fotos && p.fotos.length
-      ? `<img src="/api/drive/imagen/${p.fotos[0]}" style="width:40px;height:40px;object-fit:cover;border-radius:6px">`
+      ? `<img src="${fotoSrc(p.fotos[0])}" style="width:40px;height:40px;object-fit:cover;border-radius:6px">`
       : (p.emoji || '📦');
     return `
     <tr>
@@ -1559,7 +1563,7 @@ async function analizarConIA(btn) {
     actualizarNombresPreview();
 
     document.getElementById('agregar-drive-hint').textContent =
-      '📁 Las fotos se subirán a la carpeta configurada en Drive';
+      '☁️ Las fotos se subirán a Cloudinary (carpeta promoplanet/)';
   } catch (err) {
     showToast(err.message || 'Error al analizar con IA', 'error');
   } finally {
@@ -1612,7 +1616,7 @@ function actualizarNombresPreview() {
     return `• ${nombre} ${codigo}${sufijo}.${ext}`;
   });
   box.style.display = 'block';
-  box.innerHTML = `<span style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--texto)">Archivos que se subirán a Drive:</span><br>${lineas.join('<br>')}`;
+  box.innerHTML = `<span style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--texto)">Archivos que se subirán a Cloudinary:</span><br>${lineas.join('<br>')}`;
 }
 
 function resetAgregar() {
@@ -1652,10 +1656,10 @@ async function confirmarAgregarProducto(btn) {
   });
 
   btn.disabled = true;
-  btn.innerHTML = '⏳ Subiendo a Drive…';
+  btn.innerHTML = '⏳ Subiendo fotos…';
 
   try {
-    // Subir fotos a Drive
+    // Subir fotos a Cloudinary
     const fd = new FormData();
     orderedFiles.forEach(f => fd.append('fotos', f));
     fd.append('subcategoria', subcategoria);
@@ -1664,9 +1668,9 @@ async function confirmarAgregarProducto(btn) {
     const uploadRes = await fetch('/api/drive/subir', { method: 'POST', body: fd });
     if (!uploadRes.ok) {
       const err = await uploadRes.json().catch(() => ({}));
-      throw new Error(err.error || 'Error al subir a Drive');
+      throw new Error(err.error || 'Error al subir fotos');
     }
-    const { fileIds } = await uploadRes.json();
+    const { urls } = await uploadRes.json();
 
     btn.innerHTML = '⏳ Creando producto…';
 
@@ -1676,7 +1680,7 @@ async function confirmarAgregarProducto(btn) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         codigo: _agregarCodigo, nombre, categoria, subcategoria,
-        estado: 'borrador', fotos: fileIds, emoji: '📦',
+        estado: 'borrador', fotos: urls, emoji: '📦',
         rango: '', minimo: 0, tecnicas: [], destinatarios: [],
         ocasiones: [], badges: [], descripcion: '',
       }),

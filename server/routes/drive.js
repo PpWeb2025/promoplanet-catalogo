@@ -3,8 +3,15 @@ const { google } = require('googleapis');
 const { Readable } = require('stream');
 const path = require('path');
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const uploadMem = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
@@ -162,58 +169,34 @@ router.post('/importar', requireAdmin, async (req, res) => {
   res.json({ importados: importados.length, omitidos, actualizados });
 });
 
-// POST /api/drive/subir — requiere admin + DRIVE_ROOT_FOLDER_ID en .env
-// FormData: fotos[] (archivos), subcategoria (string), nombres (JSON array de strings)
+// POST /api/drive/subir — requiere admin
+// FormData: fotos[] (archivos), nombres (JSON array de strings)
+// Sube a Cloudinary carpeta promoplanet/ y devuelve { urls }
 router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, res) => {
-  const rootFolderId = process.env.DRIVE_ROOT_FOLDER_ID;
-  if (!rootFolderId) {
-    return res.status(503).json({ error: 'DRIVE_ROOT_FOLDER_ID no está configurado en el .env. Agregá el ID de la carpeta raíz de Drive.' });
-  }
   if (!req.files?.length) {
     return res.status(400).json({ error: 'No se recibieron archivos' });
   }
 
-  const subcategoria = req.body.subcategoria || '';
   const nombres = JSON.parse(req.body.nombres || '[]');
 
   try {
-    const drive = getDriveClient(true);
-
-    // Resolver carpeta destino: subcarpeta por nombre o raíz
-    let targetFolderId = rootFolderId;
-    if (subcategoria) {
-      const searchRes = await drive.files.list({
-        q: `'${rootFolderId}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder' and name = '${subcategoria.replace(/'/g, "\\'")}'`,
-        fields: 'files(id)',
-        pageSize: 1,
-      });
-      if (searchRes.data.files?.length) {
-        targetFolderId = searchRes.data.files[0].id;
-      } else {
-        const created = await drive.files.create({
-          requestBody: { name: subcategoria, parents: [rootFolderId], mimeType: 'application/vnd.google-apps.folder' },
-          fields: 'id',
-        });
-        targetFolderId = created.data.id;
-      }
-    }
-
-    const fileIds = [];
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
+    const urls = await Promise.all(req.files.map((file, i) => new Promise((resolve, reject) => {
       const nombre = nombres[i] || file.originalname;
-      const created = await drive.files.create({
-        requestBody: { name: nombre, parents: [targetFolderId] },
-        media: { mimeType: file.mimetype, body: Readable.from(file.buffer) },
-        fields: 'id',
-      });
-      fileIds.push(created.data.id);
-    }
+      const publicId = 'promoplanet/' + nombre.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_\- ]/g, '_');
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: 'promoplanet', public_id: publicId, overwrite: true, resource_type: 'image' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result.secure_url);
+        }
+      );
+      stream.end(file.buffer);
+    })));
 
-    res.json({ fileIds, folderId: targetFolderId });
+    res.json({ urls });
   } catch (err) {
-    console.error('Drive subir error:', err.message);
-    res.status(500).json({ error: 'Error al subir a Drive: ' + err.message });
+    console.error('Cloudinary subir error:', err.message);
+    res.status(500).json({ error: 'Error al subir a Cloudinary: ' + err.message });
   }
 });
 
