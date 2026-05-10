@@ -1,15 +1,8 @@
-const initSqlJs = require('sql.js');
-const fs = require('fs');
-const path = require('path');
+const { createClient } = require('@libsql/client');
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'promoplanet.db');
 const JSON_FIELDS = ['tecnicas', 'destinatarios', 'ocasiones', 'fotos', 'badges'];
 
-let db;
-
-function save() {
-  fs.writeFileSync(DB_PATH, Buffer.from(db.export()));
-}
+let client;
 
 function parseRow(obj) {
   if (!obj) return null;
@@ -28,28 +21,23 @@ function serializeRow(data) {
   return out;
 }
 
-// Ejecuta un SELECT y devuelve filas como array de objetos
-function query(sql, params = []) {
-  const stmt = db.prepare(sql);
-  stmt.bind(params);
-  const rows = [];
-  while (stmt.step()) rows.push(parseRow(stmt.getAsObject()));
-  stmt.free();
-  return rows;
+async function query(sql, args = []) {
+  const result = await client.execute({ sql, args });
+  return result.rows.map(row => parseRow({ ...row }));
 }
 
-function queryOne(sql, params = []) {
-  return query(sql, params)[0] || null;
+async function queryOne(sql, args = []) {
+  const rows = await query(sql, args);
+  return rows[0] || null;
 }
 
 async function initDb() {
-  try { fs.mkdirSync(path.dirname(DB_PATH), { recursive: true }); } catch {}
-  const SQL = await initSqlJs();
-  db = fs.existsSync(DB_PATH)
-    ? new SQL.Database(fs.readFileSync(DB_PATH))
-    : new SQL.Database();
+  client = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+  });
 
-  db.run(`
+  await client.execute(`
     CREATE TABLE IF NOT EXISTS productos (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       codigo        TEXT NOT NULL UNIQUE,
@@ -75,76 +63,73 @@ async function initDb() {
       fotos         TEXT DEFAULT '[]'
     )
   `);
-  // Migraciones: agregar columnas si la DB ya existía sin ellas
-  try { db.run("ALTER TABLE productos ADD COLUMN subcategoria TEXT DEFAULT ''"); } catch {}
-  try { db.run("ALTER TABLE productos ADD COLUMN badges TEXT DEFAULT '[]'"); } catch {}
 
-  // Migración: renombrar IDs de categoría viejos a los nuevos
-  const migracionCats = [
-    ['kits',      'onboarding'],
-    ['papeleria',  'escritorio'],
-    ['bolsos',     'bolsos_mochilas'],
-    ['cotidiano',  'escritorio'],
-    ['premium',    'reconocimiento'],
-  ];
-  for (const [viejo, nuevo] of migracionCats) {
-    db.run('UPDATE productos SET categoria = ? WHERE categoria = ?', [nuevo, viejo]);
+  for (const col of [
+    "ALTER TABLE productos ADD COLUMN subcategoria TEXT DEFAULT ''",
+    "ALTER TABLE productos ADD COLUMN badges TEXT DEFAULT '[]'",
+  ]) {
+    try { await client.execute(col); } catch {}
   }
 
-  save();
+  const migracionCats = [
+    ['kits',      'onboarding'],
+    ['papeleria', 'escritorio'],
+    ['bolsos',    'bolsos_mochilas'],
+    ['cotidiano', 'escritorio'],
+    ['premium',   'reconocimiento'],
+  ];
+  for (const [viejo, nuevo] of migracionCats) {
+    await client.execute({ sql: 'UPDATE productos SET categoria = ? WHERE categoria = ?', args: [nuevo, viejo] });
+  }
 }
 
-function getProductos({ soloPublicados = false, cat = null, q = null } = {}) {
+async function getProductos({ soloPublicados = false, cat = null, q = null } = {}) {
   let sql = 'SELECT * FROM productos';
-  const params = [];
+  const args = [];
   const where = [];
   if (soloPublicados) where.push("estado = 'publicado'");
-  if (cat) { where.push('categoria = ?'); params.push(cat); }
+  if (cat)  { where.push('categoria = ?'); args.push(cat); }
   if (q) {
     where.push('(nombre LIKE ? OR codigo LIKE ? OR descripcion LIKE ?)');
     const like = `%${q}%`;
-    params.push(like, like, like);
+    args.push(like, like, like);
   }
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
   sql += ' ORDER BY id DESC';
-  return query(sql, params);
+  return query(sql, args);
 }
 
-function getProductoById(id) {
+async function getProductoById(id) {
   return queryOne('SELECT * FROM productos WHERE id = ?', [id]);
 }
 
-function insertProducto(data) {
+async function insertProducto(data) {
   const row = serializeRow({
     ...data,
     fecha_carga: data.fecha_carga || new Date().toISOString(),
   });
   delete row.id;
   const cols = Object.keys(row);
-  db.run(
-    `INSERT INTO productos (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`,
-    cols.map(c => row[c])
-  );
-  const newId = db.exec('SELECT last_insert_rowid()')[0].values[0][0];
-  save();
-  return getProductoById(newId);
+  const result = await client.execute({
+    sql: `INSERT INTO productos (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`,
+    args: cols.map(c => row[c]),
+  });
+  return getProductoById(Number(result.lastInsertRowid));
 }
 
-function updateProducto(id, data) {
+async function updateProducto(id, data) {
   const row = serializeRow(data);
   delete row.id;
   const cols = Object.keys(row);
-  db.run(
-    `UPDATE productos SET ${cols.map(c => `${c} = ?`).join(', ')} WHERE id = ?`,
-    [...cols.map(c => row[c]), id]
-  );
-  save();
+  await client.execute({
+    sql: `UPDATE productos SET ${cols.map(c => `${c} = ?`).join(', ')} WHERE id = ?`,
+    args: [...cols.map(c => row[c]), id],
+  });
   return getProductoById(id);
 }
 
-function deleteProducto(id) {
-  db.run('DELETE FROM productos WHERE id = ?', [id]);
-  save();
+async function deleteProducto(id) {
+  await client.execute({ sql: 'DELETE FROM productos WHERE id = ?', args: [id] });
 }
 
 module.exports = { initDb, getProductos, getProductoById, insertProducto, updateProducto, deleteProducto };

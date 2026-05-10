@@ -70,7 +70,7 @@ router.get('/listar', requireAdmin, async (req, res) => {
 
 // POST /api/drive/importar — requiere admin
 // Body: { productos: [{ codigo, nombre, categoria, subcategoria, archivos: [{fileId, nombre}] }] }
-router.post('/importar', requireAdmin, (req, res) => {
+router.post('/importar', requireAdmin, async (req, res) => {
   const { productos } = req.body;
   if (!Array.isArray(productos) || !productos.length) {
     return res.status(400).json({ error: 'Se esperaba un array de productos' });
@@ -81,7 +81,7 @@ router.post('/importar', requireAdmin, (req, res) => {
 
   for (const p of productos) {
     try {
-      const nuevo = db.insertProducto({
+      const nuevo = await db.insertProducto({
         codigo: p.codigo,
         nombre: p.nombre,
         categoria: p.categoria || '',

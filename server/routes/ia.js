@@ -57,7 +57,7 @@ router.post('/adaptar', requireAdmin, async (req, res) => {
   }
 
   // Tomar hasta 8 productos publicados como referencia de estilo
-  const muestra = db.getProductos({ soloPublicados: true })
+  const muestra = (await db.getProductos({ soloPublicados: true }))
     .filter(p => p.descripcion && p.descripcion.length > 40)
     .slice(0, 8)
     .map(p => `Producto: ${p.nombre}\nDescripción: ${p.descripcion}\nCategoría: ${CATEGORIAS[p.categoria] || p.categoria}${p.material ? `\nMaterial: ${p.material}` : ''}${p.tecnicas?.length ? `\nTécnicas: ${p.tecnicas.join(', ')}` : ''}`)
