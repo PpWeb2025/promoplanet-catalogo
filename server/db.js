@@ -32,10 +32,12 @@ async function queryOne(sql, args = []) {
 }
 
 async function initDb() {
-  client = createClient({
-    url: process.env.TURSO_DATABASE_URL,
-    authToken: process.env.TURSO_AUTH_TOKEN,
-  });
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.TURSO_URL;
+  client = createClient(
+    isProduction
+      ? { url: process.env.TURSO_URL, authToken: process.env.TURSO_TOKEN }
+      : { url: 'file:../promoplanet.db' }
+  );
 
   await client.execute(`
     CREATE TABLE IF NOT EXISTS productos (

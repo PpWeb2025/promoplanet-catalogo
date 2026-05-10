@@ -1,6 +1,6 @@
 node_modules/
 .env
 *.db
-!promoplanet.db
 service-account.json
 api_key.txt
+migrate-to-turso.js
