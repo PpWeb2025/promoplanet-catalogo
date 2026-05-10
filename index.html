@@ -1234,7 +1234,9 @@ document.addEventListener('click', e => {
 });
 
 function imgSrc(fotoId) {
-  return fotoId.startsWith('/uploads/') ? fotoId : `/api/drive/imagen/${fotoId}`;
+  if (!fotoId) return '';
+  if (fotoId.startsWith('http') || fotoId.startsWith('/')) return fotoId;
+  return `/api/drive/imagen/${fotoId}`;
 }
 
 const BADGES = {
