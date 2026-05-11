@@ -295,9 +295,6 @@
       <button class="nav-item" onclick="showSection('agregar', this)">
         <span class="icon">📸</span> Agregar producto
       </button>
-      <button class="nav-item" onclick="showSection('proveedor', this)">
-        <span class="icon">✨</span> Importar de proveedor
-      </button>
       <button class="nav-item" onclick="showSection('importar', this)">
         <span class="icon">☁️</span> Importar de Drive
       </button>
@@ -461,9 +458,16 @@
 
               <div class="fotos-grid" id="agregar-preview" style="margin-top:1rem;display:none"></div>
 
-              <div id="agregar-ia-wrap" style="margin-top:1.25rem;display:none;align-items:center;gap:0.75rem">
-                <button class="btn btn-celeste" onclick="analizarConIA(this)">✨ Analizar con IA →</button>
-                <span style="font-size:0.78rem;color:var(--texto-suave)">La IA analiza hasta 4 fotos y sugiere nombre y categoría</span>
+              <div style="margin-top:1rem">
+                <input type="url" id="agregar-url-proveedor"
+                  placeholder="URL del proveedor (opcional) — la IA leerá la página para completar descripción, material y medidas"
+                  style="width:100%;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.85rem;box-sizing:border-box"
+                  oninput="actualizarBtnAnalizar()">
+              </div>
+
+              <div id="agregar-ia-wrap" style="margin-top:1rem;display:none;align-items:center;gap:0.75rem">
+                <button class="btn btn-celeste" onclick="analizarConIA(this)">✨ Analizar →</button>
+                <span id="agregar-ia-hint" style="font-size:0.78rem;color:var(--texto-suave)"></span>
               </div>
             </div>
           </div>
@@ -512,16 +516,6 @@
                 <div class="form-group" id="agregar-subcat-group" style="display:none">
                   <label>Subcategoría</label>
                   <select id="agregar-f-subcategoria" onchange="actualizarNombresPreview()"></select>
-                </div>
-              </div>
-
-              <!-- URL proveedor + campos de detalle -->
-              <div style="margin-top:1.25rem;padding:1rem;background:var(--gris);border-radius:10px;border:1.5px solid var(--gris-borde)">
-                <div style="font-size:0.78rem;font-weight:600;color:var(--texto);margin-bottom:0.6rem">🌐 Enriquecer con datos del proveedor (opcional)</div>
-                <div style="display:flex;gap:0.5rem;align-items:center">
-                  <input type="url" id="agregar-f-url-proveedor" placeholder="https://proveedor.com/producto/..."
-                    style="flex:1;padding:0.55rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.85rem;background:var(--blanco)">
-                  <button class="btn btn-celeste btn-sm" onclick="analizarURLProveedor(this)">🔍 Analizar página</button>
                 </div>
               </div>
 
@@ -1508,16 +1502,22 @@ function agregarFilesAlPreview(newFiles) {
   renderAgregarPreview();
 }
 
+function actualizarBtnAnalizar() {
+  const url = (document.getElementById('agregar-url-proveedor')?.value || '').trim();
+  const wrap = document.getElementById('agregar-ia-wrap');
+  const hint = document.getElementById('agregar-ia-hint');
+  const tieneFortos = _agregarFiles.length > 0;
+  const tieneURL = url.length > 0;
+  wrap.style.display = (tieneFortos || tieneURL) ? 'flex' : 'none';
+  if (tieneFortos && tieneURL) hint.textContent = 'La IA analizará las fotos y la página del proveedor en paralelo';
+  else if (tieneFortos) hint.textContent = 'La IA analiza las fotos y sugiere nombre y categoría';
+  else hint.textContent = 'La IA leerá la página y completará todos los campos';
+}
+
 function renderAgregarPreview() {
   const grid = document.getElementById('agregar-preview');
-  const wrap = document.getElementById('agregar-ia-wrap');
-  if (!_agregarFiles.length) {
-    grid.style.display = 'none';
-    wrap.style.display = 'none';
-    return;
-  }
-  grid.style.display = 'grid';
-  wrap.style.display = 'flex';
+  grid.style.display = _agregarFiles.length ? 'grid' : 'none';
+  if (!_agregarFiles.length) { actualizarBtnAnalizar(); return; }
   grid.innerHTML = _agregarFiles.map((file, i) => {
     const url = URL.createObjectURL(file);
     const esPrincipal = i === _agregarPrincipalIdx;
@@ -1530,6 +1530,7 @@ function renderAgregarPreview() {
       </div>
     </div>`;
   }).join('');
+  actualizarBtnAnalizar();
 }
 
 function setPrincipalAgregar(idx) {
@@ -1542,44 +1543,6 @@ function removeAgregarFile(idx) {
   _agregarFiles.splice(idx, 1);
   if (_agregarPrincipalIdx >= _agregarFiles.length) _agregarPrincipalIdx = 0;
   renderAgregarPreview();
-}
-
-async function analizarURLProveedor(btn) {
-  const url = document.getElementById('agregar-f-url-proveedor').value.trim();
-  if (!url) { showToast('Pegá una URL primero', 'error'); return; }
-
-  btn.disabled = true;
-  const orig = btn.innerHTML;
-  btn.innerHTML = '⏳ Analizando…';
-
-  try {
-    const res = await fetch('/api/ia/adaptar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-    });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'No se pudo analizar la URL');
-    const data = await res.json();
-
-    if (data.descripcion) document.getElementById('agregar-f-descripcion').value = data.descripcion;
-    if (data.material)    document.getElementById('agregar-f-material').value    = data.material;
-    if (data.medidas)     document.getElementById('agregar-f-medidas').value     = data.medidas;
-    if (data.colores)     document.getElementById('agregar-f-colores').value     = data.colores;
-    if (data.nombre && !document.getElementById('agregar-f-nombre').value.trim()) {
-      document.getElementById('agregar-f-nombre').value = data.nombre;
-      actualizarNombresPreview();
-    }
-    if (data.categoria && !document.getElementById('agregar-f-categoria').value) {
-      document.getElementById('agregar-f-categoria').value = data.categoria;
-      actualizarSubcatsAgregar(data.categoria);
-    }
-    showToast('✅ Datos cargados desde la página del proveedor', 'success');
-  } catch (err) {
-    showToast(err.message || 'Error al analizar la URL', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = orig;
-  }
 }
 
 function _resizarParaIA(file) {
@@ -1605,37 +1568,57 @@ function _resizarParaIA(file) {
 }
 
 async function analizarConIA(btn) {
-  if (!_agregarFiles.length) return;
-  btn.disabled = true;
-  btn.innerHTML = '⏳ Analizando fotos…';
+  const urlProveedor = document.getElementById('agregar-url-proveedor').value.trim();
+  const tieneFortos = _agregarFiles.length > 0;
+  if (!tieneFortos && !urlProveedor) return;
 
-  const fotos = await Promise.all(_agregarFiles.slice(0, 4).map(_resizarParaIA));
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Analizando…';
 
   try {
-    const res = await fetch('/api/ia/analizar-fotos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fotos }),
-    });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Error IA');
-    const data = await res.json();
+    const [dataFotos, dataURL] = await Promise.all([
+      tieneFortos
+        ? Promise.all(_agregarFiles.slice(0, 4).map(_resizarParaIA))
+            .then(fotos => fetch('/api/ia/analizar-fotos', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fotos }),
+            }).then(r => r.ok ? r.json() : null).catch(() => null))
+        : Promise.resolve(null),
+      urlProveedor
+        ? fetch('/api/ia/adaptar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: urlProveedor }),
+          }).then(r => r.ok ? r.json() : null).catch(() => null)
+        : Promise.resolve(null),
+    ]);
 
-    document.getElementById('agregar-f-nombre').value = data.nombre || '';
-    document.getElementById('agregar-f-categoria').value = data.categoria || '';
-    actualizarSubcatsAgregar(data.categoria || '', data.subcategoria || '');
+    // Fotos → nombre/categoría/subcategoría; URL → descripcion/material/medidas/colores
+    // URL también actúa de fallback si las fotos no reconocieron el nombre o categoría
+    const nombre = dataFotos?.nombre || dataURL?.nombre || '';
+    const categoria = dataFotos?.categoria || dataURL?.categoria || '';
+    const subcategoria = dataFotos?.subcategoria || '';
+
+    document.getElementById('agregar-f-nombre').value = nombre;
+    document.getElementById('agregar-f-categoria').value = categoria;
+    actualizarSubcatsAgregar(categoria, subcategoria);
+    if (dataURL?.descripcion) document.getElementById('agregar-f-descripcion').value = dataURL.descripcion;
+    if (dataURL?.material)    document.getElementById('agregar-f-material').value    = dataURL.material;
+    if (dataURL?.medidas)     document.getElementById('agregar-f-medidas').value     = dataURL.medidas;
+    if (dataURL?.colores)     document.getElementById('agregar-f-colores').value     = dataURL.colores;
 
     document.getElementById('agregar-step1').style.display = 'none';
     document.getElementById('agregar-step2').style.display = 'block';
-    renderConfirmFotos();
+    if (tieneFortos) renderConfirmFotos();
     actualizarNombresPreview();
-
     document.getElementById('agregar-drive-hint').textContent =
-      '☁️ Las fotos se subirán a Cloudinary (carpeta promoplanet/)';
+      tieneFortos ? '☁️ Las fotos se subirán a Cloudinary (carpeta promoplanet/)' : '';
   } catch (err) {
-    showToast(err.message || 'Error al analizar con IA', 'error');
+    showToast(err.message || 'Error al analizar', 'error');
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '✨ Analizar con IA →';
+    btn.innerHTML = '✨ Analizar →';
   }
 }
 
@@ -1697,7 +1680,8 @@ function resetAgregar() {
   document.getElementById('agregar-f-nombre').value = '';
   document.getElementById('agregar-f-categoria').value = '';
   document.getElementById('agregar-subcat-group').style.display = 'none';
-  document.getElementById('agregar-f-url-proveedor').value = '';
+  document.getElementById('agregar-url-proveedor').value = '';
+  actualizarBtnAnalizar();
   document.getElementById('agregar-f-descripcion').value = '';
   document.getElementById('agregar-f-material').value = '';
   document.getElementById('agregar-f-medidas').value = '';
