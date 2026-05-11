@@ -812,14 +812,16 @@
         </div>
         <div class="form-group">
           <label>Proveedor</label>
-          <select id="f-proveedor">
+          <select id="f-proveedor" onchange="toggleProveedorOtro()">
             <option value="">Seleccioná...</option>
             <option>Zecat</option>
             <option>Stocksur</option>
             <option>Xtrade</option>
             <option>Improm</option>
-            <option>Otro</option>
+            <option value="__otro__">Otro...</option>
           </select>
+          <input type="text" id="f-proveedor-otro" placeholder="Nombre del proveedor"
+            style="display:none;margin-top:0.5rem;width:100%;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;box-sizing:border-box">
         </div>
         <div class="form-group">
           <label>Estado</label>
@@ -930,6 +932,15 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
 
+function toggleProveedorOtro() {
+  const sel = document.getElementById('f-proveedor');
+  const inp = document.getElementById('f-proveedor-otro');
+  const mostrar = sel.value === '__otro__';
+  inp.style.display = mostrar ? '' : 'none';
+  if (!mostrar) inp.value = '';
+  if (mostrar) inp.focus();
+}
+
 function limpiarForm() {
   ['f-codigo','f-nombre','f-material','f-medidas','f-colores','f-descripcion','f-notas','foto-drive-url'].forEach(id => {
     const el = document.getElementById(id);
@@ -939,6 +950,8 @@ function limpiarForm() {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
+  const otroinp = document.getElementById('f-proveedor-otro');
+  if (otroinp) { otroinp.value = ''; otroinp.style.display = 'none'; }
   actualizarSubcats('');
   document.getElementById('f-minimo').value = '';
   document.getElementById('f-estado').value = 'publicado';
@@ -1020,7 +1033,9 @@ async function guardarProducto(estado) {
     destinatarios: getChecked('dest-group'),
     ocasiones: getChecked('occ-group'),
     badges: getChecked('badges-group'),
-    proveedor: document.getElementById('f-proveedor').value,
+    proveedor: document.getElementById('f-proveedor').value === '__otro__'
+      ? document.getElementById('f-proveedor-otro').value.trim()
+      : document.getElementById('f-proveedor').value,
     notas: document.getElementById('f-notas').value,
     drive_code: document.getElementById('foto-drive-url').value,
     estado: estado || document.getElementById('f-estado').value,
@@ -1131,7 +1146,18 @@ async function editarProducto(id) {
   document.getElementById('f-colores').value = p.colores || '';
   document.getElementById('f-descripcion').value = p.descripcion || '';
   document.getElementById('f-notas').value = p.notas || '';
-  document.getElementById('f-proveedor').value = p.proveedor || '';
+  const _provKnown = ['', 'Zecat', 'Stocksur', 'Xtrade', 'Improm'];
+  const _prov = p.proveedor || '';
+  const _provOtroInp = document.getElementById('f-proveedor-otro');
+  if (_provKnown.includes(_prov)) {
+    document.getElementById('f-proveedor').value = _prov;
+    _provOtroInp.style.display = 'none';
+    _provOtroInp.value = '';
+  } else {
+    document.getElementById('f-proveedor').value = '__otro__';
+    _provOtroInp.value = _prov;
+    _provOtroInp.style.display = '';
+  }
   document.getElementById('f-estado').value = p.estado || 'publicado';
   document.getElementById('foto-drive-url').value = p.drive_code || '';
   ['tecnicas-group','dest-group','occ-group','badges-group'].forEach(gid => {
