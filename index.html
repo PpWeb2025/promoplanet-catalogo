@@ -1454,6 +1454,7 @@ function filtrar() {
 // RENDER PRODUCTOS
 // ============================================================
 const RANGO_LABEL = { economico: 'Económico', intermedio: 'Intermedio', premium: 'Premium' };
+const OCC_LABEL = { onboarding: 'Onboarding', capacitacion: 'Capacitación', reconocimiento: 'Reconocimiento', eventos: 'Eventos', fechas: 'Fechas especiales' };
 const BADGE_MAP = { eco: ['badge-eco', 'Eco'], premium: ['badge-premium', 'Premium'], popular: ['badge-popular', '⭐ Popular'] };
 
 function renderProductos(lista) {
@@ -1501,7 +1502,7 @@ function renderProductos(lista) {
         <div class="product-code">Cód. ${p.codigo}</div>
         <div class="product-cat">${CATEGORIAS.find(c=>c.id===p.categoria)?.nombre || ''}</div>
         <div class="product-tags">
-          ${p.tecnicas.map(t => `<span class="product-tag">${t}</span>`).join('')}
+          ${(p.ocasiones || []).map(o => `<span class="product-tag">${OCC_LABEL[o] || o}</span>`).join('')}
           ${p.minimo ? `<span class="product-tag">Mín. ${p.minimo} u.</span>` : ""}
         </div>
         <div class="product-footer">
