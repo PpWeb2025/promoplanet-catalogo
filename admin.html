@@ -515,6 +515,35 @@
                 </div>
               </div>
 
+              <!-- URL proveedor + campos de detalle -->
+              <div style="margin-top:1.25rem;padding:1rem;background:var(--gris);border-radius:10px;border:1.5px solid var(--gris-borde)">
+                <div style="font-size:0.78rem;font-weight:600;color:var(--texto);margin-bottom:0.6rem">🌐 Enriquecer con datos del proveedor (opcional)</div>
+                <div style="display:flex;gap:0.5rem;align-items:center">
+                  <input type="url" id="agregar-f-url-proveedor" placeholder="https://proveedor.com/producto/..."
+                    style="flex:1;padding:0.55rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.85rem;background:var(--blanco)">
+                  <button class="btn btn-celeste btn-sm" onclick="analizarURLProveedor(this)">🔍 Analizar página</button>
+                </div>
+              </div>
+
+              <div class="form-grid" style="margin-top:1.25rem">
+                <div class="form-group" style="grid-column:1/-1">
+                  <label>Descripción</label>
+                  <textarea id="agregar-f-descripcion" style="width:100%;min-height:72px;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;resize:vertical" placeholder="Descripción del producto..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Material</label>
+                  <input type="text" id="agregar-f-material" placeholder="Ej: Acero inoxidable">
+                </div>
+                <div class="form-group">
+                  <label>Medidas</label>
+                  <input type="text" id="agregar-f-medidas" placeholder="Ej: 20 x 8 cm">
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                  <label>Colores disponibles</label>
+                  <input type="text" id="agregar-f-colores" placeholder="Ej: Negro, Blanco, Azul">
+                </div>
+              </div>
+
               <div style="margin-top:1.5rem">
                 <div style="font-size:0.78rem;font-weight:600;margin-bottom:0.75rem;color:var(--texto)">
                   Fotos — hacé click en ⭐ para marcar la principal
@@ -1515,6 +1544,44 @@ function removeAgregarFile(idx) {
   renderAgregarPreview();
 }
 
+async function analizarURLProveedor(btn) {
+  const url = document.getElementById('agregar-f-url-proveedor').value.trim();
+  if (!url) { showToast('Pegá una URL primero', 'error'); return; }
+
+  btn.disabled = true;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ Analizando…';
+
+  try {
+    const res = await fetch('/api/ia/adaptar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'No se pudo analizar la URL');
+    const data = await res.json();
+
+    if (data.descripcion) document.getElementById('agregar-f-descripcion').value = data.descripcion;
+    if (data.material)    document.getElementById('agregar-f-material').value    = data.material;
+    if (data.medidas)     document.getElementById('agregar-f-medidas').value     = data.medidas;
+    if (data.colores)     document.getElementById('agregar-f-colores').value     = data.colores;
+    if (data.nombre && !document.getElementById('agregar-f-nombre').value.trim()) {
+      document.getElementById('agregar-f-nombre').value = data.nombre;
+      actualizarNombresPreview();
+    }
+    if (data.categoria && !document.getElementById('agregar-f-categoria').value) {
+      document.getElementById('agregar-f-categoria').value = data.categoria;
+      actualizarSubcatsAgregar(data.categoria);
+    }
+    showToast('✅ Datos cargados desde la página del proveedor', 'success');
+  } catch (err) {
+    showToast(err.message || 'Error al analizar la URL', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
 function _resizarParaIA(file) {
   return new Promise(resolve => {
     const img = new Image();
@@ -1630,6 +1697,11 @@ function resetAgregar() {
   document.getElementById('agregar-f-nombre').value = '';
   document.getElementById('agregar-f-categoria').value = '';
   document.getElementById('agregar-subcat-group').style.display = 'none';
+  document.getElementById('agregar-f-url-proveedor').value = '';
+  document.getElementById('agregar-f-descripcion').value = '';
+  document.getElementById('agregar-f-material').value = '';
+  document.getElementById('agregar-f-medidas').value = '';
+  document.getElementById('agregar-f-colores').value = '';
   document.getElementById('agregar-fotos-confirm').innerHTML = '';
   document.getElementById('agregar-nombres-preview').style.display = 'none';
   document.getElementById('agregar-nombres-preview').innerHTML = '';
@@ -1682,7 +1754,11 @@ async function confirmarAgregarProducto(btn) {
         codigo: _agregarCodigo, nombre, categoria, subcategoria,
         estado: 'borrador', fotos: urls, emoji: '📦',
         rango: '', minimo: 0, tecnicas: [], destinatarios: [],
-        ocasiones: [], badges: [], descripcion: '',
+        ocasiones: [], badges: [],
+        descripcion: document.getElementById('agregar-f-descripcion').value.trim(),
+        material:    document.getElementById('agregar-f-material').value.trim(),
+        medidas:     document.getElementById('agregar-f-medidas').value.trim(),
+        colores:     document.getElementById('agregar-f-colores').value.trim(),
       }),
     });
     if (!prodRes.ok) {
