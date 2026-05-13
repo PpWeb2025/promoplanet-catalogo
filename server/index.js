@@ -10,10 +10,10 @@ const PORT = process.env.PORT || 3000;
 
 // MemoryStore es suficiente para uso local de un solo usuario
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { httpOnly: true, maxAge: 8 * 60 * 60 * 1000 }, // 8h
+    secret: process.env.SESSION_SECRET || 'fallback-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { httpOnly: true, maxAge: 8 * 60 * 60 * 1000 }, // 8h
 }));
 
 app.use(express.json({ limit: '20mb' }));
@@ -24,22 +24,23 @@ app.use('/api/productos', require('./routes/productos'));
 app.use('/api/drive', require('./routes/drive'));
 app.use('/api/consultas', require('./routes/consultas'));
 app.use('/api/ia', require('./routes/ia'));
+app.use('/api/suscripciones', require('./routes/suscripciones'));
 
 app.use(express.static(path.join(__dirname, '..')));
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
 initDb()
   .then(() => {
-    app.listen(PORT, () => {
-      console.log(`PromoPlanet corriendo en http://localhost:${PORT}`);
-      console.log(`  Catálogo:  http://localhost:${PORT}/`);
-      console.log(`  Admin:     http://localhost:${PORT}/admin.html`);
-    });
+        app.listen(PORT, () => {
+                console.log(`PromoPlanet corriendo en http://localhost:${PORT}`);
+                console.log(` Catálogo: http://localhost:${PORT}/`);
+                console.log(` Admin: http://localhost:${PORT}/admin.html`);
+        });
   })
   .catch(err => {
-    console.error('Error al inicializar la base de datos:', err);
-    process.exit(1);
+        console.error('Error al inicializar la base de datos:', err);
+        process.exit(1);
   });
