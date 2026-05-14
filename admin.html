@@ -187,6 +187,7 @@
   .check-chip { display: flex; align-items: center; gap: 5px; padding: 0.3rem 0.75rem; border: 1.5px solid var(--gris-borde); border-radius: 20px; cursor: pointer; font-size: 0.8rem; color: var(--texto-suave); transition: all 0.15s; }
   .check-chip input { display: none; }
   .check-chip.checked { border-color: var(--celeste); background: var(--celeste-light); color: var(--celeste); font-weight: 500; }
+  #badges-group .check-chip.checked { background: var(--chip-color, var(--celeste)); border-color: var(--chip-color, var(--celeste)); color: #fff; }
 
   /* FOTOS PANEL */
   .fotos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
@@ -196,8 +197,6 @@
   .foto-item .foto-overlay { position: absolute; inset: 0; background: rgba(0,36,78,0.5); display: flex; align-items: center; justify-content: center; gap: 4px; opacity: 0; transition: opacity 0.15s; }
   .foto-item:hover .foto-overlay { opacity: 1; }
   .foto-badge-principal { position: absolute; top: 4px; left: 4px; background: var(--celeste); color: var(--blanco); font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 4px; }
-  .foto-placeholder { aspect-ratio: 1; border-radius: 8px; border: 2px dashed var(--gris-borde); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--texto-suave); font-size: 0.75rem; gap: 4px; transition: all 0.15s; }
-  .foto-placeholder:hover { border-color: var(--celeste); color: var(--celeste); }
 
   /* DRIVE IMPORT */
   .drive-import-box { background: var(--azul-light); border: 1.5px solid rgba(0,52,113,0.2); border-radius: var(--radio); padding: 1.25rem; }
@@ -238,6 +237,13 @@
   /* EMPTY */
   .empty-table { text-align: center; padding: 3rem; color: var(--texto-suave); }
   .empty-table .icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
+
+  /* AGREGAR PRODUCTO — dropzone */
+  .agregar-dropzone { border: 2px dashed var(--gris-borde); border-radius: var(--radio); padding: 2.5rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; text-align: center; color: var(--texto-suave); font-size: 0.85rem; cursor: pointer; transition: all 0.15s; background: var(--gris); }
+  .agregar-dropzone:hover, .agregar-dropzone.dragover { border-color: var(--celeste); background: var(--celeste-light); color: var(--celeste); }
+  .agregar-dropzone-icon { font-size: 2rem; margin-bottom: 0.25rem; }
+  .agregar-ia-loading { display:flex; align-items:center; gap:0.75rem; padding:1rem; background:var(--celeste-light); border:1.5px solid var(--celeste); border-radius:8px; font-size:0.85rem; color:var(--azul); }
+  .agregar-nombres-box { background:var(--gris); border-radius:8px; padding:0.875rem 1rem; font-size:0.8rem; font-family:'DM Mono',monospace; color:var(--texto-suave); line-height:1.7; }
 
   /* SECCION HIDDEN */
   .section { display: none; }
@@ -286,6 +292,9 @@
       <button class="nav-item" onclick="showSection('productos', this)">
         <span class="icon">📦</span> Productos
       </button>
+      <button class="nav-item" onclick="showSection('agregar', this)">
+        <span class="icon">📸</span> Agregar producto
+      </button>
       <button class="nav-item" onclick="showSection('importar', this)">
         <span class="icon">☁️</span> Importar de Drive
       </button>
@@ -307,7 +316,7 @@
     <div class="topbar">
       <span class="topbar-title" id="topbar-title">Dashboard</span>
       <div class="topbar-actions">
-        <button class="btn btn-celeste" onclick="showModal('modal-producto')">+ Nuevo producto</button>
+        <button class="btn btn-celeste" onclick="showSection('agregar', document.querySelector('.nav-item[onclick*=agregar]'))">+ Nuevo producto</button>
         <a href="index.html" target="_blank" class="btn btn-outline">Ver catálogo →</a>
         <button class="btn btn-outline" onclick="logout()">Salir</button>
       </div>
@@ -375,20 +384,20 @@
             </div>
             <select class="filter-select" onchange="filtrarTabla('', this.value)">
               <option value="">Todas las categorías</option>
-              <option value="onboarding">Onboarding</option>
-              <option value="capacitacion">Capacitación</option>
-              <option value="reconocimiento">Reconocimiento</option>
+              <option value="bolsos_mochilas">Bolsos y Mochilas</option>
+              <option value="capacitacion">Capacitación y Eventos</option>
               <option value="drinkware">Drinkware</option>
-            <option value="drinkware">Drinkware</option>
-            <option value="cotidiano">Escritorio & Oficina</option>
-            <option value="escritura">Escritura</option>
-            <option value="tecnologia">Tecnología</option>
-            <option value="eco">Eco & Sustentable</option>
-            <option value="llaveros">Llaveros & Accesorios</option>
-              <option value="outdoors">Outdoors</option>
-              <option value="fechas">Fechas especiales</option>
-              <option value="indumentaria">Indumentaria</option>
-              <option value="packaging">Packaging</option>
+              <option value="eco">Eco y Sustentable</option>
+              <option value="escritorio">Escritorio y Oficina</option>
+              <option value="escritura">Escritura</option>
+              <option value="fechas">Fechas Especiales</option>
+              <option value="indumentaria">Indumentaria Corporativa</option>
+              <option value="llaveros">Llaveros y Accesorios</option>
+              <option value="onboarding">Onboarding y Bienvenida</option>
+              <option value="outdoors">Outdoors y Bienestar</option>
+              <option value="packaging">Packaging y Presentación</option>
+              <option value="reconocimiento">Reconocimiento y Premios</option>
+              <option value="tecnologia">Tecnología</option>
             </select>
             <select class="filter-select" onchange="filtrarTablaEstado(this.value)">
               <option value="">Todos los estados</option>
@@ -421,19 +430,182 @@
         </div>
       </div>
 
+      <!-- AGREGAR PRODUCTO -->
+      <div class="section" id="sec-agregar">
+
+        <!-- STEP 1: Subir fotos -->
+        <div id="agregar-step1">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📸 Agregar producto nuevo</span>
+              <div style="display:flex;align-items:center;gap:0.75rem">
+                <span style="font-size:0.8rem;color:var(--texto-suave)">Próximo código:</span>
+                <span id="agregar-codigo" style="font-family:'DM Mono',monospace;font-size:1rem;font-weight:700;color:var(--celeste)">…</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="agregar-dropzone" id="agregar-dropzone"
+                ondragover="event.preventDefault();this.classList.add('dragover')"
+                ondragleave="this.classList.remove('dragover')"
+                ondrop="onDropFiles(event);this.classList.remove('dragover')"
+                onclick="document.getElementById('agregar-file-input').click()">
+                <div class="agregar-dropzone-icon">📷</div>
+                <div style="font-weight:500">Arrastrá las fotos acá</div>
+                <div style="font-size:0.78rem;margin:0.2rem 0">o hacé click para seleccionar</div>
+                <div style="font-size:0.72rem;color:var(--texto-suave)">JPG, PNG, WEBP — hasta 20 MB por foto</div>
+              </div>
+              <input type="file" id="agregar-file-input" accept="image/*" multiple style="display:none" onchange="onSelectFiles(this)">
+
+              <div class="fotos-grid" id="agregar-preview" style="margin-top:1rem;display:none"></div>
+
+              <div style="margin-top:1rem">
+                <input type="url" id="agregar-url-proveedor"
+                  placeholder="URL del proveedor (opcional) — la IA leerá la página para completar descripción, material y medidas"
+                  style="width:100%;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.85rem;box-sizing:border-box"
+                  oninput="actualizarBtnAnalizar()">
+              </div>
+
+              <div id="agregar-ia-wrap" style="margin-top:1rem;display:none;align-items:center;gap:0.75rem">
+                <button class="btn btn-celeste" onclick="analizarConIA(this)">✨ Analizar →</button>
+                <span id="agregar-ia-hint" style="font-size:0.78rem;color:var(--texto-suave)"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: Confirmar -->
+        <div id="agregar-step2" style="display:none">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Confirmar y crear producto</span>
+              <button class="btn btn-outline btn-sm" onclick="resetAgregar()">← Volver</button>
+            </div>
+            <div class="panel-body">
+              <div style="background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:8px;padding:0.65rem 1rem;margin-bottom:1.25rem;font-size:0.85rem;color:var(--azul)">
+                ✨ La IA sugirió los datos abajo. Podés editarlos antes de confirmar.
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Código</label>
+                  <input type="text" id="agregar-f-codigo" readonly style="background:var(--gris);font-family:'DM Mono',monospace;font-weight:600;color:var(--celeste)">
+                </div>
+                <div class="form-group">
+                  <label>Nombre del producto *</label>
+                  <input type="text" id="agregar-f-nombre" oninput="actualizarNombresPreview()">
+                </div>
+                <div class="form-group">
+                  <label>Categoría *</label>
+                  <select id="agregar-f-categoria" onchange="actualizarSubcatsAgregar(this.value)">
+                    <option value="">Seleccioná...</option>
+                    <option value="bolsos_mochilas">Bolsos y Mochilas</option>
+                    <option value="capacitacion">Capacitación y Eventos</option>
+                    <option value="drinkware">Drinkware</option>
+                    <option value="eco">Eco y Sustentable</option>
+                    <option value="escritorio">Escritorio y Oficina</option>
+                    <option value="escritura">Escritura</option>
+                    <option value="fechas">Fechas Especiales</option>
+                    <option value="indumentaria">Indumentaria Corporativa</option>
+                    <option value="llaveros">Llaveros y Accesorios</option>
+                    <option value="onboarding">Onboarding y Bienvenida</option>
+                    <option value="outdoors">Outdoors y Bienestar</option>
+                    <option value="packaging">Packaging y Presentación</option>
+                    <option value="reconocimiento">Reconocimiento y Premios</option>
+                    <option value="tecnologia">Tecnología</option>
+                  </select>
+                </div>
+                <div class="form-group" id="agregar-subcat-group" style="display:none">
+                  <label>Subcategoría</label>
+                  <select id="agregar-f-subcategoria" onchange="actualizarNombresPreview()"></select>
+                </div>
+              </div>
+
+              <div class="form-grid" style="margin-top:1.25rem">
+                <div class="form-group" style="grid-column:1/-1">
+                  <label>Descripción</label>
+                  <textarea id="agregar-f-descripcion" style="width:100%;min-height:72px;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;resize:vertical" placeholder="Descripción del producto..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Material</label>
+                  <input type="text" id="agregar-f-material" placeholder="Ej: Acero inoxidable">
+                </div>
+                <div class="form-group">
+                  <label>Medidas</label>
+                  <input type="text" id="agregar-f-medidas" placeholder="Ej: 20 x 8 cm">
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                  <label>Colores disponibles</label>
+                  <input type="text" id="agregar-f-colores" placeholder="Ej: Negro, Blanco, Azul">
+                </div>
+              </div>
+
+              <div style="margin-top:1.5rem">
+                <div style="font-size:0.78rem;font-weight:600;margin-bottom:0.75rem;color:var(--texto)">
+                  Fotos — hacé click en ⭐ para marcar la principal
+                </div>
+                <div class="fotos-grid" id="agregar-fotos-confirm"></div>
+              </div>
+
+              <div id="agregar-nombres-preview" class="agregar-nombres-box" style="margin-top:1.25rem;display:none"></div>
+            </div>
+            <div style="padding:1rem 1.25rem;border-top:1px solid var(--gris-borde);display:flex;justify-content:flex-end;gap:0.75rem;align-items:center">
+              <span id="agregar-drive-hint" style="font-size:0.75rem;color:var(--texto-suave);margin-right:auto"></span>
+              <button class="btn btn-outline" onclick="resetAgregar()">Cancelar</button>
+              <button class="btn btn-celeste" onclick="confirmarAgregarProducto(this)">✅ Crear producto en borrador</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- IMPORTAR DE PROVEEDOR -->
+      <div class="section" id="sec-proveedor">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">✨ Importar producto de proveedor con IA</span>
+          </div>
+          <div class="panel-body">
+            <p style="color:var(--texto-suave);font-size:0.88rem;margin-bottom:1.25rem">
+              Pegá el <strong>link del producto</strong> del proveedor o el texto de la ficha. Claude va a leer la página y adaptarlo al estilo PromoPlanet.
+            </p>
+            <div class="form-group" style="margin-bottom:1rem">
+              <label id="ia-label">Link o texto del producto del proveedor *</label>
+              <textarea id="ia-texto" style="min-height:80px;width:100%;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;resize:vertical" placeholder="https://proveedor.com/producto/..." oninput="iaDetectarTipo(this)"></textarea>
+              <div id="ia-tipo-badge" style="display:none;margin-top:0.4rem;font-size:0.78rem;font-weight:600;color:var(--celeste)"></div>
+            </div>
+            <button class="btn btn-celeste" id="btn-ia-adaptar" onclick="adaptarConIA()">
+              ✨ Adaptar con Claude
+            </button>
+            <div id="ia-resultado" style="display:none;margin-top:1.25rem;background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:10px;padding:1.25rem">
+              <div style="font-size:0.85rem;font-weight:600;color:var(--azul);margin-bottom:0.75rem">✅ Descripción adaptada — revisá y completá los datos que faltan</div>
+              <div id="ia-preview" style="font-size:0.85rem;color:var(--texto-suave);line-height:1.6;margin-bottom:1rem"></div>
+              <button class="btn btn-primary" onclick="cargarEnFormulario()">Cargar en formulario →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- IMPORTAR DRIVE -->
       <div class="section" id="sec-importar">
         <div class="panel">
           <div class="panel-header"><span class="panel-title">☁️ Importar productos desde Google Drive</span></div>
           <div class="panel-body">
             <p style="color:var(--texto-suave);font-size:0.88rem;margin-bottom:1.25rem">
-              El sistema lee tu carpeta de Drive, detecta el código de cada imagen (ej: <code style="background:var(--gris);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace">PP-0042</code> en <em>Jarro Térmico PP-0042 a.jpg</em>) y agrupa todas las fotos del mismo producto automáticamente.
+              El sistema lee tu carpeta de Drive, detecta el código de cada imagen (ej: <code style="background:var(--gris);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace">G1603</code> en <em>Jarro Térmico G1603 a.jpg</em>) y agrupa todas las fotos del mismo producto automáticamente.
             </p>
 
             <div class="form-group" style="margin-bottom:1rem">
               <label>Link de la carpeta de Google Drive</label>
               <input type="text" id="import-drive-url" placeholder="https://drive.google.com/drive/folders/XXXXXXXXXX">
               <span class="form-hint">La carpeta debe ser pública o compartida con acceso de lectura</span>
+            </div>
+
+            <div style="display:flex;gap:1.5rem;margin-bottom:0.75rem;font-size:0.85rem;color:var(--texto)">
+              <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer">
+                <input type="checkbox" id="opt-recursive"> Incluir subcarpetas
+              </label>
+              <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer">
+                <input type="checkbox" id="opt-actualizar"> Actualizar fotos si ya existe
+              </label>
             </div>
 
             <div style="display:flex;gap:0.75rem;margin-bottom:1.5rem">
@@ -518,52 +690,58 @@
       <!-- FOTOS -->
       <div style="margin-bottom:1.5rem">
         <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:0.5rem">Imágenes del producto</label>
-        <div class="fotos-grid" id="fotos-preview">
-          <div class="foto-placeholder" onclick="document.getElementById('foto-input').click()">
-            <span style="font-size:1.2rem">📷</span>
-            <span>Agregar foto</span>
-          </div>
+        <div class="fotos-grid" id="fotos-preview"></div>
+        <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.75rem">
+          <button type="button" class="btn btn-sm" style="background:var(--celeste);color:#fff;font-size:0.78rem" onclick="document.getElementById('foto-file-input').click()">+ Subir foto</button>
+          <input type="file" id="foto-file-input" accept="image/*" style="display:none" onchange="subirFotoDesdeArchivo(this)">
+          <span id="foto-upload-status" style="font-size:0.78rem;color:var(--texto-suave)"></span>
         </div>
-        <input type="file" id="foto-input" accept="image/*" multiple style="display:none" onchange="previewFotos(this)">
-        <div style="font-size:0.72rem;color:var(--texto-suave)">La primera imagen será la principal. Podés agregar varias.</div>
         <div style="margin-top:0.5rem">
           <label style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:0.3rem">O pegá el link de Drive de las fotos de este producto:</label>
-          <input type="text" id="foto-drive-url" placeholder="Código del producto (ej: PP-0042) — se buscan las fotos automáticamente" style="width:100%;padding:0.5rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem">
+          <input type="text" id="foto-drive-url" style="width:100%;padding:0.5rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem">
         </div>
       </div>
 
       <div class="form-grid">
         <div class="form-group">
           <label>Código *</label>
-          <input type="text" id="f-codigo" placeholder="PP-0042">
+          <input type="text" id="f-codigo">
           <span class="form-hint">Debe coincidir con el código en el nombre de las fotos</span>
         </div>
         <div class="form-group">
           <label>Nombre del producto *</label>
-          <input type="text" id="f-nombre" placeholder="Jarro Térmico Premium">
+          <input type="text" id="f-nombre">
         </div>
         <div class="form-group">
           <label>Categoría *</label>
-          <select id="f-categoria">
+          <select id="f-categoria" onchange="actualizarSubcats(this.value)">
             <option value="">Seleccioná...</option>
-            <option value="onboarding">Onboarding & Bienvenida</option>
-            <option value="capacitacion">Capacitación & Eventos</option>
-            <option value="reconocimiento">Reconocimiento & Premios</option>
+            <option value="bolsos_mochilas">Bolsos y Mochilas</option>
+            <option value="capacitacion">Capacitación y Eventos</option>
             <option value="drinkware">Drinkware</option>
-            <option value="cotidiano">Escritorio & Oficina</option>
+            <option value="eco">Eco y Sustentable</option>
+            <option value="escritorio">Escritorio y Oficina</option>
             <option value="escritura">Escritura</option>
+            <option value="fechas">Fechas Especiales</option>
+            <option value="indumentaria">Indumentaria Corporativa</option>
+            <option value="llaveros">Llaveros y Accesorios</option>
+            <option value="onboarding">Onboarding y Bienvenida</option>
+            <option value="outdoors">Outdoors y Bienestar</option>
+            <option value="packaging">Packaging y Presentación</option>
+            <option value="reconocimiento">Reconocimiento y Premios</option>
             <option value="tecnologia">Tecnología</option>
-            <option value="eco">Eco & Sustentable</option>
-            <option value="llaveros">Llaveros & Accesorios</option>
-            <option value="outdoors">Outdoors & Bienestar</option>
-            <option value="fechas">Fechas especiales</option>
-            <option value="indumentaria">Indumentaria</option>
-            <option value="packaging">Packaging & Presentación</option>
+          </select>
+        </div>
+        <div class="form-group" id="f-subcategoria-group" style="display:none">
+          <label>Subcategoría</label>
+          <select id="f-subcategoria">
+            <option value="">Sin subcategoría</option>
           </select>
         </div>
         <div class="form-group">
           <label>Rango de precio</label>
           <select id="f-rango">
+            <option value="">Sin precio definido</option>
             <option value="economico">Económico</option>
             <option value="intermedio">Intermedio</option>
             <option value="premium">Premium</option>
@@ -571,23 +749,38 @@
         </div>
         <div class="form-group">
           <label>Cantidad mínima</label>
-          <input type="number" id="f-minimo" placeholder="50" min="1">
+          <input type="number" id="f-minimo" min="1">
         </div>
         <div class="form-group">
           <label>Material</label>
-          <input type="text" id="f-material" placeholder="Acero inoxidable 304">
+          <input type="text" id="f-material">
         </div>
         <div class="form-group">
           <label>Medidas</label>
-          <input type="text" id="f-medidas" placeholder="22 cm alto × 7 cm diám.">
+          <input type="text" id="f-medidas">
         </div>
         <div class="form-group">
           <label>Colores disponibles</label>
-          <input type="text" id="f-colores" placeholder="Negro, plateado, blanco">
+          <input type="text" id="f-colores">
         </div>
         <div class="form-group full">
           <label>Descripción</label>
-          <textarea id="f-descripcion" placeholder="Describí el producto: características, usos, ventajas..."></textarea>
+          <textarea id="f-descripcion"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Etiquetas del producto <span style="font-size:0.72rem;color:var(--texto-suave);font-weight:400">(se muestran sobre la imagen en el catálogo)</span></label>
+          <div class="check-group" id="badges-group">
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#2563eb"><input type="checkbox" value="tinta_azul"> 🖊️ Tinta azul</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#374151"><input type="checkbox" value="tinta_negra"> 🖊️ Tinta negra</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#22c55e"><input type="checkbox" value="nuevo"> ✨ Nuevo</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#16a34a"><input type="checkbox" value="ecofriendly"> 🌱 Eco friendly</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#0ea5e9"><input type="checkbox" value="termico"> 🌡️ Térmico</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#7c3aed"><input type="checkbox" value="premium"> ⭐ Premium</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#ef4444"><input type="checkbox" value="sale"> 🔥 SALE</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#00A8B4"><input type="checkbox" value="kit"> 🎁 Kit</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#ec4899"><input type="checkbox" value="ninos"> 🧒 Niños</label>
+            <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#f59e0b"><input type="checkbox" value="popular"> 🔥 Popular</label>
+          </div>
         </div>
         <div class="form-group full">
           <label>Técnicas de personalización</label>
@@ -622,57 +815,16 @@
         </div>
         <div class="form-group">
           <label>Proveedor</label>
-          <select id="f-proveedor">
+          <select id="f-proveedor" onchange="toggleProveedorOtro()">
             <option value="">Seleccioná...</option>
             <option>Zecat</option>
             <option>Stocksur</option>
             <option>Xtrade</option>
             <option>Improm</option>
-            <option>Otro</option>
+            <option value="__otro__">Otro...</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label>Marca</label>
-          <select id="f-marca">
-            <option value="">Sin marca / Genérico</option>
-            <option>Bagsmart</option>
-            <option>Cardón</option>
-            <option>Chili</option>
-            <option>Coleman</option>
-            <option>Contigo</option>
-            <option>Durabag</option>
-            <option>Elmers</option>
-            <option>Gato</option>
-            <option>Herschel</option>
-            <option>Hydra Go</option>
-            <option>Kingtech</option>
-            <option>Klean Kanteen</option>
-            <option>La Baule</option>
-            <option>Laguiolé</option>
-            <option>Leafcounty</option>
-            <option>Moleskine</option>
-            <option>NomaWalk</option>
-            <option>Notes</option>
-            <option>Oster</option>
-            <option>Pampa Spirit</option>
-            <option>Pampero</option>
-            <option>Paper Mate</option>
-            <option>Parker</option>
-            <option>Poncho Pampa</option>
-            <option>Prodir</option>
-            <option>Re·use me</option>
-            <option>Roupen</option>
-            <option>Rubbermaid</option>
-            <option>Sharpie</option>
-            <option>Sistema</option>
-            <option>Slazenger</option>
-            <option>Sol's</option>
-            <option>Suns Tools</option>
-            <option>The Daily Book</option>
-            <option>Trust</option>
-            <option>Wagner</option>
-            <option>Waterman</option>
-          </select>
+          <input type="text" id="f-proveedor-otro" placeholder="Nombre del proveedor"
+            style="display:none;margin-top:0.5rem;width:100%;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;box-sizing:border-box">
         </div>
         <div class="form-group">
           <label>Estado</label>
@@ -683,7 +835,7 @@
         </div>
         <div class="form-group full">
           <label>Notas internas (no se muestran al cliente)</label>
-          <textarea id="f-notas" placeholder="Código de proveedor, observaciones, variantes..." style="min-height:60px"></textarea>
+          <textarea id="f-notas" style="min-height:60px"></textarea>
         </div>
       </div>
     </div>
@@ -700,22 +852,22 @@
 
 <script>
 // ============================================================
-// AUTH
+// AUTH — via API
 // ============================================================
 async function login() {
-  const v = document.getElementById('pwd-input').value;
-  const errEl = document.getElementById('login-error');
-  errEl.style.display = 'none';
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: v }),
-    });
-    if (res.ok) { await mostrarApp(); } else { errEl.style.display = 'block'; }
-  } catch {
-    errEl.textContent = 'Error de conexión';
-    errEl.style.display = 'block';
+  const password = document.getElementById('pwd-input').value;
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+  if (res.ok) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    await Promise.all([renderTabla(), renderDashboard()]);
+    renderCatAdmin();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
   }
 }
 
@@ -726,33 +878,30 @@ async function logout() {
   document.getElementById('pwd-input').value = '';
 }
 
-async function mostrarApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').classList.add('visible');
-  await cargarProductos();
-  renderTabla();
-  renderDashboard();
-  renderCatAdmin();
-}
-
-fetch('/api/auth/me').then(r => { if (r.ok) mostrarApp(); });
+// Verificar sesión activa al cargar la página
+(async () => {
+  const res = await fetch('/api/auth/me');
+  if (res.ok) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    await Promise.all([renderTabla(), renderDashboard()]);
+    renderCatAdmin();
+  }
+})();
 
 // ============================================================
-// DATA — API del servidor
+// DATA — API REST
 // ============================================================
-let productosCache = [];
-
-async function cargarProductos() {
+async function getProductos() {
   const res = await fetch('/api/productos/admin/list');
-  if (res.ok) productosCache = await res.json();
+  if (!res.ok) return [];
+  return res.json();
 }
-
-function getProductos() { return productosCache; }
 
 // ============================================================
 // NAVEGACIÓN
 // ============================================================
-const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', importar:'Importar de Drive', categorias:'Categorías', exportar:'Exportar datos' };
+const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', agregar:'Agregar producto', proveedor:'Importar de proveedor', importar:'Importar de Drive', categorias:'Categorías', exportar:'Exportar datos' };
 
 function showSection(id, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -760,8 +909,14 @@ function showSection(id, btn) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.getElementById('topbar-title').textContent = SEC_TITLES[id] || id;
-  if (id === 'productos') cargarProductos().then(() => renderTabla());
-  if (id === 'dashboard') cargarProductos().then(() => renderDashboard());
+  if (id === 'productos') renderTabla();
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'agregar') initAgregarSection();
+}
+
+async function verCategoria(catId) {
+  showSection('productos', document.querySelectorAll('.nav-item')[1]);
+  await filtrarTabla('', catId);
 }
 
 // ============================================================
@@ -780,20 +935,32 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
 });
 
+function toggleProveedorOtro() {
+  const sel = document.getElementById('f-proveedor');
+  const inp = document.getElementById('f-proveedor-otro');
+  const mostrar = sel.value === '__otro__';
+  inp.style.display = mostrar ? '' : 'none';
+  if (!mostrar) inp.value = '';
+  if (mostrar) inp.focus();
+}
+
 function limpiarForm() {
   ['f-codigo','f-nombre','f-material','f-medidas','f-colores','f-descripcion','f-notas','foto-drive-url'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  ['f-categoria','f-rango','f-proveedor','f-marca'].forEach(id => {
+  ['f-categoria','f-rango','f-proveedor'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
+  const otroinp = document.getElementById('f-proveedor-otro');
+  if (otroinp) { otroinp.value = ''; otroinp.style.display = 'none'; }
+  actualizarSubcats('');
   document.getElementById('f-minimo').value = '';
   document.getElementById('f-estado').value = 'publicado';
   document.querySelectorAll('.check-chip').forEach(c => c.classList.remove('checked'));
   document.querySelectorAll('.check-chip input').forEach(c => c.checked = false);
-  document.getElementById('fotos-preview').innerHTML = `<div class="foto-placeholder" onclick="document.getElementById('foto-input').click()"><span style="font-size:1.2rem">📷</span><span>Agregar foto</span></div>`;
+  document.getElementById('fotos-preview').innerHTML = '';
 }
 
 // ============================================================
@@ -807,26 +974,8 @@ function toggleChip(el) {
 }
 
 // ============================================================
-// FOTOS PREVIEW
+// FOTOS (solo Drive)
 // ============================================================
-function previewFotos(input) {
-  const files = Array.from(input.files);
-  const grid = document.getElementById('fotos-preview');
-  const existing = grid.querySelectorAll('.foto-item');
-  files.forEach((file, i) => {
-    const url = URL.createObjectURL(file);
-    const div = document.createElement('div');
-    div.className = 'foto-item' + (existing.length === 0 && i === 0 ? ' principal' : '');
-    div.innerHTML = `<img src="${url}">
-      ${existing.length === 0 && i === 0 ? '<span class="foto-badge-principal">Principal</span>' : ''}
-      <div class="foto-overlay">
-        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
-        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
-      </div>`;
-    grid.insertBefore(div, grid.querySelector('.foto-placeholder'));
-  });
-}
-
 function setPrincipal(el) {
   document.querySelectorAll('.foto-item').forEach(f => {
     f.classList.remove('principal');
@@ -837,8 +986,67 @@ function setPrincipal(el) {
   el.insertAdjacentHTML('afterbegin', '<span class="foto-badge-principal">Principal</span>');
 }
 
+function fotosExistentes() {
+  return Array.from(document.querySelectorAll('#fotos-preview .foto-item img'))
+    .map(img => img.dataset.fotoid)
+    .filter(Boolean);
+}
+
+function fotoSrc(id) {
+  return id && id.startsWith('http') ? id : `/api/drive/imagen/${id}`;
+}
+
+function mostrarFotosExistentes(fotos) {
+  if (!fotos || !fotos.length) return;
+  const grid = document.getElementById('fotos-preview');
+  fotos.forEach((fotoId, i) => {
+    const div = document.createElement('div');
+    div.className = 'foto-item' + (i === 0 ? ' principal' : '');
+    div.innerHTML = `<img src="${fotoSrc(fotoId)}" data-fotoid="${fotoId}">
+      ${i === 0 ? '<span class="foto-badge-principal">Principal</span>' : ''}
+      <div class="foto-overlay">
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
+        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+function agregarFotoAlGrid(url) {
+  const grid = document.getElementById('fotos-preview');
+  const esPrimera = !grid.querySelector('.foto-item');
+  const div = document.createElement('div');
+  div.className = 'foto-item' + (esPrimera ? ' principal' : '');
+  div.innerHTML = `<img src="${url}" data-fotoid="${url}">
+    ${esPrimera ? '<span class="foto-badge-principal">Principal</span>' : ''}
+    <div class="foto-overlay">
+      <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
+      <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
+    </div>`;
+  grid.appendChild(div);
+}
+
+async function subirFotoDesdeArchivo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('foto-upload-status');
+  status.textContent = 'Subiendo...';
+  const fd = new FormData();
+  fd.append('foto', file);
+  try {
+    const r = await fetch('/api/productos/upload-foto', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error al subir');
+    agregarFotoAlGrid(data.url);
+    status.textContent = '';
+  } catch (err) {
+    status.textContent = 'Error: ' + err.message;
+  }
+  input.value = '';
+}
+
 // ============================================================
-// GUARDAR PRODUCTO
+// GUARDAR PRODUCTO — via API
 // ============================================================
 async function guardarProducto(estado) {
   const codigo = document.getElementById('f-codigo').value.trim();
@@ -847,8 +1055,6 @@ async function guardarProducto(estado) {
   if (!codigo || !nombre || !cat) { showToast('Completá código, nombre y categoría', 'error'); return; }
 
   const getChecked = groupId => Array.from(document.querySelectorAll(`#${groupId} input:checked`)).map(i => i.value);
-  const fotos = Array.from(document.querySelectorAll('#fotos-preview .foto-item img'))
-    .map(img => img.getAttribute('src')).filter(s => s && s.startsWith('http'));
 
   const prod = {
     codigo, nombre,
@@ -862,28 +1068,34 @@ async function guardarProducto(estado) {
     tecnicas: getChecked('tecnicas-group'),
     destinatarios: getChecked('dest-group'),
     ocasiones: getChecked('occ-group'),
-    proveedor: document.getElementById('f-proveedor').value,
+    badges: getChecked('badges-group'),
+    proveedor: document.getElementById('f-proveedor').value === '__otro__'
+      ? document.getElementById('f-proveedor-otro').value.trim()
+      : document.getElementById('f-proveedor').value,
     notas: document.getElementById('f-notas').value,
     drive_code: document.getElementById('foto-drive-url').value,
     estado: estado || document.getElementById('f-estado').value,
     emoji: '📦',
-    fotos,
+    fotos: fotosExistentes(),
   };
 
-  try {
-    const url = editandoId ? `/api/productos/admin/${editandoId}` : '/api/productos/admin';
-    const res = await fetch(url, {
-      method: editandoId ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(prod),
-    });
-    if (!res.ok) { const e = await res.json(); showToast(e.error || 'Error al guardar', 'error'); return; }
-    closeModal('modal-producto');
-    await cargarProductos();
-    renderTabla();
-    renderDashboard();
-    showToast(estado === 'publicado' ? '✅ Producto publicado en el catálogo' : '📝 Guardado como borrador', 'success');
-  } catch { showToast('Error de conexión', 'error'); }
+  const url = editandoId ? `/api/productos/admin/${editandoId}` : '/api/productos/admin';
+  const method = editandoId ? 'PUT' : 'POST';
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(prod),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    showToast(err.error || 'Error al guardar', 'error');
+    return;
+  }
+
+  closeModal('modal-producto');
+  await Promise.all([renderTabla(), renderDashboard()]);
+  showToast(prod.estado === 'publicado' ? '✅ Producto publicado en el catálogo' : '📝 Guardado como borrador', 'success');
 }
 
 // ============================================================
@@ -895,19 +1107,31 @@ const CAT_NAMES = {
   escritura:'Escritura', fechas:'Fechas Especiales', indumentaria:'Indumentaria Corporativa',
   llaveros:'Llaveros y Accesorios', onboarding:'Onboarding y Bienvenida',
   outdoors:'Outdoors y Bienestar', packaging:'Packaging y Presentación',
-  reconocimiento:'Reconocimiento y Premios', tecnologia:'Tecnología',
+  reconocimiento:'Reconocimiento y Premios', tecnologia:'Tecnología'
 };
 const RANGO_NAMES = { economico:'Económico', intermedio:'Intermedio', premium:'Premium' };
 
-function renderTabla(lista) {
-  lista = lista !== undefined ? lista : getProductos();
+// cache en memoria para la tabla actual (se recarga con renderTabla())
+let _tablaCache = [];
+
+async function renderTabla(lista) {
+  if (!lista) lista = await getProductos();
+  _tablaCache = lista;
   const tbody = document.getElementById('tabla-productos');
   const empty = document.getElementById('tabla-empty');
-  if (!lista.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  if (!lista.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
   empty.style.display = 'none';
-  tbody.innerHTML = lista.map(p => `
+  tbody.innerHTML = lista.map(p => {
+    const thumb = p.fotos && p.fotos.length
+      ? `<img src="${fotoSrc(p.fotos[0])}" style="width:40px;height:40px;object-fit:cover;border-radius:6px">`
+      : (p.emoji || '📦');
+    return `
     <tr>
-      <td><div class="prod-thumb">${p.emoji || '📦'}</div></td>
+      <td><div class="prod-thumb">${thumb}</div></td>
       <td><span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--celeste)">${p.codigo}</span></td>
       <td><strong>${p.nombre}</strong>${p.proveedor ? `<br><span style="font-size:0.72rem;color:var(--texto-suave)">${p.proveedor}</span>` : ''}</td>
       <td>${CAT_NAMES[p.categoria] || p.categoria}</td>
@@ -922,30 +1146,35 @@ function renderTabla(lista) {
           <button class="btn btn-success btn-sm" onclick="toggleEstado(${p.id})">${p.estado === 'publicado' ? '⏸' : '▶'}</button>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
-function filtrarTabla(q, cat) {
-  let lista = getProductos();
+async function filtrarTabla(q, cat) {
+  let lista = await getProductos();
   if (q) lista = lista.filter(p => p.nombre.toLowerCase().includes(q.toLowerCase()) || p.codigo.toLowerCase().includes(q.toLowerCase()));
   if (cat) lista = lista.filter(p => p.categoria === cat);
   renderTabla(lista);
 }
 
-function filtrarTablaEstado(estado) {
-  let lista = getProductos();
+async function filtrarTablaEstado(estado) {
+  let lista = await getProductos();
   if (estado) lista = lista.filter(p => p.estado === estado);
   renderTabla(lista);
 }
 
-function editarProducto(id) {
-  const p = getProductos().find(x => x.id === id);
+async function editarProducto(id) {
+  const lista = _tablaCache.length ? _tablaCache : await getProductos();
+  const p = lista.find(x => x.id === id);
   if (!p) return;
+  limpiarForm();
   editandoId = id;
   document.getElementById('modal-prod-title').textContent = 'Editar producto';
   document.getElementById('f-codigo').value = p.codigo;
   document.getElementById('f-nombre').value = p.nombre;
   document.getElementById('f-categoria').value = p.categoria;
+  actualizarSubcats(p.categoria);
+  document.getElementById('f-subcategoria').value = p.subcategoria || '';
   document.getElementById('f-rango').value = p.rango;
   document.getElementById('f-minimo').value = p.minimo;
   document.getElementById('f-material').value = p.material || '';
@@ -953,26 +1182,22 @@ function editarProducto(id) {
   document.getElementById('f-colores').value = p.colores || '';
   document.getElementById('f-descripcion').value = p.descripcion || '';
   document.getElementById('f-notas').value = p.notas || '';
-  document.getElementById('f-proveedor').value = p.proveedor || '';
-  const marcaEl = document.getElementById('f-marca');
-  if (marcaEl) marcaEl.selectedIndex = 0;
+  const _provKnown = ['', 'Zecat', 'Stocksur', 'Xtrade', 'Improm'];
+  const _prov = p.proveedor || '';
+  const _provOtroInp = document.getElementById('f-proveedor-otro');
+  if (_provKnown.includes(_prov)) {
+    document.getElementById('f-proveedor').value = _prov;
+    _provOtroInp.style.display = 'none';
+    _provOtroInp.value = '';
+  } else {
+    document.getElementById('f-proveedor').value = '__otro__';
+    _provOtroInp.value = _prov;
+    _provOtroInp.style.display = '';
+  }
   document.getElementById('f-estado').value = p.estado || 'publicado';
   document.getElementById('foto-drive-url').value = p.drive_code || '';
-  const grid = document.getElementById('fotos-preview');
-  grid.innerHTML = `<div class="foto-placeholder" onclick="document.getElementById('foto-input').click()"><span style="font-size:1.2rem">📷</span><span>Agregar foto</span></div>`;
-  (p.fotos || []).forEach((url, i) => {
-    const div = document.createElement('div');
-    div.className = 'foto-item' + (i === 0 ? ' principal' : '');
-    div.innerHTML = `<img src="${url}">
-      ${i === 0 ? '<span class="foto-badge-principal">Principal</span>' : ''}
-      <div class="foto-overlay">
-        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
-        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
-      </div>`;
-    grid.insertBefore(div, grid.querySelector('.foto-placeholder'));
-  });
-  ['tecnicas-group','dest-group','occ-group'].forEach(gid => {
-    const field = gid === 'tecnicas-group' ? 'tecnicas' : gid === 'dest-group' ? 'destinatarios' : 'ocasiones';
+  ['tecnicas-group','dest-group','occ-group','badges-group'].forEach(gid => {
+    const field = gid === 'tecnicas-group' ? 'tecnicas' : gid === 'dest-group' ? 'destinatarios' : gid === 'badges-group' ? 'badges' : 'ocasiones';
     document.querySelectorAll(`#${gid} .check-chip`).forEach(chip => {
       const val = chip.querySelector('input').value;
       const checked = (p[field] || []).includes(val);
@@ -980,44 +1205,38 @@ function editarProducto(id) {
       chip.querySelector('input').checked = checked;
     });
   });
+  mostrarFotosExistentes(p.fotos || []);
   document.getElementById('modal-producto').classList.add('open');
 }
 
 async function eliminarProducto(id) {
   if (!confirm('¿Eliminar este producto del catálogo?')) return;
-  try {
-    const res = await fetch(`/api/productos/admin/${id}`, { method: 'DELETE' });
-    if (!res.ok) { showToast('Error al eliminar', 'error'); return; }
-    await cargarProductos();
-    renderTabla();
-    renderDashboard();
-    showToast('Producto eliminado');
-  } catch { showToast('Error de conexión', 'error'); }
+  const res = await fetch(`/api/productos/admin/${id}`, { method: 'DELETE' });
+  if (!res.ok) { showToast('Error al eliminar', 'error'); return; }
+  await Promise.all([renderTabla(), renderDashboard()]);
+  showToast('Producto eliminado');
 }
 
 async function toggleEstado(id) {
-  const p = getProductos().find(x => x.id === id);
+  const lista = _tablaCache.length ? _tablaCache : await getProductos();
+  const p = lista.find(x => x.id === id);
   if (!p) return;
   const nuevoEstado = p.estado === 'publicado' ? 'borrador' : 'publicado';
-  try {
-    const res = await fetch(`/api/productos/admin/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ estado: nuevoEstado }),
-    });
-    if (!res.ok) { showToast('Error al cambiar estado', 'error'); return; }
-    await cargarProductos();
-    renderTabla();
-    renderDashboard();
-    showToast(nuevoEstado === 'publicado' ? '✅ Publicado en el catálogo' : '⏸ Quitado del catálogo', nuevoEstado === 'publicado' ? 'success' : '');
-  } catch { showToast('Error de conexión', 'error'); }
+  const res = await fetch(`/api/productos/admin/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...p, estado: nuevoEstado }),
+  });
+  if (!res.ok) { showToast('Error al actualizar estado', 'error'); return; }
+  await Promise.all([renderTabla(), renderDashboard()]);
+  showToast(nuevoEstado === 'publicado' ? '✅ Publicado en el catálogo' : '⏸ Quitado del catálogo', nuevoEstado === 'publicado' ? 'success' : '');
 }
 
 // ============================================================
 // DASHBOARD
 // ============================================================
-function renderDashboard() {
-  const lista = getProductos();
+async function renderDashboard() {
+  const lista = await getProductos();
   const pub = lista.filter(p => p.estado === 'publicado').length;
   document.getElementById('stat-total').textContent = lista.length;
   document.getElementById('stat-pub').textContent = pub;
@@ -1034,7 +1253,7 @@ function renderDashboard() {
       <td style="padding:0.5rem 0.5rem"><span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--celeste)">${p.codigo}</span></td>
       <td style="padding:0.5rem 0.5rem">${p.nombre}</td>
       <td style="padding:0.5rem 0.5rem"><span class="badge badge-${p.estado === 'publicado' ? 'active' : 'draft'}">${p.estado}</span></td>
-      <td style="padding:0.5rem 1rem;font-size:0.75rem;color:var(--texto-suave)">${p.fecha_carga ? new Date(p.fecha_carga).toLocaleDateString('es-AR') : '—'}</td>
+      <td style="padding:0.5rem 1rem;font-size:0.75rem;color:var(--texto-suave)">${new Date(p.fecha_carga).toLocaleDateString('es-AR')}</td>
     </tr>`).join('') + '</tbody></table>';
 }
 
@@ -1042,113 +1261,185 @@ function renderDashboard() {
 // CATEGORÍAS ADMIN
 // ============================================================
 const CATS = [
-  { id:'bolsos_mochilas', nombre:'Bolsos y Mochilas', icon:'👜' },
-  { id:'capacitacion', nombre:'Capacitación y Eventos', icon:'🎓' },
-  { id:'drinkware', nombre:'Drinkware', icon:'🥤' },
-  { id:'eco', nombre:'Eco y Sustentable', icon:'♻️' },
-  { id:'escritorio', nombre:'Escritorio y Oficina', icon:'📓' },
-  { id:'escritura', nombre:'Escritura', icon:'✏️' },
-  { id:'fechas', nombre:'Fechas Especiales', icon:'🎉' },
-  { id:'indumentaria', nombre:'Indumentaria Corporativa', icon:'👕' },
-  { id:'llaveros', nombre:'Llaveros y Accesorios', icon:'🔑' },
-  { id:'onboarding', nombre:'Onboarding y Bienvenida', icon:'🎁' },
-  { id:'outdoors', nombre:'Outdoors y Bienestar', icon:'🌿' },
-  { id:'packaging', nombre:'Packaging y Presentación', icon:'📦' },
-  { id:'reconocimiento', nombre:'Reconocimiento y Premios', icon:'⭐' },
-  { id:'tecnologia', nombre:'Tecnología', icon:'💻' },
+  { id:'bolsos_mochilas', nombre:'Bolsos y Mochilas', icon:'👜', subcats:['Bolsos','Maletines y portfolios','Mochilas','Neceseres y accesorios','Viaje'] },
+  { id:'capacitacion', nombre:'Capacitación y Eventos', icon:'📚', subcats:[] },
+  { id:'drinkware', nombre:'Drinkware', icon:'🥤', subcats:['Botellas standard','Botellas térmicas','Tazas mugs y jarros','Termos y mates'] },
+  { id:'eco', nombre:'Eco y Sustentable', icon:'♻️', subcats:['Bambu y madera','Reciclados','Tote bags y bolsas'] },
+  { id:'escritorio', nombre:'Escritorio y Oficina', icon:'📓', subcats:['Cuadernos y agendas','Organizadores'] },
+  { id:'escritura', nombre:'Escritura', icon:'✏️', subcats:['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'] },
+  { id:'fechas', nombre:'Fechas Especiales', icon:'🎉', subcats:[] },
+  { id:'indumentaria', nombre:'Indumentaria Corporativa', icon:'👕', subcats:['Abrigos','Camisas','Delantales y pecheras','Gorras','Remeras y chombas'] },
+  { id:'llaveros', nombre:'Llaveros y Accesorios', icon:'🔑', subcats:['Llaveros de madera','Llaveros metálicos','Llaveros plásticos','Multipropósito'] },
+  { id:'onboarding', nombre:'Onboarding y Bienvenida', icon:'🎁', subcats:[] },
+  { id:'outdoors', nombre:'Outdoors y Bienestar', icon:'🌿', subcats:['Coolers y loncheras','Cuidado personal','Deporte y fitness','Gastronomía','Paraguas'] },
+  { id:'packaging', nombre:'Packaging y Presentación', icon:'📦', subcats:['Bolsas y papel','Cajas'] },
+  { id:'reconocimiento', nombre:'Reconocimiento y Premios', icon:'🏆', subcats:[] },
+  { id:'tecnologia', nombre:'Tecnología', icon:'💻', subcats:['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'] },
 ];
 
-function renderCatAdmin() {
-  const lista = getProductos();
+// Mapa automático subcategoría → categorías
+const SUBCAT_MAP = {};
+for (const cat of CATS) {
+  for (const sub of cat.subcats) {
+    if (!SUBCAT_MAP[sub]) SUBCAT_MAP[sub] = [];
+    SUBCAT_MAP[sub].push(cat.id);
+  }
+}
+
+function normalizar(str) {
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+const CAT_FOLDER_MAP = {
+  'capacitacion y eventos': 'capacitacion',
+  'fechas especiales': 'fechas',
+  'onboarding y bienvenida': 'onboarding',
+  'reconocimiento y premios': 'reconocimiento',
+};
+
+function resolverCategoria(folderName) {
+  const norm = normalizar(folderName);
+  for (const [sub, cats] of Object.entries(SUBCAT_MAP)) {
+    if (normalizar(sub) === norm) return { subcategoria: sub, categorias: cats };
+  }
+  if (CAT_FOLDER_MAP[norm]) {
+    return { subcategoria: '', categorias: [CAT_FOLDER_MAP[norm]] };
+  }
+  // Fallback: match por id o nombre normalizado de categoría
+  const cat = CATS.find(c => c.id === norm || normalizar(c.nombre) === norm);
+  if (cat) return { subcategoria: '', categorias: [cat.id] };
+  return null;
+}
+
+function actualizarSubcats(catId) {
+  const cat = CATS.find(c => c.id === catId);
+  const group = document.getElementById('f-subcategoria-group');
+  const sel = document.getElementById('f-subcategoria');
+  if (!cat || !cat.subcats.length) { group.style.display = 'none'; sel.value = ''; return; }
+  group.style.display = '';
+  sel.innerHTML = '<option value="">Sin subcategoría</option>' +
+    cat.subcats.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+async function renderCatAdmin() {
+  const lista = await getProductos();
   document.getElementById('cat-admin-list').innerHTML = CATS.map(c => {
     const count = lista.filter(p => p.categoria === c.id).length;
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;border-radius:8px;background:var(--gris);margin-bottom:0.5rem">
-      <div style="display:flex;align-items:center;gap:0.75rem">
-        <span style="font-size:1.25rem">${c.icon}</span>
-        <div>
-          <div style="font-weight:600;font-size:0.9rem">${c.nombre}</div>
-          <div style="font-size:0.75rem;color:var(--texto-suave)">${count} producto${count !== 1 ? 's' : ''}</div>
+    const subcatsHtml = c.subcats.length
+      ? `<div style="margin-top:0.4rem;display:flex;flex-wrap:wrap;gap:0.3rem">
+          ${c.subcats.map(s => `<span style="font-size:0.7rem;background:var(--gris-borde);border-radius:4px;padding:2px 7px;color:var(--texto-suave)">${s}</span>`).join('')}
+         </div>`
+      : '';
+    return `<div style="padding:0.85rem 1rem;border-radius:8px;background:var(--gris);margin-bottom:0.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <span style="font-size:1.25rem">${c.icon}</span>
+          <div>
+            <div style="font-weight:600;font-size:0.9rem">${c.nombre}</div>
+            <div style="font-size:0.75rem;color:var(--texto-suave)">${count} producto${count !== 1 ? 's' : ''}</div>
+          </div>
         </div>
+        <button class="btn btn-outline btn-sm" onclick="verCategoria('${c.id}')">Ver productos →</button>
       </div>
-      <button class="btn btn-outline btn-sm" onclick="filtrarTabla('','${c.id}');showSection('productos',document.querySelectorAll('.nav-item')[1])">Ver productos →</button>
+      ${subcatsHtml}
     </div>`;
   }).join('');
 }
 
 // ============================================================
-// IMPORTAR DESDE DRIVE (simulación — conectar con API real)
+// IMPORTAR DESDE DRIVE — API real
 // ============================================================
-const DEMO_ARCHIVOS = [
-  'Jarro Térmico PP-0001 a.jpg','Jarro Térmico PP-0001 b.jpg','Jarro Térmico PP-0001 c.png',
-  'Mochila Ejecutiva PP-0002 a.jpg','Mochila Ejecutiva PP-0002 b.jpg',
-  'Botella Deportiva PP-0003 a.png','Botella Deportiva PP-0003 b.png','Botella Deportiva PP-0003 c.jpg',
-  'Termo Acero PP-0004 a.jpg','Termo Acero PP-0004 b.jpg',
-  'Cuaderno Anillado PP-0005 a.jpg','Cuaderno Anillado PP-0005 b.jpg','Cuaderno Anillado PP-0005 c.jpg',
-  'Lapicera Metálica PP-0006 a.jpg','Lapicera Metálica PP-0006 b.jpg',
-  'Taza Cerámica PP-0007 a.png','Taza Cerámica PP-0007 b.jpg',
-  'Auriculares BT PP-0008 a.jpg','Auriculares BT PP-0008 b.png',
-  'Bolso Térmico PP-0009 a.jpg',
-];
-
 let importSeleccion = [];
 
-function extraerCodigo(nombre) {
-  const m = nombre.match(/PP-?(\d{4})/i);
-  return m ? `PP-${m[1]}` : null;
+function extraerFolderId(url) {
+  const m = url.match(/folders\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : url.trim();
 }
 
-function agruparArchivos(archivos) {
-  const grupos = {};
-  archivos.forEach(arch => {
-    const cod = extraerCodigo(arch);
-    if (!cod) return;
-    if (!grupos[cod]) {
-      const sinExt = arch.replace(/\.[^.]+$/, '');
-      const nombre = sinExt.replace(/\s+[A-Z]{1,3}\d{3,4}[A-Z]?\s+[a-z]$/, '').replace(/\s+[a-z]$/, '').trim();
-      grupos[cod] = { codigo: cod, nombre, archivos: [] };
-    }
-    grupos[cod].archivos.push(arch);
-  });
-  return Object.values(grupos);
-}
-
-function simularImport() {
+async function simularImport() {
   const url = document.getElementById('import-drive-url').value.trim();
   if (!url) { showToast('Pegá el link de tu carpeta de Drive', 'error'); return; }
-  importarDemoData();
-}
 
-function importarDemoData() {
+  const folderId = extraerFolderId(url);
+  const recursive = document.getElementById('opt-recursive').checked;
   const prog = document.getElementById('import-progress');
   const fill = document.getElementById('import-prog-fill');
   const status = document.getElementById('import-status');
+
   prog.style.display = 'block';
   document.getElementById('import-results').style.display = 'none';
-  let pct = 0;
-  const interval = setInterval(() => {
-    pct += Math.random() * 20;
-    if (pct >= 100) { pct = 100; clearInterval(interval); mostrarResultados(); }
-    fill.style.width = pct + '%';
-    status.textContent = pct < 40 ? 'Conectando con Google Drive...' : pct < 70 ? 'Leyendo archivos...' : 'Agrupando por código...';
-  }, 200);
+  fill.style.width = '20%';
+  status.textContent = recursive ? 'Escaneando carpetas y subcarpetas...' : 'Conectando con Google Drive...';
+
+  const res = await fetch(`/api/drive/listar?folderId=${encodeURIComponent(folderId)}&recursive=${recursive}`);
+  fill.style.width = '80%';
+  status.textContent = 'Agrupando por código...';
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    showToast(err.error || 'Error al leer la carpeta de Drive', 'error');
+    prog.style.display = 'none';
+    return;
+  }
+
+  const data = await res.json();
+  fill.style.width = '100%';
+  status.textContent = 'Listo';
+
+  mostrarResultados(data.grupos, data.total, data.folderName);
 }
 
-function mostrarResultados() {
-  const grupos = agruparArchivos(DEMO_ARCHIVOS);
+let _categoriaImport = null;
+
+function mostrarResultados(grupos, totalArchivos, folderName) {
+  _categoriaImport = folderName ? resolverCategoria(folderName) : null;
   importSeleccion = grupos.map(g => ({ ...g, seleccionado: true }));
-  document.getElementById('import-results-title').textContent = `${grupos.length} productos detectados en ${DEMO_ARCHIVOS.length} archivos`;
-  document.getElementById('import-list').innerHTML = grupos.map((g, i) => `
+
+  const esRecursivo = document.getElementById('opt-recursive')?.checked;
+
+  let catBanner = '';
+  if (esRecursivo) {
+    const subcarpetas = [...new Set(grupos.map(g => g.subcarpeta).filter(Boolean))];
+    const sinCat = grupos.filter(g => !resolverCategoria(g.subcarpeta || '')).length;
+    catBanner = `<div style="background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:8px;padding:0.65rem 1rem;margin-bottom:0.875rem;font-size:0.85rem;color:var(--azul)">
+      📂 Escaneo recursivo — <strong>${subcarpetas.length} subcarpeta${subcarpetas.length !== 1 ? 's' : ''}</strong>: ${subcarpetas.join(', ')}
+      ${sinCat ? `<br><span style="color:#b45309">⚠️ ${sinCat} producto${sinCat !== 1 ? 's' : ''} sin categoría reconocida — asignala manualmente luego.</span>` : ''}
+    </div>`;
+  } else if (_categoriaImport) {
+    const cats = _categoriaImport.categorias.map(id => CAT_NAMES[id]).join(', ');
+    catBanner = `<div style="background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:8px;padding:0.65rem 1rem;margin-bottom:0.875rem;font-size:0.85rem;color:var(--azul)">
+      📂 Carpeta: <strong>${folderName}</strong> → se asignará a <strong>${cats}</strong>
+    </div>`;
+  } else if (folderName) {
+    catBanner = `<div style="background:var(--amarillo-light);border:1.5px solid var(--amarillo);border-radius:8px;padding:0.65rem 1rem;margin-bottom:0.875rem;font-size:0.85rem;color:var(--amarillo)">
+      ⚠️ La carpeta "<strong>${folderName}</strong>" no coincide con ninguna subcategoría conocida. Asigná la categoría manualmente en cada producto.
+    </div>`;
+  }
+
+  document.getElementById('import-results-title').textContent =
+    `${grupos.length} productos detectados en ${totalArchivos} archivos`;
+  document.getElementById('import-list').innerHTML = catBanner + grupos.map((g, i) => {
+    let catLine = '';
+    if (esRecursivo && g.subcarpeta) {
+      const catInfo = resolverCategoria(g.subcarpeta);
+      catLine = catInfo
+        ? `<div style="font-size:0.7rem;color:var(--celeste);margin-top:2px">${CAT_NAMES[catInfo.categorias[0]] || catInfo.categorias[0]}${catInfo.subcategoria ? ' › ' + catInfo.subcategoria : ''}</div>`
+        : `<div style="font-size:0.7rem;color:var(--texto-suave);margin-top:2px">📂 ${g.subcarpeta}</div>`;
+    }
+    return `
     <div class="import-result-item">
       <div class="import-thumb">📦</div>
       <div>
         <div class="import-name">${g.nombre}</div>
         <div class="import-code">${g.codigo}</div>
-        <div class="import-count">${g.archivos.length} foto${g.archivos.length !== 1 ? 's' : ''}: ${g.archivos.join(', ')}</div>
+        ${catLine}
+        <div class="import-count">${g.archivos.length} foto${g.archivos.length !== 1 ? 's' : ''}: ${g.archivos.map(a => a.nombre).join(', ')}</div>
       </div>
       <label class="check-chip checked" onclick="toggleImportItem(${i},this)">
         <input type="checkbox" checked> Importar
       </label>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   document.getElementById('import-results').style.display = 'block';
 }
 
@@ -1161,10 +1452,9 @@ function toggleImportItem(i, el) {
 
 function toggleSelectAll() {
   const todos = importSeleccion.every(g => g.seleccionado);
-  importSeleccion.forEach((g, i) => g.seleccionado = !todos);
-  document.querySelectorAll('#import-list .check-chip').forEach((el, i) => {
-    const cb = el.querySelector('input');
-    cb.checked = !todos;
+  importSeleccion.forEach(g => g.seleccionado = !todos);
+  document.querySelectorAll('#import-list .check-chip').forEach(el => {
+    el.querySelector('input').checked = !todos;
     el.classList.toggle('checked', !todos);
   });
 }
@@ -1172,33 +1462,46 @@ function toggleSelectAll() {
 async function importarSeleccionados() {
   const selec = importSeleccion.filter(g => g.seleccionado);
   if (!selec.length) { showToast('Seleccioná al menos un producto', 'error'); return; }
-  try {
-    const res = await fetch('/api/drive/importar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productos: selec }),
-    });
-    if (!res.ok) { showToast('Error al importar', 'error'); return; }
-    const { importados, omitidos } = await res.json();
-    await cargarProductos();
-    renderTabla();
-    renderDashboard();
-    showToast(`✅ ${importados} productos importados${omitidos.length ? `, ${omitidos.length} ya existían` : ''}. Completá los datos faltantes.`, 'success');
-    showSection('productos', document.querySelectorAll('.nav-item')[1]);
-  } catch { showToast('Error de conexión', 'error'); }
+
+  const actualizarExistentes = document.getElementById('opt-actualizar').checked;
+
+  const conCat = selec.map(g => {
+    const catInfo = g.subcarpeta ? resolverCategoria(g.subcarpeta) : _categoriaImport;
+    return {
+      ...g,
+      categoria: catInfo ? catInfo.categorias[0] : '',
+      subcategoria: catInfo ? catInfo.subcategoria : '',
+    };
+  });
+
+  const res = await fetch('/api/drive/importar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ productos: conCat, actualizarExistentes }),
+  });
+
+  if (!res.ok) { showToast('Error al importar', 'error'); return; }
+  const { importados, omitidos, actualizados } = await res.json();
+
+  await Promise.all([renderTabla(), renderDashboard()]);
+  let msg = importados ? `✅ ${importados} producto${importados !== 1 ? 's' : ''} importado${importados !== 1 ? 's' : ''} como borrador${importados !== 1 ? 'es' : ''}.` : '';
+  if (actualizados?.length) msg += ` 🔄 ${actualizados.length} actualizado${actualizados.length !== 1 ? 's' : ''} con fotos nuevas.`;
+  if (omitidos.length) msg += ` ${omitidos.length} ya existían y se saltearon.`;
+  showToast(msg || '✅ Listo', 'success');
+  showSection('productos', document.querySelectorAll('.nav-item')[1]);
 }
 
 // ============================================================
 // EXPORTAR
 // ============================================================
-function exportarJSON() {
-  const data = JSON.stringify(getProductos(), null, 2);
-  descargar('promoplanet-productos.json', data, 'application/json');
+async function exportarJSON() {
+  const lista = await getProductos();
+  descargar('promoplanet-productos.json', JSON.stringify(lista, null, 2), 'application/json');
   showToast('✅ JSON descargado', 'success');
 }
 
-function exportarCSV() {
-  const lista = getProductos();
+async function exportarCSV() {
+  const lista = await getProductos();
   const headers = ['id','codigo','nombre','categoria','rango','minimo','material','medidas','colores','descripcion','tecnicas','destinatarios','ocasiones','proveedor','estado','fecha_carga'];
   const rows = lista.map(p => headers.map(h => {
     const v = Array.isArray(p[h]) ? p[h].join('|') : (p[h] || '');
@@ -1208,8 +1511,9 @@ function exportarCSV() {
   showToast('✅ CSV descargado', 'success');
 }
 
-function generarCatalogo() {
-  const publicados = getProductos().filter(p => p.estado === 'publicado').length;
+async function generarCatalogo() {
+  const lista = await getProductos();
+  const publicados = lista.filter(p => p.estado === 'publicado').length;
   if (!publicados) { showToast('No hay productos publicados aún', 'error'); return; }
   window.open('/', '_blank');
   showToast(`✅ Catálogo con ${publicados} productos publicados`, 'success');
@@ -1220,6 +1524,397 @@ function descargar(nombre, contenido, tipo) {
   a.href = URL.createObjectURL(new Blob([contenido], { type: tipo }));
   a.download = nombre;
   a.click();
+}
+
+// ============================================================
+// AGREGAR PRODUCTO — flujo completo con IA y Drive
+// ============================================================
+let _agregarFiles = [];
+let _agregarPrincipalIdx = 0;
+let _agregarCodigo = '';
+
+async function initAgregarSection() {
+  _agregarCodigo = '';
+  document.getElementById('agregar-codigo').textContent = '…';
+  try {
+    const res = await fetch('/api/productos/admin/next-code');
+    if (res.ok) {
+      const { codigo } = await res.json();
+      _agregarCodigo = codigo;
+      document.getElementById('agregar-codigo').textContent = codigo;
+      document.getElementById('agregar-f-codigo').value = codigo;
+    }
+  } catch {}
+}
+
+function onDropFiles(event) {
+  event.preventDefault();
+  const files = Array.from(event.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  if (files.length) agregarFilesAlPreview(files);
+}
+
+function onSelectFiles(input) {
+  const files = Array.from(input.files);
+  agregarFilesAlPreview(files);
+  input.value = '';
+}
+
+function agregarFilesAlPreview(newFiles) {
+  _agregarFiles = [..._agregarFiles, ...newFiles];
+  renderAgregarPreview();
+}
+
+function actualizarBtnAnalizar() {
+  const url = (document.getElementById('agregar-url-proveedor')?.value || '').trim();
+  const wrap = document.getElementById('agregar-ia-wrap');
+  const hint = document.getElementById('agregar-ia-hint');
+  const tieneFortos = _agregarFiles.length > 0;
+  const tieneURL = url.length > 0;
+  wrap.style.display = (tieneFortos || tieneURL) ? 'flex' : 'none';
+  if (tieneFortos && tieneURL) hint.textContent = 'La IA analizará las fotos y la página del proveedor en paralelo';
+  else if (tieneFortos) hint.textContent = 'La IA analiza las fotos y sugiere nombre y categoría';
+  else hint.textContent = 'La IA leerá la página y completará todos los campos';
+}
+
+function renderAgregarPreview() {
+  const grid = document.getElementById('agregar-preview');
+  grid.style.display = _agregarFiles.length ? 'grid' : 'none';
+  if (!_agregarFiles.length) { actualizarBtnAnalizar(); return; }
+  grid.innerHTML = _agregarFiles.map((file, i) => {
+    const url = URL.createObjectURL(file);
+    const esPrincipal = i === _agregarPrincipalIdx;
+    return `<div class="foto-item${esPrincipal ? ' principal' : ''}">
+      <img src="${url}">
+      ${esPrincipal ? '<span class="foto-badge-principal">Principal</span>' : ''}
+      <div class="foto-overlay">
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipalAgregar(${i})">⭐</button>
+        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="removeAgregarFile(${i})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+  actualizarBtnAnalizar();
+}
+
+function setPrincipalAgregar(idx) {
+  _agregarPrincipalIdx = idx;
+  renderAgregarPreview();
+  actualizarNombresPreview();
+}
+
+function removeAgregarFile(idx) {
+  _agregarFiles.splice(idx, 1);
+  if (_agregarPrincipalIdx >= _agregarFiles.length) _agregarPrincipalIdx = 0;
+  renderAgregarPreview();
+}
+
+function _resizarParaIA(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      if (width > 1024) {
+        height = Math.round(height * 1024 / width);
+        width = 1024;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+    };
+    img.src = url;
+  });
+}
+
+async function analizarConIA(btn) {
+  const urlProveedor = document.getElementById('agregar-url-proveedor').value.trim();
+  const tieneFortos = _agregarFiles.length > 0;
+  if (!tieneFortos && !urlProveedor) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Analizando…';
+
+  try {
+    const [dataFotos, dataURL] = await Promise.all([
+      tieneFortos
+        ? Promise.all(_agregarFiles.slice(0, 4).map(_resizarParaIA))
+            .then(fotos => fetch('/api/ia/analizar-fotos', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fotos }),
+            }).then(r => r.ok ? r.json() : null).catch(() => null))
+        : Promise.resolve(null),
+      urlProveedor
+        ? fetch('/api/ia/adaptar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: urlProveedor }),
+          }).then(r => r.ok ? r.json() : null).catch(() => null)
+        : Promise.resolve(null),
+    ]);
+
+    // Fotos → nombre/categoría/subcategoría; URL → descripcion/material/medidas/colores
+    // URL también actúa de fallback si las fotos no reconocieron el nombre o categoría
+    const nombre = dataFotos?.nombre || dataURL?.nombre || '';
+    const categoria = dataFotos?.categoria || dataURL?.categoria || '';
+    const subcategoria = dataFotos?.subcategoria || '';
+
+    document.getElementById('agregar-f-nombre').value = nombre;
+    document.getElementById('agregar-f-categoria').value = categoria;
+    actualizarSubcatsAgregar(categoria, subcategoria);
+    if (dataURL?.descripcion) document.getElementById('agregar-f-descripcion').value = dataURL.descripcion;
+    if (dataURL?.material)    document.getElementById('agregar-f-material').value    = dataURL.material;
+    if (dataURL?.medidas)     document.getElementById('agregar-f-medidas').value     = dataURL.medidas;
+    if (dataURL?.colores)     document.getElementById('agregar-f-colores').value     = dataURL.colores;
+
+    document.getElementById('agregar-step1').style.display = 'none';
+    document.getElementById('agregar-step2').style.display = 'block';
+    if (tieneFortos) renderConfirmFotos();
+    actualizarNombresPreview();
+    document.getElementById('agregar-drive-hint').textContent =
+      tieneFortos ? '☁️ Las fotos se subirán a Cloudinary (carpeta promoplanet/)' : '';
+  } catch (err) {
+    showToast(err.message || 'Error al analizar', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ Analizar →';
+  }
+}
+
+function actualizarSubcatsAgregar(catId, subcatPreset = '') {
+  const cat = CATS.find(c => c.id === catId);
+  const group = document.getElementById('agregar-subcat-group');
+  const sel = document.getElementById('agregar-f-subcategoria');
+  if (!cat || !cat.subcats.length) { group.style.display = 'none'; sel.value = ''; }
+  else {
+    group.style.display = '';
+    sel.innerHTML = '<option value="">Sin subcategoría</option>' +
+      cat.subcats.map(s => `<option value="${s}"${s === subcatPreset ? ' selected' : ''}>${s}</option>`).join('');
+  }
+  actualizarNombresPreview();
+}
+
+function renderConfirmFotos() {
+  const grid = document.getElementById('agregar-fotos-confirm');
+  grid.innerHTML = _agregarFiles.map((file, i) => {
+    const url = URL.createObjectURL(file);
+    const esPrincipal = i === _agregarPrincipalIdx;
+    return `<div class="foto-item${esPrincipal ? ' principal' : ''}">
+      <img src="${url}">
+      ${esPrincipal ? '<span class="foto-badge-principal">Principal</span>' : ''}
+      <div class="foto-overlay">
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipalAgregar(${i})">⭐</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function actualizarNombresPreview() {
+  const nombre = (document.getElementById('agregar-f-nombre')?.value || '').trim() || 'Producto';
+  const codigo = _agregarCodigo || 'PP-XXX';
+  const box = document.getElementById('agregar-nombres-preview');
+  if (!box || !_agregarFiles.length) return;
+
+  const ordered = [
+    _agregarPrincipalIdx,
+    ..._agregarFiles.map((_, i) => i).filter(i => i !== _agregarPrincipalIdx),
+  ];
+  const lineas = ordered.map((origIdx, i) => {
+    const ext = _agregarFiles[origIdx].name.split('.').pop();
+    const sufijo = i === 0 ? '' : ` ${String.fromCharCode(97 + i)}`;
+    return `• ${nombre} ${codigo}${sufijo}.${ext}`;
+  });
+  box.style.display = 'block';
+  box.innerHTML = `<span style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--texto)">Archivos que se subirán a Cloudinary:</span><br>${lineas.join('<br>')}`;
+}
+
+function resetAgregar() {
+  _agregarFiles = [];
+  _agregarPrincipalIdx = 0;
+  document.getElementById('agregar-step1').style.display = 'block';
+  document.getElementById('agregar-step2').style.display = 'none';
+  document.getElementById('agregar-preview').innerHTML = '';
+  document.getElementById('agregar-preview').style.display = 'none';
+  document.getElementById('agregar-ia-wrap').style.display = 'none';
+  document.getElementById('agregar-f-nombre').value = '';
+  document.getElementById('agregar-f-categoria').value = '';
+  document.getElementById('agregar-subcat-group').style.display = 'none';
+  document.getElementById('agregar-url-proveedor').value = '';
+  actualizarBtnAnalizar();
+  document.getElementById('agregar-f-descripcion').value = '';
+  document.getElementById('agregar-f-material').value = '';
+  document.getElementById('agregar-f-medidas').value = '';
+  document.getElementById('agregar-f-colores').value = '';
+  document.getElementById('agregar-fotos-confirm').innerHTML = '';
+  document.getElementById('agregar-nombres-preview').style.display = 'none';
+  document.getElementById('agregar-nombres-preview').innerHTML = '';
+}
+
+async function confirmarAgregarProducto(btn) {
+  const nombre = document.getElementById('agregar-f-nombre').value.trim();
+  const categoria = document.getElementById('agregar-f-categoria').value;
+  const subcategoria = document.getElementById('agregar-f-subcategoria').value;
+  if (!nombre || !categoria) { showToast('Completá nombre y categoría', 'error'); return; }
+  if (!_agregarFiles.length) { showToast('No hay fotos cargadas', 'error'); return; }
+
+  // Reordenar: principal primero
+  const orderedFiles = [
+    _agregarFiles[_agregarPrincipalIdx],
+    ..._agregarFiles.filter((_, i) => i !== _agregarPrincipalIdx),
+  ];
+
+  // Generar nombres de archivo
+  const nombres = orderedFiles.map((file, i) => {
+    const ext = file.name.split('.').pop();
+    const sufijo = i === 0 ? '' : ` ${String.fromCharCode(97 + i)}`;
+    return `${nombre} ${_agregarCodigo}${sufijo}.${ext}`;
+  });
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Subiendo fotos…';
+
+  try {
+    // Subir fotos a Cloudinary
+    const fd = new FormData();
+    orderedFiles.forEach(f => fd.append('fotos', f));
+    fd.append('subcategoria', subcategoria);
+    fd.append('nombres', JSON.stringify(nombres));
+
+    const uploadRes = await fetch('/api/drive/subir', { method: 'POST', body: fd });
+    if (!uploadRes.ok) {
+      const err = await uploadRes.json().catch(() => ({}));
+      throw new Error(err.error || 'Error al subir fotos');
+    }
+    const { urls } = await uploadRes.json();
+
+    btn.innerHTML = '⏳ Creando producto…';
+
+    // Crear producto en DB
+    const prodRes = await fetch('/api/productos/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        codigo: _agregarCodigo, nombre, categoria, subcategoria,
+        estado: 'borrador', fotos: urls, emoji: '📦',
+        rango: '', minimo: 0, tecnicas: [], destinatarios: [],
+        ocasiones: [], badges: [],
+        descripcion: document.getElementById('agregar-f-descripcion').value.trim(),
+        material:    document.getElementById('agregar-f-material').value.trim(),
+        medidas:     document.getElementById('agregar-f-medidas').value.trim(),
+        colores:     document.getElementById('agregar-f-colores').value.trim(),
+      }),
+    });
+    if (!prodRes.ok) {
+      const err = await prodRes.json().catch(() => ({}));
+      throw new Error(err.error || 'Error al crear producto');
+    }
+
+    await Promise.all([renderTabla(), renderDashboard()]);
+    showToast(`✅ ${nombre} (${_agregarCodigo}) creado como borrador`, 'success');
+    resetAgregar();
+    initAgregarSection();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✅ Crear producto en borrador';
+  }
+}
+
+// ============================================================
+// IMPORTAR DE PROVEEDOR CON IA
+// ============================================================
+let _iaData = null;
+
+function iaDetectarTipo(el) {
+  const val = el.value.trim();
+  const badge = document.getElementById('ia-tipo-badge');
+  const label = document.getElementById('ia-label');
+  if (/^https?:\/\//i.test(val)) {
+    badge.textContent = '🔗 Se va a leer la página automáticamente';
+    badge.style.display = 'block';
+    label.textContent = 'Link del producto del proveedor *';
+    el.style.minHeight = '50px';
+  } else if (val.length > 0) {
+    badge.textContent = '📝 Modo texto';
+    badge.style.display = 'block';
+    label.textContent = 'Texto del producto del proveedor *';
+    el.style.minHeight = '140px';
+  } else {
+    badge.style.display = 'none';
+    label.textContent = 'Link o texto del producto del proveedor *';
+    el.style.minHeight = '80px';
+  }
+}
+
+async function adaptarConIA() {
+  const valor = document.getElementById('ia-texto').value.trim();
+  if (!valor) { showToast('Pegá el link o el texto del producto primero', 'error'); return; }
+
+  const esURL = /^https?:\/\//i.test(valor);
+  const body = esURL ? { url: valor } : { texto: valor };
+
+  const btn = document.getElementById('btn-ia-adaptar');
+  btn.disabled = true;
+  btn.textContent = esURL ? '⏳ Leyendo página...' : '⏳ Procesando con Claude...';
+  document.getElementById('ia-resultado').style.display = 'none';
+
+  try {
+    const res = await fetch('/api/ia/adaptar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { const e = await res.json(); showToast(e.error || 'Error al procesar', 'error'); return; }
+    _iaData = await res.json();
+
+    const tecnicasLabel = { laser:'Grabado láser', dtf:'DTF / Full color', tampografia:'Tampografía', bordado:'Bordado', sublimacion:'Sublimación', hotstamping:'Hot stamping', serigrafia:'Serigrafía', 'dtf-textil':'DTF Textil' };
+    document.getElementById('ia-preview').innerHTML = `
+      <strong>${_iaData.nombre}</strong><br>
+      <em style="color:var(--celeste);font-size:0.8rem">${CAT_NAMES[_iaData.categoria] || _iaData.categoria} · ${_iaData.rango || ''}</em><br><br>
+      ${_iaData.descripcion}<br><br>
+      ${_iaData.material ? `<strong>Material:</strong> ${_iaData.material}<br>` : ''}
+      ${_iaData.medidas ? `<strong>Medidas:</strong> ${_iaData.medidas}<br>` : ''}
+      ${_iaData.colores ? `<strong>Colores:</strong> ${_iaData.colores}<br>` : ''}
+      ${_iaData.tecnicas?.length ? `<strong>Técnicas:</strong> ${_iaData.tecnicas.map(t => tecnicasLabel[t] || t).join(', ')}<br>` : ''}
+    `;
+    document.getElementById('ia-resultado').style.display = 'block';
+  } catch { showToast('Error de conexión', 'error'); }
+  finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ Adaptar con Claude';
+  }
+}
+
+function cargarEnFormulario() {
+  if (!_iaData) return;
+  limpiarForm();
+  editandoId = null;
+  document.getElementById('modal-prod-title').textContent = 'Nuevo producto';
+  document.getElementById('f-nombre').value = _iaData.nombre || '';
+  document.getElementById('f-descripcion').value = _iaData.descripcion || '';
+  document.getElementById('f-material').value = _iaData.material || '';
+  document.getElementById('f-medidas').value = _iaData.medidas || '';
+  document.getElementById('f-colores').value = _iaData.colores || '';
+  document.getElementById('f-categoria').value = _iaData.categoria || '';
+  actualizarSubcats(_iaData.categoria || '');
+  document.getElementById('f-rango').value = _iaData.rango || '';
+
+  ['tecnicas-group','badges-group'].forEach(gid => {
+    const field = gid === 'tecnicas-group' ? 'tecnicas' : 'badges';
+    document.querySelectorAll(`#${gid} .check-chip`).forEach(chip => {
+      const val = chip.querySelector('input').value;
+      const checked = (_iaData[field] || []).includes(val);
+      chip.classList.toggle('checked', checked);
+      chip.querySelector('input').checked = checked;
+    });
+  });
+
+  document.getElementById('modal-producto').classList.add('open');
+  showToast('✅ Formulario pre-completado — revisá y completá los datos que faltan', 'success');
 }
 
 // ============================================================

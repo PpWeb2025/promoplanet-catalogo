@@ -925,15 +925,6 @@
         <span class="cat-dot" style="background:#ec4899"></span> Fechas especiales
       </button>
     </div>
-    <div class="sidebar-section">
-      <div class="sidebar-title">Sustentabilidad</div>
-      <button class="cat-item active" data-tag="todos" onclick="toggleTag(this)">
-        <span class="cat-dot" style="background:var(--celeste)"></span> Todos
-      </button>
-      <button class="cat-item" data-tag="eco" onclick="toggleTag(this)">
-        <span class="cat-dot" style="background:#16a34a"></span> 🌿 Eco y Sustentable
-      </button>
-    </div>
   </aside>
 
   <!-- PRODUCT GRID -->
@@ -1278,13 +1269,18 @@ function badgesHtml(badges) {
 // ============================================================
 const CATEGORIAS = [
   { id: 'bolsos_mochilas', nombre: 'Bolsos y Mochilas', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`, color: '#a855f7' },
+  { id: 'capacitacion', nombre: 'Capacitación y Eventos', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`, color: '#0284c7' },
   { id: 'drinkware', nombre: 'Drinkware', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>`, color: '#0ea5e9' },
+  { id: 'eco', nombre: 'Eco y Sustentable', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`, color: '#16a34a' },
   { id: 'escritorio', nombre: 'Escritorio y Oficina', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`, color: '#6366f1' },
   { id: 'escritura', nombre: 'Escritura', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`, color: '#64748b' },
+  { id: 'fechas', nombre: 'Fechas Especiales', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>`, color: '#ec4899' },
   { id: 'indumentaria', nombre: 'Indumentaria Corporativa', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg>`, color: '#8b5cf6' },
   { id: 'llaveros', nombre: 'Llaveros y Accesorios', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>`, color: '#ca8a04' },
+  { id: 'onboarding', nombre: 'Onboarding y Bienvenida', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`, color: '#003471' },
   { id: 'outdoors', nombre: 'Outdoors y Bienestar', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>`, color: '#22c55e' },
   { id: 'packaging', nombre: 'Packaging y Presentación', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`, color: '#f97316' },
+  { id: 'reconocimiento', nombre: 'Reconocimiento y Premios', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>`, color: '#b45309' },
   { id: 'tecnologia', nombre: 'Tecnología', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>`, color: '#7c3aed' },
 ];
 
@@ -1303,7 +1299,6 @@ let destActivo = 'todos';
 let occActiva = 'todos';
 let productoActual = null;
 let sortActivo = 'nuevo';
-let tagActivo = 'todos';
 
 // ============================================================
 // RENDER CATEGORIAS SIDEBAR
@@ -1404,13 +1399,6 @@ function toggleOcc(el) {
   filtrar();
 }
 
-function toggleTag(el) {
-  tagActivo = el.dataset.tag;
-  document.querySelectorAll('[data-tag]').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
-  filtrar();
-}
-
 
 
 function normalizar(str) {
@@ -1452,7 +1440,6 @@ function filtrar() {
     if (subcatActiva !== 'todos' && p.subcategoria !== subcatActiva) return false;
     if (destActivo !== 'todos' && !p.destinatarios.includes(destActivo)) return false;
     if (occActiva !== 'todos' && !p.ocasiones.includes(occActiva)) return false;
-    if (tagActivo !== 'todos' && !(p.tags || []).includes(tagActivo)) return false;
     return true;
   });
 
