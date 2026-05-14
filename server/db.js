@@ -1,6 +1,6 @@
 const { createClient } = require('@libsql/client');
 
-const JSON_FIELDS = ['tecnicas', 'destinatarios', 'ocasiones', 'fotos', 'badges'];
+const JSON_FIELDS = ['tecnicas', 'destinatarios', 'ocasiones', 'fotos', 'badges', 'tags'];
 
 let client;
 
@@ -69,6 +69,7 @@ async function initDb() {
   for (const col of [
     "ALTER TABLE productos ADD COLUMN subcategoria TEXT DEFAULT ''",
     "ALTER TABLE productos ADD COLUMN badges TEXT DEFAULT '[]'",
+    "ALTER TABLE productos ADD COLUMN tags TEXT DEFAULT '[]'",
   ]) {
     try { await client.execute(col); } catch {}
   }
