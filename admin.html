@@ -700,27 +700,46 @@
 
 <script>
 // ============================================================
-// AUTH — contraseña simple (cambiar en producción)
+// AUTH
 // ============================================================
-const PASS = 'promoplanet2026';
-
-function login() {
+async function login() {
   const v = document.getElementById('pwd-input').value;
-  if (v === PASS) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').classList.add('visible');
-    renderTabla();
-    renderDashboard();
-    renderCatAdmin();
-  } else {
-    document.getElementById('login-error').style.display = 'block';
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: v }),
+    });
+    if (res.ok) {
+      mostrarApp();
+    } else {
+      errEl.style.display = 'block';
+    }
+  } catch {
+    errEl.textContent = 'Error de conexión';
+    errEl.style.display = 'block';
   }
 }
-function logout() {
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
   document.getElementById('app').classList.remove('visible');
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('pwd-input').value = '';
 }
+
+function mostrarApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  renderTabla();
+  renderDashboard();
+  renderCatAdmin();
+}
+
+// Verificar sesión activa al cargar la página
+fetch('/api/auth/me').then(r => { if (r.ok) mostrarApp(); });
 
 // ============================================================
 // DATA — localStorage como base de datos local
