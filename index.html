@@ -1455,6 +1455,7 @@ function filtrar() {
 // ============================================================
 const RANGO_LABEL = { economico: 'Económico', intermedio: 'Intermedio', premium: 'Premium' };
 const OCC_LABEL = { onboarding: 'Onboarding', capacitacion: 'Capacitación', reconocimiento: 'Reconocimiento', eventos: 'Eventos', fechas: 'Fechas especiales' };
+const TECNICA_LABEL = { tampografia: 'Tampografía', serigrafia: 'Serigrafía', 'grabado laser': 'Grabado láser', dtf: 'DTF / Full color', bordado: 'Bordado', sublimacion: 'Sublimación', 'hot stamping': 'Hot stamping', 'dtf textil': 'DTF Textil' };
 const BADGE_MAP = { eco: ['badge-eco', 'Eco'], premium: ['badge-premium', 'Premium'], popular: ['badge-popular', '⭐ Popular'] };
 
 function renderProductos(lista) {
@@ -1641,14 +1642,14 @@ function verProducto(id) {
     <span class="badge tag-cat">${cat?.nombre || ''}</span>
     ${p.minimo ? `<span class="badge tag-min">Mín. ${p.minimo} unidades</span>` : ""}
     ${p.rango ? `<span class="badge tag-tec">${RANGO_LABEL[p.rango]}</span>` : `<span class="badge tag-tec" style="font-style:italic">Consultar precio</span>`}
-    ${p.tecnicas.map(t => `<span class="badge tag-tec">${t}</span>`).join('')}
+    ${p.tecnicas.map(t => `<span class="badge tag-tec">${TECNICA_LABEL[t] || t}</span>`).join('')}
   `;
   document.getElementById('mp-desc').textContent = p.descripcion;
   document.getElementById('mp-specs').innerHTML = `
     <div class="spec-item"><div class="spec-label">Material</div><div class="spec-val">${p.material}</div></div>
     <div class="spec-item"><div class="spec-label">Medidas</div><div class="spec-val">${p.medidas}</div></div>
     <div class="spec-item"><div class="spec-label">Colores</div><div class="spec-val">${p.colores}</div></div>
-    <div class="spec-item"><div class="spec-label">Personalización</div><div class="spec-val">${p.tecnicas?.join(', ') || 'A confirmar'}</div></div>
+    <div class="spec-item"><div class="spec-label">Personalización</div><div class="spec-val">${p.tecnicas?.map(t => TECNICA_LABEL[t] || t).join(', ') || 'A confirmar'}</div></div>
   `;
   document.getElementById('modal-producto').classList.add('open');
 }
