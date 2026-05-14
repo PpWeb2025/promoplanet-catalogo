@@ -700,37 +700,54 @@
 
 <script>
 // ============================================================
-// AUTH — contraseña simple (cambiar en producción)
+// AUTH
 // ============================================================
-const PASS = 'promoplanet2026';
-
-function login() {
+async function login() {
   const v = document.getElementById('pwd-input').value;
-  if (v === PASS) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').classList.add('visible');
-    renderTabla();
-    renderDashboard();
-    renderCatAdmin();
-  } else {
-    document.getElementById('login-error').style.display = 'block';
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: v }),
+    });
+    if (res.ok) { await mostrarApp(); } else { errEl.style.display = 'block'; }
+  } catch {
+    errEl.textContent = 'Error de conexión';
+    errEl.style.display = 'block';
   }
 }
-function logout() {
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
   document.getElementById('app').classList.remove('visible');
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('pwd-input').value = '';
 }
 
-// ============================================================
-// DATA — localStorage como base de datos local
-// ============================================================
-function getProductos() {
-  return JSON.parse(localStorage.getItem('pp_productos') || '[]');
+async function mostrarApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  await cargarProductos();
+  renderTabla();
+  renderDashboard();
+  renderCatAdmin();
 }
-function saveProductos(data) {
-  localStorage.setItem('pp_productos', JSON.stringify(data));
+
+fetch('/api/auth/me').then(r => { if (r.ok) mostrarApp(); });
+
+// ============================================================
+// DATA — API del servidor
+// ============================================================
+let productosCache = [];
+
+async function cargarProductos() {
+  const res = await fetch('/api/productos/admin/list');
+  if (res.ok) productosCache = await res.json();
 }
+
+function getProductos() { return productosCache; }
 
 // ============================================================
 // NAVEGACIÓN
@@ -743,8 +760,8 @@ function showSection(id, btn) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.getElementById('topbar-title').textContent = SEC_TITLES[id] || id;
-  if (id === 'productos') renderTabla();
-  if (id === 'dashboard') renderDashboard();
+  if (id === 'productos') cargarProductos().then(() => renderTabla());
+  if (id === 'dashboard') cargarProductos().then(() => renderDashboard());
 }
 
 // ============================================================
@@ -822,17 +839,18 @@ function setPrincipal(el) {
 
 // ============================================================
 // GUARDAR PRODUCTO
-// ============////////////////////////////////////////////////
-function guardarProducto(estado) {
+// ============================================================
+async function guardarProducto(estado) {
   const codigo = document.getElementById('f-codigo').value.trim();
   const nombre = document.getElementById('f-nombre').value.trim();
   const cat = document.getElementById('f-categoria').value;
   if (!codigo || !nombre || !cat) { showToast('Completá código, nombre y categoría', 'error'); return; }
 
   const getChecked = groupId => Array.from(document.querySelectorAll(`#${groupId} input:checked`)).map(i => i.value);
+  const fotos = Array.from(document.querySelectorAll('#fotos-preview .foto-item img'))
+    .map(img => img.getAttribute('src')).filter(s => s && s.startsWith('http'));
 
   const prod = {
-    id: editandoId || Date.now(),
     codigo, nombre,
     categoria: cat,
     rango: document.getElementById('f-rango').value,
@@ -845,50 +863,47 @@ function guardarProducto(estado) {
     destinatarios: getChecked('dest-group'),
     ocasiones: getChecked('occ-group'),
     proveedor: document.getElementById('f-proveedor').value,
-    marca: document.getElementById('f-marca').value,
     notas: document.getElementById('f-notas').value,
-    driveCode: document.getElementById('foto-drive-url').value,
+    drive_code: document.getElementById('foto-drive-url').value,
     estado: estado || document.getElementById('f-estado').value,
-    fechaCarga: new Date().toISOString(),
     emoji: '📦',
-    fotos: []
+    fotos,
   };
 
-  const lista = getProductos();
-  if (editandoId) {
-    const idx = lista.findIndex(p => p.id === editandoId);
-    if (idx >= 0) lista[idx] = prod;
-  } else {
-    lista.unshift(prod);
-  }
-  saveProductos(lista);
-  closeModal('modal-producto');
-  renderTabla();
-  renderDashboard();
-  showToast(estado === 'publicado' ? '✅ Producto publicado en el catálogo' : '📝 Guardado como borrador', 'success');
+  try {
+    const url = editandoId ? `/api/productos/admin/${editandoId}` : '/api/productos/admin';
+    const res = await fetch(url, {
+      method: editandoId ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(prod),
+    });
+    if (!res.ok) { const e = await res.json(); showToast(e.error || 'Error al guardar', 'error'); return; }
+    closeModal('modal-producto');
+    await cargarProductos();
+    renderTabla();
+    renderDashboard();
+    showToast(estado === 'publicado' ? '✅ Producto publicado en el catálogo' : '📝 Guardado como borrador', 'success');
+  } catch { showToast('Error de conexión', 'error'); }
 }
 
 // ============================================================
 // TABLA PRODUCTOS
 // ============================================================
 const CAT_NAMES = {
-  kits:'Kits & Bienvenida', drinkware:'Drinkware', escritura:'Escritura',
-  papeleria:'Papelería & Escritorio', bolsos:'Bolsos & Marroquinería',
-  tecnologia:'Tecnología', llaveros:'Llaveros & Accesorios',
-  indumentaria:'Indumentaria', outdoors:'Outdoors & Bienestar',
-  eco:'Eco & Sustentable', premium:'Premium & Ejecutivo', packaging:'Packaging & Presentación'
+  bolsos_mochilas:'Bolsos y Mochilas', capacitacion:'Capacitación y Eventos',
+  drinkware:'Drinkware', eco:'Eco y Sustentable', escritorio:'Escritorio y Oficina',
+  escritura:'Escritura', fechas:'Fechas Especiales', indumentaria:'Indumentaria Corporativa',
+  llaveros:'Llaveros y Accesorios', onboarding:'Onboarding y Bienvenida',
+  outdoors:'Outdoors y Bienestar', packaging:'Packaging y Presentación',
+  reconocimiento:'Reconocimiento y Premios', tecnologia:'Tecnología',
 };
 const RANGO_NAMES = { economico:'Económico', intermedio:'Intermedio', premium:'Premium' };
 
 function renderTabla(lista) {
-  lista = lista || getProductos();
+  lista = lista !== undefined ? lista : getProductos();
   const tbody = document.getElementById('tabla-productos');
   const empty = document.getElementById('tabla-empty');
-  if (!lista.length) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
+  if (!lista.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
   tbody.innerHTML = lista.map(p => `
     <tr>
@@ -896,7 +911,7 @@ function renderTabla(lista) {
       <td><span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--celeste)">${p.codigo}</span></td>
       <td><strong>${p.nombre}</strong>${p.proveedor ? `<br><span style="font-size:0.72rem;color:var(--texto-suave)">${p.proveedor}</span>` : ''}</td>
       <td>${CAT_NAMES[p.categoria] || p.categoria}</td>
-      <td><span class="badge badge-${p.rango === 'economico' ? 'eco' : p.rango === 'premium' ? 'premium' : 'inter'}">${RANGO_NAMES[p.rango]}</span></td>
+      <td><span class="badge badge-${p.rango === 'economico' ? 'eco' : p.rango === 'premium' ? 'premium' : 'inter'}">${RANGO_NAMES[p.rango] || p.rango}</span></td>
       <td>${p.minimo}</td>
       <td><span class="fotos-count">${p.fotos?.length || 0} 📷</span></td>
       <td><span class="badge badge-${p.estado === 'publicado' ? 'active' : 'draft'}">${p.estado === 'publicado' ? 'Publicado' : 'Borrador'}</span></td>
@@ -939,10 +954,23 @@ function editarProducto(id) {
   document.getElementById('f-descripcion').value = p.descripcion || '';
   document.getElementById('f-notas').value = p.notas || '';
   document.getElementById('f-proveedor').value = p.proveedor || '';
-  document.getElementById('f-marca').value = p.marca || '';
+  const marcaEl = document.getElementById('f-marca');
+  if (marcaEl) marcaEl.selectedIndex = 0;
   document.getElementById('f-estado').value = p.estado || 'publicado';
-  document.getElementById('foto-drive-url').value = p.driveCode || '';
-  // chips
+  document.getElementById('foto-drive-url').value = p.drive_code || '';
+  const grid = document.getElementById('fotos-preview');
+  grid.innerHTML = `<div class="foto-placeholder" onclick="document.getElementById('foto-input').click()"><span style="font-size:1.2rem">📷</span><span>Agregar foto</span></div>`;
+  (p.fotos || []).forEach((url, i) => {
+    const div = document.createElement('div');
+    div.className = 'foto-item' + (i === 0 ? ' principal' : '');
+    div.innerHTML = `<img src="${url}">
+      ${i === 0 ? '<span class="foto-badge-principal">Principal</span>' : ''}
+      <div class="foto-overlay">
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
+        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
+      </div>`;
+    grid.insertBefore(div, grid.querySelector('.foto-placeholder'));
+  });
   ['tecnicas-group','dest-group','occ-group'].forEach(gid => {
     const field = gid === 'tecnicas-group' ? 'tecnicas' : gid === 'dest-group' ? 'destinatarios' : 'ocasiones';
     document.querySelectorAll(`#${gid} .check-chip`).forEach(chip => {
@@ -952,27 +980,37 @@ function editarProducto(id) {
       chip.querySelector('input').checked = checked;
     });
   });
-  showModal('modal-producto');
+  document.getElementById('modal-producto').classList.add('open');
 }
 
-function eliminarProducto(id) {
+async function eliminarProducto(id) {
   if (!confirm('¿Eliminar este producto del catálogo?')) return;
-  const lista = getProductos().filter(p => p.id !== id);
-  saveProductos(lista);
-  renderTabla();
-  renderDashboard();
-  showToast('Producto eliminado');
+  try {
+    const res = await fetch(`/api/productos/admin/${id}`, { method: 'DELETE' });
+    if (!res.ok) { showToast('Error al eliminar', 'error'); return; }
+    await cargarProductos();
+    renderTabla();
+    renderDashboard();
+    showToast('Producto eliminado');
+  } catch { showToast('Error de conexión', 'error'); }
 }
 
-function toggleEstado(id) {
-  const lista = getProductos();
-  const p = lista.find(x => x.id === id);
+async function toggleEstado(id) {
+  const p = getProductos().find(x => x.id === id);
   if (!p) return;
-  p.estado = p.estado === 'publicado' ? 'borrador' : 'publicado';
-  saveProductos(lista);
-  renderTabla();
-  renderDashboard();
-  showToast(p.estado === 'publicado' ? '✅ Publicado en el catálogo' : '⏸ Quitado del catálogo', p.estado === 'publicado' ? 'success' : '');
+  const nuevoEstado = p.estado === 'publicado' ? 'borrador' : 'publicado';
+  try {
+    const res = await fetch(`/api/productos/admin/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado: nuevoEstado }),
+    });
+    if (!res.ok) { showToast('Error al cambiar estado', 'error'); return; }
+    await cargarProductos();
+    renderTabla();
+    renderDashboard();
+    showToast(nuevoEstado === 'publicado' ? '✅ Publicado en el catálogo' : '⏸ Quitado del catálogo', nuevoEstado === 'publicado' ? 'success' : '');
+  } catch { showToast('Error de conexión', 'error'); }
 }
 
 // ============================================================
@@ -996,7 +1034,7 @@ function renderDashboard() {
       <td style="padding:0.5rem 0.5rem"><span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--celeste)">${p.codigo}</span></td>
       <td style="padding:0.5rem 0.5rem">${p.nombre}</td>
       <td style="padding:0.5rem 0.5rem"><span class="badge badge-${p.estado === 'publicado' ? 'active' : 'draft'}">${p.estado}</span></td>
-      <td style="padding:0.5rem 1rem;font-size:0.75rem;color:var(--texto-suave)">${new Date(p.fechaCarga).toLocaleDateString('es-AR')}</td>
+      <td style="padding:0.5rem 1rem;font-size:0.75rem;color:var(--texto-suave)">${p.fecha_carga ? new Date(p.fecha_carga).toLocaleDateString('es-AR') : '—'}</td>
     </tr>`).join('') + '</tbody></table>';
 }
 
@@ -1004,18 +1042,20 @@ function renderDashboard() {
 // CATEGORÍAS ADMIN
 // ============================================================
 const CATS = [
-  { id:'kits', nombre:'Kits & Bienvenida', icon:'🎁' },
+  { id:'bolsos_mochilas', nombre:'Bolsos y Mochilas', icon:'👜' },
+  { id:'capacitacion', nombre:'Capacitación y Eventos', icon:'🎓' },
   { id:'drinkware', nombre:'Drinkware', icon:'🥤' },
+  { id:'eco', nombre:'Eco y Sustentable', icon:'♻️' },
+  { id:'escritorio', nombre:'Escritorio y Oficina', icon:'📓' },
   { id:'escritura', nombre:'Escritura', icon:'✏️' },
-  { id:'papeleria', nombre:'Papelería & Escritorio', icon:'📓' },
-  { id:'bolsos', nombre:'Bolsos & Marroquinería', icon:'👜' },
+  { id:'fechas', nombre:'Fechas Especiales', icon:'🎉' },
+  { id:'indumentaria', nombre:'Indumentaria Corporativa', icon:'👕' },
+  { id:'llaveros', nombre:'Llaveros y Accesorios', icon:'🔑' },
+  { id:'onboarding', nombre:'Onboarding y Bienvenida', icon:'🎁' },
+  { id:'outdoors', nombre:'Outdoors y Bienestar', icon:'🌿' },
+  { id:'packaging', nombre:'Packaging y Presentación', icon:'📦' },
+  { id:'reconocimiento', nombre:'Reconocimiento y Premios', icon:'⭐' },
   { id:'tecnologia', nombre:'Tecnología', icon:'💻' },
-  { id:'llaveros', nombre:'Llaveros & Accesorios', icon:'🔑' },
-  { id:'indumentaria', nombre:'Indumentaria', icon:'👕' },
-  { id:'outdoors', nombre:'Outdoors & Bienestar', icon:'🌿' },
-  { id:'eco', nombre:'Eco & Sustentable', icon:'♻️' },
-  { id:'premium', nombre:'Premium & Ejecutivo', icon:'⭐' },
-  { id:'packaging', nombre:'Packaging & Presentación', icon:'📦' },
 ];
 
 function renderCatAdmin() {
@@ -1129,36 +1169,23 @@ function toggleSelectAll() {
   });
 }
 
-function importarSeleccionados() {
+async function importarSeleccionados() {
   const selec = importSeleccion.filter(g => g.seleccionado);
   if (!selec.length) { showToast('Seleccioná al menos un producto', 'error'); return; }
-  const lista = getProductos();
-  selec.forEach(g => {
-    if (!lista.find(p => p.codigo === g.codigo)) {
-      lista.unshift({
-        id: Date.now() + Math.random(),
-        codigo: g.codigo,
-        nombre: g.nombre,
-        categoria: '',
-        rango: 'intermedio',
-        minimo: 50,
-        tecnicas: [],
-        destinatarios: [],
-        ocasiones: [],
-        estado: 'borrador',
-        fotos: g.archivos,
-        emoji: '📦',
-        fechaCarga: new Date().toISOString(),
-        descripcion: '',
-        driveCode: g.codigo,
-      });
-    }
-  });
-  saveProductos(lista);
-  renderTabla();
-  renderDashboard();
-  showToast(`✅ ${selec.length} productos importados como borradores. Completá los datos faltantes.`, 'success');
-  showSection('productos', document.querySelectorAll('.nav-item')[1]);
+  try {
+    const res = await fetch('/api/drive/importar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productos: selec }),
+    });
+    if (!res.ok) { showToast('Error al importar', 'error'); return; }
+    const { importados, omitidos } = await res.json();
+    await cargarProductos();
+    renderTabla();
+    renderDashboard();
+    showToast(`✅ ${importados} productos importados${omitidos.length ? `, ${omitidos.length} ya existían` : ''}. Completá los datos faltantes.`, 'success');
+    showSection('productos', document.querySelectorAll('.nav-item')[1]);
+  } catch { showToast('Error de conexión', 'error'); }
 }
 
 // ============================================================
@@ -1172,7 +1199,7 @@ function exportarJSON() {
 
 function exportarCSV() {
   const lista = getProductos();
-  const headers = ['id','codigo','nombre','categoria','rango','minimo','material','medidas','colores','descripcion','tecnicas','destinatarios','ocasiones','proveedor','estado','fechaCarga'];
+  const headers = ['id','codigo','nombre','categoria','rango','minimo','material','medidas','colores','descripcion','tecnicas','destinatarios','ocasiones','proveedor','estado','fecha_carga'];
   const rows = lista.map(p => headers.map(h => {
     const v = Array.isArray(p[h]) ? p[h].join('|') : (p[h] || '');
     return `"${String(v).replace(/"/g,'""')}"`;
@@ -1182,16 +1209,10 @@ function exportarCSV() {
 }
 
 function generarCatalogo() {
-  const lista = getProductos();
-  const publicados = lista.filter(p => p.estado === 'publicado').length;
-  if (!publicados) {
-    showToast('No hay productos publicados aún', 'error');
-    return;
-  }
-  // Los productos ya están en localStorage — el catálogo los lee automáticamente
-  // Solo necesitamos abrir el catálogo
-  window.open('index.html', '_blank');
-  showToast(`✅ Catálogo actualizado con ${publicados} productos publicados`, 'success');
+  const publicados = getProductos().filter(p => p.estado === 'publicado').length;
+  if (!publicados) { showToast('No hay productos publicados aún', 'error'); return; }
+  window.open('/', '_blank');
+  showToast(`✅ Catálogo con ${publicados} productos publicados`, 'success');
 }
 
 function descargar(nombre, contenido, tipo) {
