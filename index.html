@@ -2128,5 +2128,38 @@ document.addEventListener('keydown', e => {
   </div>
 </div>
 
+<script>
+  document.querySelector('.footer-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const input = document.getElementById('subs-email');
+    const btn = this.querySelector('button[type="submit"]');
+    const email = input.value.trim();
+    if (!email) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+      const res = await fetch('/api/suscripciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        btn.textContent = '\u00a1Listo!';
+        input.value = '';
+        input.placeholder = 'Te sumamos a la lista';
+      } else {
+        btn.textContent = 'Error, reintent\u00e1';
+        btn.disabled = false;
+      }
+    } catch {
+      btn.textContent = 'Error, reintent\u00e1';
+      btn.disabled = false;
+    }
+  });
+</script>
 </body>
 </html>
