@@ -2131,7 +2131,7 @@ document.addEventListener('keydown', e => {
 <script>
   document.querySelector('.footer-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const input = document.getElementById('subs-email');
+    const input = this.querySelector('input[type="email"]');
     const btn = this.querySelector('button[type="submit"]');
     const email = input.value.trim();
     if (!email) return;
