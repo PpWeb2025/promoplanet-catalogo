@@ -1,6 +1,16 @@
 const router = require('express').Router();
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 // Público — solo publicados
 router.get('/', async (req, res) => {
@@ -59,6 +69,24 @@ router.delete('/admin/:id', requireAdmin, async (req, res) => {
   if (!p) return res.status(404).json({ error: 'No encontrado' });
   await db.deleteProducto(req.params.id);
   res.json({ ok: true });
+});
+
+// POST /api/productos/upload-foto — sube una imagen a Cloudinary y devuelve la URL pública
+router.post('/upload-foto', requireAdmin, upload.single('foto'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No se recibió archivo' });
+  try {
+    const url = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: 'promoplanet', resource_type: 'image' },
+        (error, result) => error ? reject(error) : resolve(result.secure_url)
+      );
+      stream.end(req.file.buffer);
+    });
+    res.json({ url });
+  } catch (err) {
+    console.error('Cloudinary upload-foto error:', err.message);
+    res.status(500).json({ error: 'Error al subir a Cloudinary: ' + err.message });
+  }
 });
 
 module.exports = router;

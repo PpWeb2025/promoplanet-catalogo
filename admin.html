@@ -691,6 +691,11 @@
       <div style="margin-bottom:1.5rem">
         <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:0.5rem">Imágenes del producto</label>
         <div class="fotos-grid" id="fotos-preview"></div>
+        <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.75rem">
+          <button type="button" class="btn btn-sm" style="background:var(--cian);color:#fff;font-size:0.78rem" onclick="document.getElementById('foto-file-input').click()">+ Subir foto</button>
+          <input type="file" id="foto-file-input" accept="image/*" style="display:none" onchange="subirFotoDesdeArchivo(this)">
+          <span id="foto-upload-status" style="font-size:0.78rem;color:var(--texto-suave)"></span>
+        </div>
         <div style="margin-top:0.5rem">
           <label style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:0.3rem">O pegá el link de Drive de las fotos de este producto:</label>
           <input type="text" id="foto-drive-url" style="width:100%;padding:0.5rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem">
@@ -1007,6 +1012,39 @@ function mostrarFotosExistentes(fotos) {
       </div>`;
     grid.appendChild(div);
   });
+}
+
+function agregarFotoAlGrid(url) {
+  const grid = document.getElementById('fotos-preview');
+  const esPrimera = !grid.querySelector('.foto-item');
+  const div = document.createElement('div');
+  div.className = 'foto-item' + (esPrimera ? ' principal' : '');
+  div.innerHTML = `<img src="${url}" data-fotoid="${url}">
+    ${esPrimera ? '<span class="foto-badge-principal">Principal</span>' : ''}
+    <div class="foto-overlay">
+      <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
+      <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
+    </div>`;
+  grid.appendChild(div);
+}
+
+async function subirFotoDesdeArchivo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('foto-upload-status');
+  status.textContent = 'Subiendo...';
+  const fd = new FormData();
+  fd.append('foto', file);
+  try {
+    const r = await fetch('/api/productos/upload-foto', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error al subir');
+    agregarFotoAlGrid(data.url);
+    status.textContent = '';
+  } catch (err) {
+    status.textContent = 'Error: ' + err.message;
+  }
+  input.value = '';
 }
 
 // ============================================================
