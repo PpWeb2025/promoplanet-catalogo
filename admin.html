@@ -1194,6 +1194,22 @@ const CAT_NAMES = {
   reconocimiento:'Reconocimiento y Premios', tecnologia:'Tecnología'
 };
 const RANGO_NAMES = { economico:'Económico', intermedio:'Intermedio', premium:'Premium' };
+const SUBCATS = {
+  bolsos_mochilas: ['Mochilas','Bolsos','Riñoneras','Tote bags','Maletines'],
+  drinkware:       ['Termos','Jarros','Vasos','Botellas','Mates y accesorios'],
+  escritorio:      ['Organizadores','Cuadernos','Libretas','Sets de escritorio','Porta documentos'],
+  escritura:       ['Bolígrafos ecológicos','Bolígrafos plásticos','Bolígrafos metálicos','Lápices','Sets de escritura','Marcadores'],
+  indumentaria:    ['Remeras','Buzos','Camperas','Gorras','Delantales'],
+  llaveros:        ['Llaveros metálicos','Llaveros ecológicos','Llaveros con luz','Accesorios'],
+  outdoors:        ['Reposeras','Paraguas','Bolsas de frío','Accesorios outdoor','Fitness'],
+  packaging:       ['Cajas','Bolsas','Papel tissue','Cintas','Packaging ecológico'],
+  tecnologia:      ['Cargadores','Auriculares','Cables','Mousepads','Accesorios móvil'],
+  eco:             ['Bolsas reutilizables','Cuadernos ecológicos','Semillas','Accesorios eco'],
+  fechas:          ['Navidad','Día del trabajador','Día de la madre','Día del padre','Halloween'],
+  capacitacion:    ['Kits de capacitación','Blocks','Sets ejecutivos'],
+  onboarding:      ['Kits bienvenida','Sets onboarding'],
+  reconocimiento:  ['Trofeos','Placas','Medallas','Regalos premium'],
+};
 
 // cache en memoria para la tabla actual (se recarga con renderTabla())
 let _tablaCache = [];
@@ -1218,7 +1234,7 @@ async function renderTabla(lista) {
       <td><div class="prod-thumb">${thumb}</div></td>
       <td><span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--celeste)">${p.codigo}</span></td>
       <td><strong>${p.nombre}</strong>${p.proveedor ? `<br><span style="font-size:0.72rem;color:var(--texto-suave)">${p.proveedor}</span>` : ''}</td>
-      <td>${catSelectHTML(p.id, p.categoria)}</td>
+      <td>${catSelectHTML(p.id, p.categoria, p.subcategoria)}</td>
       <td><span class="badge badge-${p.rango === 'economico' ? 'eco' : p.rango === 'premium' ? 'premium' : 'inter'}">${RANGO_NAMES[p.rango] || p.rango}</span></td>
       <td>${p.minimo}</td>
       <td><span class="fotos-count">${p.fotos?.length || 0} 📷</span></td>
@@ -1234,8 +1250,9 @@ async function renderTabla(lista) {
   }).join('');
 }
 
-function catSelectHTML(id, cat) {
-  const opts = [
+function catSelectHTML(id, cat, subcat) {
+  const sel = `padding:0.22rem 0.4rem;border:1.5px solid transparent;border-radius:6px;font-family:'DM Sans',sans-serif;background:var(--gris);color:var(--texto);cursor:pointer;width:100%;display:block;`;
+  const catOpts = [
     ['bolsos_mochilas', '🎒 Bolsos y Mochilas'],
     ['capacitacion',    '📚 Capacitación'],
     ['drinkware',       '🥤 Drinkware'],
@@ -1251,36 +1268,53 @@ function catSelectHTML(id, cat) {
     ['reconocimiento',  '🏆 Reconocimiento'],
     ['tecnologia',      '💻 Tecnología'],
   ].map(([v, l]) => `<option value="${v}"${cat === v ? ' selected' : ''}>${l}</option>`).join('');
-  return `<select data-prev="${cat}"
-    onchange="cambiarCategoriaInline(this,${id})"
-    onmouseover="this.style.borderColor='var(--celeste)'"
-    onmouseout="this.style.borderColor='transparent'"
-    style="padding:0.25rem 0.5rem;border:1.5px solid transparent;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.8rem;background:var(--gris);color:var(--texto);cursor:pointer;max-width:160px;"
-  >${opts}</select>`;
+  const subcats = SUBCATS[cat] || [];
+  const subOpts = ['<option value="">Sin subcategoría</option>',
+    ...subcats.map(s => `<option value="${s}"${subcat === s ? ' selected' : ''}>${s}</option>`)
+  ].join('');
+  return `<div style="display:flex;flex-direction:column;gap:3px;min-width:155px">
+    <select data-prev="${cat}"
+      onchange="cambiarCategoriaInline(this,${id})"
+      onmouseover="this.style.borderColor='var(--celeste)'"
+      onmouseout="this.style.borderColor='transparent'"
+      style="${sel}font-size:0.8rem;">${catOpts}</select>
+    <select id="subcat-select-${id}" data-prev="${subcat || ''}"
+      onchange="cambiarSubcatInline(this,${id})"
+      onmouseover="this.style.borderColor='var(--celeste)'"
+      onmouseout="this.style.borderColor='transparent'"
+      style="${sel}font-size:0.72rem;color:var(--texto-suave)">${subOpts}</select>
+  </div>`;
 }
 
 async function cambiarCategoriaInline(selectEl, productoId) {
   const nuevaCategoria = selectEl.value;
   const valorAnterior = selectEl.dataset.prev || selectEl.value;
   selectEl.dataset.prev = nuevaCategoria;
-
   selectEl.style.background = 'var(--celeste-light)';
   selectEl.style.borderColor = 'var(--celeste)';
+
+  const subcatSelect = document.getElementById(`subcat-select-${productoId}`);
+  if (subcatSelect) {
+    const subcats = SUBCATS[nuevaCategoria] || [];
+    subcatSelect.innerHTML = '<option value="">Sin subcategoría</option>' +
+      subcats.map(s => `<option value="${s}">${s}</option>`).join('');
+    subcatSelect.dataset.prev = '';
+  }
 
   try {
     const res = await fetch(`/api/productos/admin/${productoId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categoria: nuevaCategoria }),
+      body: JSON.stringify({ categoria: nuevaCategoria, subcategoria: '' }),
     });
-    if (!res.ok) throw new Error('Error al guardar');
+    if (!res.ok) throw new Error();
     setTimeout(() => {
       selectEl.style.background = 'var(--gris)';
       selectEl.style.borderColor = 'transparent';
-    }, 1000);
+    }, 800);
     showToast('✅ Categoría actualizada', 'success');
     renderDashboard();
-  } catch (err) {
+  } catch {
     selectEl.value = valorAnterior;
     selectEl.dataset.prev = valorAnterior;
     selectEl.style.background = 'var(--rojo-light, #fff0f0)';
@@ -1290,6 +1324,38 @@ async function cambiarCategoriaInline(selectEl, productoId) {
       selectEl.style.borderColor = 'transparent';
     }, 2000);
     showToast('Error al cambiar categoría', 'error');
+  }
+}
+
+async function cambiarSubcatInline(selectEl, productoId) {
+  const nuevaSubcat = selectEl.value;
+  const valorAnterior = selectEl.dataset.prev || '';
+  selectEl.dataset.prev = nuevaSubcat;
+  selectEl.style.background = 'var(--celeste-light)';
+  selectEl.style.borderColor = 'var(--celeste)';
+
+  try {
+    const res = await fetch(`/api/productos/admin/${productoId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subcategoria: nuevaSubcat }),
+    });
+    if (!res.ok) throw new Error();
+    setTimeout(() => {
+      selectEl.style.background = 'var(--gris)';
+      selectEl.style.borderColor = 'transparent';
+    }, 800);
+    showToast('✅ Subcategoría actualizada', 'success');
+  } catch {
+    selectEl.value = valorAnterior;
+    selectEl.dataset.prev = valorAnterior;
+    selectEl.style.background = 'var(--rojo-light, #fff0f0)';
+    selectEl.style.borderColor = 'var(--rojo, #e53e3e)';
+    setTimeout(() => {
+      selectEl.style.background = 'var(--gris)';
+      selectEl.style.borderColor = 'transparent';
+    }, 2000);
+    showToast('Error al cambiar subcategoría', 'error');
   }
 }
 
