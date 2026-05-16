@@ -897,33 +897,12 @@
       <div id="cat-list"></div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-title">Sustentabilidad</div>
-      <button class="cat-item active" data-tag="todos" onclick="toggleTag(this)">
-        <span class="cat-dot" style="background:var(--celeste)"></span> Todos
-      </button>
-      <button class="cat-item" data-tag="eco" onclick="toggleTag(this)">
-        <span class="cat-dot" style="background:#16a34a"></span> 🌿 Eco y Sustentable
-      </button>
-    </div>
-    <div class="sidebar-section">
       <div class="sidebar-title">Ocasión</div>
       <button class="cat-item active" data-occ="todos" onclick="toggleOcc(this)">
         <span class="cat-dot" style="background:var(--azul)"></span> Todas
       </button>
-      <button class="cat-item" data-occ="onboarding" onclick="toggleOcc(this)">
-        <span class="cat-dot" style="background:#003471"></span> Onboarding
-      </button>
-      <button class="cat-item" data-occ="capacitacion" onclick="toggleOcc(this)">
-        <span class="cat-dot" style="background:#0284c7"></span> Capacitación
-      </button>
-      <button class="cat-item" data-occ="reconocimiento" onclick="toggleOcc(this)">
-        <span class="cat-dot" style="background:#b45309"></span> Reconocimiento
-      </button>
       <button class="cat-item" data-occ="evento" onclick="toggleOcc(this)">
         <span class="cat-dot" style="background:#7c3aed"></span> Eventos
-      </button>
-      <button class="cat-item" data-occ="fechas" onclick="toggleOcc(this)">
-        <span class="cat-dot" style="background:#ec4899"></span> Fechas especiales
       </button>
     </div>
     <div class="sidebar-section">
@@ -1301,6 +1280,32 @@ const CATEGORIAS = [
   { id: 'tecnologia', nombre: 'Tecnología', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>`, color: '#7c3aed' },
 ];
 
+const CAT_NAMES = {
+  bolsos_mochilas: 'Bolsos y Mochilas',
+  drinkware:       'Drinkware',
+  escritorio:      'Escritorio y Oficina',
+  escritura:       'Escritura',
+  indumentaria:    'Indumentaria Corporativa',
+  llaveros:        'Llaveros y Accesorios',
+  outdoors:        'Outdoors y Fitness',
+  bienestar:       'Bienestar y Autocuidado',
+  packaging:       'Packaging y Presentación',
+  tecnologia:      'Tecnología',
+};
+
+const SUBCATS = {
+  bolsos_mochilas: ['Bolsos','Maletines y portfolios','Mochilas','Necessaires y accesorios','Tote bags y bolsas','Valijas y carry on'],
+  drinkware:       ['Botellas standard','Botellas térmicas','Jarros y mugs','Mates y accesorios','Termos'],
+  escritorio:      ['Cuadernos y agendas','Organizadores'],
+  escritura:       ['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'],
+  indumentaria:    ['Abrigos','Delantales y pecheras','Gorras','Remeras y chombas'],
+  llaveros:        ['Llaveros ecológicos','Llaveros plásticos','Llaveros metálicos','Llaveros multipropósito'],
+  outdoors:        ['Camping','Gastronomía','Paraguas','Cooler y loncheras'],
+  bienestar:       ['Cuidado personal','Ambientación'],
+  packaging:       ['Bolsas','Cajas'],
+  tecnologia:      ['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'],
+};
+
 // ============================================================
 // PRODUCTOS — se leen desde la API
 // ============================================================
@@ -1331,9 +1336,7 @@ function renderCatSidebar() {
       <span class="cat-dot" style="background:${c.color}"></span> ${c.nombre}
     </button>`;
     if (catActiva === c.id) {
-      const subcats = [...new Set(
-        PRODUCTOS.filter(p => p.categoria === c.id && p.subcategoria).map(p => p.subcategoria)
-      )].sort();
+      const subcats = SUBCATS[c.id] || [];
       if (subcats.length) {
         html += `<div class="subcat-inline">`;
         html += subcats.map(s =>
