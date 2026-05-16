@@ -187,7 +187,7 @@
   .check-chip { display: flex; align-items: center; gap: 5px; padding: 0.3rem 0.75rem; border: 1.5px solid var(--gris-borde); border-radius: 20px; cursor: pointer; font-size: 0.8rem; color: var(--texto-suave); transition: all 0.15s; }
   .check-chip input { display: none; }
   .check-chip.checked { border-color: var(--celeste); background: var(--celeste-light); color: var(--celeste); font-weight: 500; }
-  #badges-group .check-chip.checked { background: var(--chip-color, var(--celeste)); border-color: var(--chip-color, var(--celeste)); color: #fff; }
+  #badges-group .check-chip.checked, #agregar-badges-group .check-chip.checked { background: var(--chip-color, var(--celeste)); border-color: var(--chip-color, var(--celeste)); color: #fff; }
 
   /* FOTOS PANEL */
   .fotos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
@@ -528,6 +528,93 @@
                 </div>
               </div>
 
+              <div class="form-grid" style="margin-top:1.25rem">
+                <div class="form-group full">
+                  <label>Precio unitario del proveedor (ARS, sin IVA)</label>
+                  <input type="number" id="agregar-f-precio-proveedor" placeholder="Ej: 3500" min="0" step="1" oninput="autoCalcularRangoMinimo(this.value)">
+                  <span class="form-hint">Opcional — si lo ingresás, el sistema sugiere el rango y el mínimo automáticamente</span>
+                  <span id="agregar-precio-hint" style="display:none;font-size:0.78rem;margin-top:0.3rem"></span>
+                </div>
+                <div class="form-group">
+                  <label>Rango de precio</label>
+                  <select id="agregar-f-rango">
+                    <option value="">Sin precio definido</option>
+                    <option value="economico">Económico</option>
+                    <option value="intermedio">Intermedio</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Cantidad mínima</label>
+                  <input type="number" id="agregar-f-minimo" min="1" placeholder="Ej: 100">
+                </div>
+                <div class="form-group full">
+                  <label>Etiquetas del producto <span style="font-size:0.72rem;color:var(--texto-suave);font-weight:400">(se muestran sobre la imagen en el catálogo)</span></label>
+                  <div class="check-group" id="agregar-badges-group">
+                    <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#2563eb"><input type="checkbox" value="tinta_azul"> 🖊️ Tinta azul</label>
+                    <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#374151"><input type="checkbox" value="tinta_negra"> 🖊️ Tinta negra</label>
+                    <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#22c55e"><input type="checkbox" value="nuevo"> ✨ Nuevo</label>
+                    <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#16a34a"><input type="checkbox" value="ecofriendly"> 🌱 Eco friendly</label>
+                    <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#0ea5e9"><input type="checkbox" value="termico"> 🌡️ Térmico</label>
+                    <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#7c3aed"><input type="checkbox" value="premium"> ⭐ Premium</label>
+                    <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#ef4444"><input type="checkbox" value="sale"> 🔥 SALE</label>
+                    <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#00A8B4"><input type="checkbox" value="kit"> 🎁 Kit</label>
+                    <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#ec4899"><input type="checkbox" value="ninos"> 🧒 Niños</label>
+                    <label class="check-chip" onclick="toggleChip(this)" style="--chip-color:#f59e0b"><input type="checkbox" value="popular"> 🔥 Popular</label>
+                  </div>
+                </div>
+                <div class="form-group full">
+                  <label>Técnicas de personalización</label>
+                  <div class="check-group" id="agregar-tecnicas-group">
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="laser"> Grabado láser</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="dtf"> DTF / Full color</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="tampografia"> Tampografía</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="bordado"> Bordado</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="sublimacion"> Sublimación</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="hotstamping"> Hot stamping</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="serigrafia"> Serigrafía</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="dtf-textil"> DTF Textil</label>
+                  </div>
+                </div>
+                <div class="form-group full">
+                  <label>Destinatarios</label>
+                  <div class="check-group" id="agregar-dest-group">
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="colaborador"> 👤 Colaborador</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="cliente"> 🤝 Cliente</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="directivo"> ⭐ Directivo</label>
+                  </div>
+                </div>
+                <div class="form-group full">
+                  <label>Ocasiones</label>
+                  <div class="check-group" id="agregar-occ-group">
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="onboarding"> Onboarding</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="capacitacion"> Capacitación</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="reconocimiento"> Reconocimiento</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="evento"> Eventos</label>
+                    <label class="check-chip" onclick="toggleChip(this)"><input type="checkbox" value="fechas"> Fechas especiales</label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Proveedor</label>
+                  <select id="agregar-f-proveedor" onchange="toggleAgregarProveedorOtro()">
+                    <option value="">Seleccioná...</option>
+                    <option>Zecat</option>
+                    <option>Stocksur</option>
+                    <option>Xtrade</option>
+                    <option>Improm</option>
+                    <option>Nuevas Formas</option>
+                    <option>Maya</option>
+                    <option value="__otro__">Otro...</option>
+                  </select>
+                  <input type="text" id="agregar-f-proveedor-otro" placeholder="Nombre del proveedor"
+                    style="display:none;margin-top:0.5rem;width:100%;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;box-sizing:border-box">
+                </div>
+                <div class="form-group full">
+                  <label>Notas internas (no se muestran al cliente)</label>
+                  <textarea id="agregar-f-notas" style="min-height:60px"></textarea>
+                </div>
+              </div>
+
               <div style="margin-top:1.5rem">
                 <div style="font-size:0.78rem;font-weight:600;margin-bottom:0.75rem;color:var(--texto)">
                   Fotos — hacé click en ⭐ para marcar la principal
@@ -540,7 +627,8 @@
             <div style="padding:1rem 1.25rem;border-top:1px solid var(--gris-borde);display:flex;justify-content:flex-end;gap:0.75rem;align-items:center">
               <span id="agregar-drive-hint" style="font-size:0.75rem;color:var(--texto-suave);margin-right:auto"></span>
               <button class="btn btn-outline" onclick="resetAgregar()">Cancelar</button>
-              <button class="btn btn-celeste" onclick="confirmarAgregarProducto(this)">✅ Crear producto en borrador</button>
+              <button class="btn btn-outline" onclick="confirmarAgregarProducto(this, 'borrador')">Guardar borrador</button>
+              <button class="btn btn-celeste" onclick="confirmarAgregarProducto(this, 'publicado')">Publicar producto</button>
             </div>
           </div>
         </div>
@@ -1651,6 +1739,27 @@ async function analizarConIA(btn) {
     if (dataURL?.medidas)     document.getElementById('agregar-f-medidas').value     = dataURL.medidas;
     if (dataURL?.colores)     document.getElementById('agregar-f-colores').value     = dataURL.colores;
 
+    // Pre-seleccionar chips con datos de la IA
+    const _iaChips = {
+      tecnicas:      dataURL?.tecnicas      || dataFotos?.tecnicas      || [],
+      destinatarios: dataURL?.destinatarios || dataFotos?.destinatarios || [],
+      ocasiones:     dataURL?.ocasiones     || dataFotos?.ocasiones     || [],
+      badges:        dataURL?.badges        || dataFotos?.badges        || [],
+    };
+    [
+      ['agregar-tecnicas-group', 'tecnicas'],
+      ['agregar-dest-group',     'destinatarios'],
+      ['agregar-occ-group',      'ocasiones'],
+      ['agregar-badges-group',   'badges'],
+    ].forEach(([gid, field]) => {
+      document.querySelectorAll(`#${gid} .check-chip`).forEach(chip => {
+        const val = chip.querySelector('input').value;
+        const checked = (_iaChips[field] || []).includes(val);
+        chip.classList.toggle('checked', checked);
+        chip.querySelector('input').checked = checked;
+      });
+    });
+
     document.getElementById('agregar-step1').style.display = 'none';
     document.getElementById('agregar-step2').style.display = 'block';
     if (tieneFortos) renderConfirmFotos();
@@ -1712,6 +1821,34 @@ function actualizarNombresPreview() {
   box.innerHTML = `<span style="font-family:'DM Sans',sans-serif;font-weight:600;color:var(--texto)">Archivos que se subirán a Cloudinary:</span><br>${lineas.join('<br>')}`;
 }
 
+function autoCalcularRangoMinimo(precio) {
+  const p = parseFloat(precio);
+  if (!p || p <= 0) return;
+  let rango, minimo;
+  if (p < 2000)       { rango = 'economico';  minimo = 1000; }
+  else if (p < 6000)  { rango = 'economico';  minimo = 500;  }
+  else if (p < 15000) { rango = 'intermedio'; minimo = 100;  }
+  else if (p < 40000) { rango = 'intermedio'; minimo = 50;   }
+  else                { rango = 'premium';    minimo = 25;   }
+  document.getElementById('agregar-f-rango').value = rango;
+  document.getElementById('agregar-f-minimo').value = minimo;
+  const hint = document.getElementById('agregar-precio-hint');
+  if (hint) {
+    hint.textContent = `✨ Sugerido automáticamente: ${rango} · mínimo ${minimo} uds.`;
+    hint.style.color = 'var(--celeste)';
+    hint.style.display = 'block';
+  }
+}
+
+function toggleAgregarProveedorOtro() {
+  const sel = document.getElementById('agregar-f-proveedor');
+  const inp = document.getElementById('agregar-f-proveedor-otro');
+  const mostrar = sel.value === '__otro__';
+  inp.style.display = mostrar ? '' : 'none';
+  if (!mostrar) inp.value = '';
+  if (mostrar) inp.focus();
+}
+
 function resetAgregar() {
   _agregarFiles = [];
   _agregarPrincipalIdx = 0;
@@ -1732,14 +1869,30 @@ function resetAgregar() {
   document.getElementById('agregar-fotos-confirm').innerHTML = '';
   document.getElementById('agregar-nombres-preview').style.display = 'none';
   document.getElementById('agregar-nombres-preview').innerHTML = '';
+  document.getElementById('agregar-f-precio-proveedor').value = '';
+  const _hint = document.getElementById('agregar-precio-hint');
+  if (_hint) { _hint.style.display = 'none'; _hint.textContent = ''; }
+  document.getElementById('agregar-f-rango').value = '';
+  document.getElementById('agregar-f-minimo').value = '';
+  ['agregar-badges-group','agregar-tecnicas-group','agregar-dest-group','agregar-occ-group'].forEach(gid => {
+    document.querySelectorAll(`#${gid} .check-chip`).forEach(c => c.classList.remove('checked'));
+    document.querySelectorAll(`#${gid} input`).forEach(c => c.checked = false);
+  });
+  document.getElementById('agregar-f-proveedor').selectedIndex = 0;
+  document.getElementById('agregar-f-proveedor-otro').value = '';
+  document.getElementById('agregar-f-proveedor-otro').style.display = 'none';
+  document.getElementById('agregar-f-notas').value = '';
 }
 
-async function confirmarAgregarProducto(btn) {
+async function confirmarAgregarProducto(btn, estadoForzado) {
   const nombre = document.getElementById('agregar-f-nombre').value.trim();
   const categoria = document.getElementById('agregar-f-categoria').value;
   const subcategoria = document.getElementById('agregar-f-subcategoria').value;
   if (!nombre || !categoria) { showToast('Completá nombre y categoría', 'error'); return; }
   if (!_agregarFiles.length) { showToast('No hay fotos cargadas', 'error'); return; }
+
+  const estado = estadoForzado || 'borrador';
+  const getChecked = groupId => Array.from(document.querySelectorAll(`#${groupId} input:checked`)).map(i => i.value);
 
   // Reordenar: principal primero
   const orderedFiles = [
@@ -1754,6 +1907,7 @@ async function confirmarAgregarProducto(btn) {
     return `${nombre} ${_agregarCodigo}${sufijo}.${ext}`;
   });
 
+  const btnOrigText = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = '⏳ Subiendo fotos…';
 
@@ -1773,15 +1927,29 @@ async function confirmarAgregarProducto(btn) {
 
     btn.innerHTML = '⏳ Creando producto…';
 
+    const proveedorSel = document.getElementById('agregar-f-proveedor');
+    const proveedor = proveedorSel.value === '__otro__'
+      ? document.getElementById('agregar-f-proveedor-otro').value.trim()
+      : proveedorSel.value;
+    const badgesCheck = getChecked('agregar-badges-group');
+
     // Crear producto en DB
     const prodRes = await fetch('/api/productos/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         codigo: _agregarCodigo, nombre, categoria, subcategoria,
-        estado: 'borrador', fotos: urls, emoji: '📦',
-        rango: '', minimo: 0, tecnicas: [], destinatarios: [],
-        ocasiones: [], badges: [],
+        estado, fotos: urls, emoji: '📦',
+        rango: document.getElementById('agregar-f-rango').value,
+        minimo: parseInt(document.getElementById('agregar-f-minimo').value) || 0,
+        tecnicas: getChecked('agregar-tecnicas-group'),
+        destinatarios: getChecked('agregar-dest-group'),
+        ocasiones: getChecked('agregar-occ-group'),
+        badges: badgesCheck,
+        tags: badgesCheck.includes('ecofriendly') ? ['eco'] : [],
+        proveedor,
+        precio_proveedor: parseFloat(document.getElementById('agregar-f-precio-proveedor').value) || null,
+        notas: document.getElementById('agregar-f-notas').value.trim(),
         descripcion: document.getElementById('agregar-f-descripcion').value.trim(),
         material:    document.getElementById('agregar-f-material').value.trim(),
         medidas:     document.getElementById('agregar-f-medidas').value.trim(),
@@ -1794,14 +1962,17 @@ async function confirmarAgregarProducto(btn) {
     }
 
     await Promise.all([renderTabla(), renderDashboard()]);
-    showToast(`✅ ${nombre} (${_agregarCodigo}) creado como borrador`, 'success');
+    const msg = estado === 'publicado'
+      ? `✅ ${nombre} (${_agregarCodigo}) publicado en el catálogo`
+      : `📝 ${nombre} (${_agregarCodigo}) guardado como borrador`;
+    showToast(msg, 'success');
     resetAgregar();
     initAgregarSection();
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '✅ Crear producto en borrador';
+    btn.innerHTML = btnOrigText;
   }
 }
 
