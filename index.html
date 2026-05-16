@@ -1322,6 +1322,7 @@ let occActiva = 'todos';
 let productoActual = null;
 let sortActivo = 'nuevo';
 let tagActivo = 'todos';
+let ecoActivo = false;
 
 // ============================================================
 // RENDER CATEGORIAS SIDEBAR
@@ -1346,6 +1347,10 @@ function renderCatSidebar() {
       }
     }
   });
+  html += `<div style="border-top:1px solid rgba(0,168,180,0.15);margin:8px 0 4px"></div>
+  <button class="cat-item ${ecoActivo ? 'active' : ''}" onclick="toggleEco()">
+    <span class="cat-dot" style="background:#16a34a"></span> 🌿 Eco / Sustentable
+  </button>`;
   el.innerHTML = html;
 }
 
@@ -1372,6 +1377,7 @@ function renderCatGrid() {
 function setCatFromGrid(id) {
   catActiva = id;
   subcatActiva = 'todos';
+  ecoActivo = false;
   document.querySelectorAll('.cat-item').forEach(el => {
     el.classList.toggle('active', el.dataset.cat === id);
   });
@@ -1390,6 +1396,7 @@ function setCatFromGrid(id) {
 function setCat(id, el) {
   catActiva = id;
   subcatActiva = 'todos';
+  ecoActivo = false;
   document.querySelectorAll('.cat-item').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
   renderSubcatSidebar();
@@ -1426,6 +1433,16 @@ function toggleTag(el) {
   tagActivo = el.dataset.tag;
   document.querySelectorAll('[data-tag]').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
+  filtrar();
+}
+
+function toggleEco() {
+  ecoActivo = !ecoActivo;
+  if (ecoActivo) {
+    catActiva = 'todos';
+    subcatActiva = 'todos';
+  }
+  renderCatSidebar();
   filtrar();
 }
 
@@ -1517,6 +1534,7 @@ function filtrar() {
     if (destActivo !== 'todos' && !p.destinatarios.includes(destActivo)) return false;
     if (occActiva !== 'todos' && !p.ocasiones.includes(occActiva)) return false;
     if (tagActivo !== 'todos' && !(p.tags || []).includes(tagActivo)) return false;
+    if (ecoActivo && !(p.badges || []).includes('ecofriendly')) return false;
     return true;
   });
 
@@ -1557,7 +1575,9 @@ function renderProductos(lista) {
   const empty = document.getElementById('empty-state');
   const count = document.getElementById('prod-count');
 
-  count.textContent = `${lista.length} producto${lista.length !== 1 ? 's' : ''}`;
+  count.textContent = ecoActivo
+    ? `${lista.length} producto${lista.length !== 1 ? 's' : ''} eco`
+    : `${lista.length} producto${lista.length !== 1 ? 's' : ''}`;
 
   if (!lista.length) {
     grid.innerHTML = '';
