@@ -811,6 +811,13 @@
             <option value="">Sin subcategoría</option>
           </select>
         </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Precio unitario del proveedor (USD)</label>
+          <input type="number" id="f-precio-proveedor" min="0" step="0.01"
+                 placeholder="Ej: 3.50"
+                 oninput="autoCalcularRangoMinimoModal(this.value)">
+          <span id="modal-precio-hint" style="display:none;font-size:0.78rem;margin-top:0.3rem;color:var(--celeste)"></span>
+        </div>
         <div class="form-group">
           <label>Rango de precio</label>
           <select id="f-rango">
@@ -1030,6 +1037,8 @@ function limpiarForm() {
   if (otroinp) { otroinp.value = ''; otroinp.style.display = 'none'; }
   actualizarSubcats('');
   document.getElementById('f-minimo').value = '';
+  document.getElementById('f-precio-proveedor').value = '';
+  document.getElementById('modal-precio-hint').style.display = 'none';
   document.getElementById('f-estado').value = 'publicado';
   document.querySelectorAll('.check-chip').forEach(c => c.classList.remove('checked'));
   document.querySelectorAll('.check-chip input').forEach(c => c.checked = false);
@@ -1146,6 +1155,7 @@ async function guardarProducto(estado) {
     proveedor: document.getElementById('f-proveedor').value === '__otro__'
       ? document.getElementById('f-proveedor-otro').value.trim()
       : document.getElementById('f-proveedor').value,
+    precio_proveedor: parseFloat(document.getElementById('f-precio-proveedor').value) || 0,
     notas: document.getElementById('f-notas').value,
     drive_code: document.getElementById('foto-drive-url').value,
     estado: estado || document.getElementById('f-estado').value,
@@ -1249,6 +1259,8 @@ async function editarProducto(id) {
   document.getElementById('f-categoria').value = p.categoria;
   actualizarSubcats(p.categoria);
   document.getElementById('f-subcategoria').value = p.subcategoria || '';
+  document.getElementById('f-precio-proveedor').value = p.precio_proveedor || '';
+  document.getElementById('modal-precio-hint').style.display = 'none';
   document.getElementById('f-rango').value = p.rango;
   document.getElementById('f-minimo').value = p.minimo;
   document.getElementById('f-material').value = p.material || '';
@@ -1869,6 +1881,40 @@ function autoCalcularRangoMinimo(precio) {
     const rangoLabel = { economico: 'Económico', intermedio: 'Intermedio', premium: 'Premium' };
     hint.textContent = `✨ Sugerido: ${rangoLabel[rango]} · mínimo ${minimo} unidades`;
     hint.style.color = 'var(--celeste)';
+    hint.style.display = 'block';
+  }
+}
+
+function autoCalcularRangoMinimoModal(precio) {
+  const p = parseFloat(precio);
+  if (!p || p <= 0) return;
+
+  let minimo, rango;
+
+  if (p <= 0.24)       { minimo = 2000; rango = 'economico'; }
+  else if (p <= 0.50)  { minimo = 1000; rango = 'economico'; }
+  else if (p <= 0.99)  { minimo = 750;  rango = 'economico'; }
+  else if (p <= 2.00)  { minimo = 500;  rango = 'economico'; }
+  else if (p <= 3.00)  { minimo = 250;  rango = 'economico'; }
+  else if (p <= 5.00)  { minimo = 150;  rango = 'intermedio'; }
+  else if (p <= 7.50)  { minimo = 100;  rango = 'intermedio'; }
+  else if (p <= 10.00) { minimo = 80;   rango = 'intermedio'; }
+  else if (p <= 15.00) { minimo = 50;   rango = 'intermedio'; }
+  else if (p <= 20.00) { minimo = 30;   rango = 'premium'; }
+  else if (p <= 25.00) { minimo = 25;   rango = 'premium'; }
+  else if (p <= 30.00) { minimo = 20;   rango = 'premium'; }
+  else if (p <= 40.00) { minimo = 15;   rango = 'premium'; }
+  else if (p <= 50.00) { minimo = 12;   rango = 'premium'; }
+  else if (p <= 100.00){ minimo = 10;   rango = 'premium'; }
+  else                 { minimo = 5;    rango = 'premium'; }
+
+  document.getElementById('f-rango').value = rango;
+  document.getElementById('f-minimo').value = minimo;
+
+  const hint = document.getElementById('modal-precio-hint');
+  if (hint) {
+    const rangoLabel = { economico: 'Económico', intermedio: 'Intermedio', premium: 'Premium' };
+    hint.textContent = `✨ Sugerido: ${rangoLabel[rango]} · mínimo ${minimo} unidades`;
     hint.style.display = 'block';
   }
 }
