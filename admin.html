@@ -1825,15 +1825,29 @@ function actualizarNombresPreview() {
 function autoCalcularRangoMinimo(precio) {
   const p = parseFloat(precio);
   if (!p || p <= 0) return;
-  let rango, minimo;
-  if (p < 1.5)       { rango = 'economico';  minimo = 1000; }
-  else if (p < 4)    { rango = 'economico';  minimo = 500;  }
-  else if (p < 10)   { rango = 'intermedio'; minimo = 200;  }
-  else if (p < 25)   { rango = 'intermedio'; minimo = 100;  }
-  else if (p < 60)   { rango = 'premium';    minimo = 50;   }
-  else               { rango = 'premium';    minimo = 25;   }
+
+  let minimo, rango;
+
+  if (p <= 0.24)       { minimo = 2000; rango = 'economico'; }
+  else if (p <= 0.50)  { minimo = 1000; rango = 'economico'; }
+  else if (p <= 0.99)  { minimo = 750;  rango = 'economico'; }
+  else if (p <= 2.00)  { minimo = 500;  rango = 'economico'; }
+  else if (p <= 3.00)  { minimo = 250;  rango = 'economico'; }
+  else if (p <= 5.00)  { minimo = 150;  rango = 'intermedio'; }
+  else if (p <= 7.50)  { minimo = 100;  rango = 'intermedio'; }
+  else if (p <= 10.00) { minimo = 80;   rango = 'intermedio'; }
+  else if (p <= 15.00) { minimo = 50;   rango = 'intermedio'; }
+  else if (p <= 20.00) { minimo = 30;   rango = 'premium'; }
+  else if (p <= 25.00) { minimo = 25;   rango = 'premium'; }
+  else if (p <= 30.00) { minimo = 20;   rango = 'premium'; }
+  else if (p <= 40.00) { minimo = 15;   rango = 'premium'; }
+  else if (p <= 50.00) { minimo = 12;   rango = 'premium'; }
+  else if (p <= 100.00){ minimo = 10;   rango = 'premium'; }
+  else                 { minimo = 5;    rango = 'premium'; }
+
   document.getElementById('agregar-f-rango').value = rango;
   document.getElementById('agregar-f-minimo').value = minimo;
+
   const hint = document.getElementById('agregar-precio-hint');
   if (hint) {
     const rangoLabel = { economico: 'Económico', intermedio: 'Intermedio', premium: 'Premium' };
