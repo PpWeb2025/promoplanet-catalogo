@@ -492,15 +492,16 @@
                   <label>Categoría *</label>
                   <select id="agregar-f-categoria" onchange="actualizarSubcatsAgregar(this.value)">
                     <option value="">Seleccioná...</option>
-                    <option value="bolsos_mochilas">Bolsos y Mochilas</option>
-                    <option value="drinkware">Drinkware</option>
-                    <option value="escritorio">Escritorio y Oficina</option>
-                    <option value="escritura">Escritura</option>
-                    <option value="indumentaria">Indumentaria Corporativa</option>
-                    <option value="llaveros">Llaveros y Accesorios</option>
-                    <option value="outdoors">Outdoors y Bienestar</option>
-                    <option value="packaging">Packaging y Presentación</option>
-                    <option value="tecnologia">Tecnología</option>
+                    <option value="bolsos_mochilas">🎒 Bolsos y Mochilas</option>
+                    <option value="drinkware">🥤 Drinkware</option>
+                    <option value="escritorio">📋 Escritorio y Oficina</option>
+                    <option value="escritura">✏️ Escritura</option>
+                    <option value="indumentaria">👕 Indumentaria Corporativa</option>
+                    <option value="llaveros">🔑 Llaveros y Accesorios</option>
+                    <option value="outdoors">⛺ Outdoors y Fitness</option>
+                    <option value="bienestar">🌿 Bienestar y Autocuidado</option>
+                    <option value="packaging">📦 Packaging y Presentación</option>
+                    <option value="tecnologia">💻 Tecnología</option>
                   </select>
                 </div>
                 <div class="form-group" id="agregar-subcat-group" style="display:none">
@@ -794,15 +795,16 @@
           <label>Categoría *</label>
           <select id="f-categoria" onchange="actualizarSubcats(this.value)">
             <option value="">Seleccioná...</option>
-            <option value="bolsos_mochilas">Bolsos y Mochilas</option>
-            <option value="drinkware">Drinkware</option>
-            <option value="escritorio">Escritorio y Oficina</option>
-            <option value="escritura">Escritura</option>
-            <option value="indumentaria">Indumentaria Corporativa</option>
-            <option value="llaveros">Llaveros y Accesorios</option>
-            <option value="outdoors">Outdoors y Bienestar</option>
-            <option value="packaging">Packaging y Presentación</option>
-            <option value="tecnologia">Tecnología</option>
+            <option value="bolsos_mochilas">🎒 Bolsos y Mochilas</option>
+            <option value="drinkware">🥤 Drinkware</option>
+            <option value="escritorio">📋 Escritorio y Oficina</option>
+            <option value="escritura">✏️ Escritura</option>
+            <option value="indumentaria">👕 Indumentaria Corporativa</option>
+            <option value="llaveros">🔑 Llaveros y Accesorios</option>
+            <option value="outdoors">⛺ Outdoors y Fitness</option>
+            <option value="bienestar">🌿 Bienestar y Autocuidado</option>
+            <option value="packaging">📦 Packaging y Presentación</option>
+            <option value="tecnologia">💻 Tecnología</option>
           </select>
         </div>
         <div class="form-group" id="f-subcategoria-group" style="display:none">
@@ -1186,29 +1188,41 @@ async function guardarProducto(estado) {
 // TABLA PRODUCTOS
 // ============================================================
 const CAT_NAMES = {
-  bolsos_mochilas:'Bolsos y Mochilas', capacitacion:'Capacitación y Eventos',
-  drinkware:'Drinkware', eco:'Eco y Sustentable', escritorio:'Escritorio y Oficina',
-  escritura:'Escritura', fechas:'Fechas Especiales', indumentaria:'Indumentaria Corporativa',
-  llaveros:'Llaveros y Accesorios', onboarding:'Onboarding y Bienvenida',
-  outdoors:'Outdoors y Bienestar', packaging:'Packaging y Presentación',
-  reconocimiento:'Reconocimiento y Premios', tecnologia:'Tecnología'
+  bolsos_mochilas: 'Bolsos y Mochilas',
+  drinkware:       'Drinkware',
+  escritorio:      'Escritorio y Oficina',
+  escritura:       'Escritura',
+  indumentaria:    'Indumentaria Corporativa',
+  llaveros:        'Llaveros y Accesorios',
+  outdoors:        'Outdoors y Fitness',
+  bienestar:       'Bienestar y Autocuidado',
+  packaging:       'Packaging y Presentación',
+  tecnologia:      'Tecnología',
 };
 const RANGO_NAMES = { economico:'Económico', intermedio:'Intermedio', premium:'Premium' };
+const EMOJIS = {
+  bolsos_mochilas: '🎒',
+  drinkware:       '🥤',
+  escritorio:      '📋',
+  escritura:       '✏️',
+  indumentaria:    '👕',
+  llaveros:        '🔑',
+  outdoors:        '⛺',
+  bienestar:       '🌿',
+  packaging:       '📦',
+  tecnologia:      '💻',
+};
 const SUBCATS = {
-  bolsos_mochilas: ['Mochilas','Bolsos','Riñoneras','Tote bags','Maletines'],
-  drinkware:       ['Termos','Jarros','Vasos','Botellas','Mates y accesorios'],
-  escritorio:      ['Organizadores','Cuadernos','Libretas','Sets de escritorio','Porta documentos'],
-  escritura:       ['Bolígrafos ecológicos','Bolígrafos plásticos','Bolígrafos metálicos','Lápices','Sets de escritura','Marcadores'],
-  indumentaria:    ['Remeras','Buzos','Camperas','Gorras','Delantales'],
-  llaveros:        ['Llaveros metálicos','Llaveros ecológicos','Llaveros con luz','Accesorios'],
-  outdoors:        ['Paraguas y ponchos','Bolsas térmicas y coolers','Asado y camping','Bienestar y autocuidado','Fitness y deporte'],
-  packaging:       ['Cajas','Bolsas','Papel tissue','Cintas','Packaging ecológico'],
-  tecnologia:      ['Cargadores','Auriculares','Cables','Mousepads','Accesorios móvil'],
-  eco:             ['Bolsas reutilizables','Cuadernos ecológicos','Semillas','Accesorios eco'],
-  fechas:          ['Navidad','Día del trabajador','Día de la madre','Día del padre','Halloween'],
-  capacitacion:    ['Kits de capacitación','Blocks','Sets ejecutivos'],
-  onboarding:      ['Kits bienvenida','Sets onboarding'],
-  reconocimiento:  ['Trofeos','Placas','Medallas','Regalos premium'],
+  bolsos_mochilas: ['Bolsos','Maletines y portfolios','Mochilas','Necessaires y accesorios','Tote bags y bolsas','Valijas y carry on'],
+  drinkware:       ['Botellas standard','Botellas térmicas','Jarros y mugs','Mates y accesorios','Termos'],
+  escritorio:      ['Cuadernos y agendas','Organizadores'],
+  escritura:       ['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'],
+  indumentaria:    ['Abrigos','Delantales y pecheras','Gorras','Remeras y chombas'],
+  llaveros:        ['Llaveros ecológicos','Llaveros plásticos','Llaveros metálicos','Llaveros multipropósito'],
+  outdoors:        ['Camping','Gastronomía','Paraguas','Cooler y loncheras'],
+  bienestar:       ['Cuidado personal','Ambientación'],
+  packaging:       ['Bolsas','Cajas'],
+  tecnologia:      ['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'],
 };
 
 // cache en memoria para la tabla actual (se recarga con renderTabla())
@@ -1254,18 +1268,14 @@ function catSelectHTML(id, cat, subcat) {
   const sel = `padding:0.22rem 0.4rem;border:1.5px solid transparent;border-radius:6px;font-family:'DM Sans',sans-serif;background:var(--gris);color:var(--texto);cursor:pointer;width:100%;display:block;`;
   const catOpts = [
     ['bolsos_mochilas', '🎒 Bolsos y Mochilas'],
-    ['capacitacion',    '📚 Capacitación'],
     ['drinkware',       '🥤 Drinkware'],
-    ['eco',             '🌿 Eco y Sustentable'],
     ['escritorio',      '📋 Escritorio y Oficina'],
     ['escritura',       '✏️ Escritura'],
-    ['fechas',          '🎉 Fechas Especiales'],
-    ['indumentaria',    '👕 Indumentaria'],
+    ['indumentaria',    '👕 Indumentaria Corporativa'],
     ['llaveros',        '🔑 Llaveros y Accesorios'],
-    ['onboarding',      '🚀 Onboarding'],
-    ['outdoors',        '⛺ Outdoors y Bienestar'],
-    ['packaging',       '📦 Packaging'],
-    ['reconocimiento',  '🏆 Reconocimiento'],
+    ['outdoors',        '⛺ Outdoors y Fitness'],
+    ['bienestar',       '🌿 Bienestar y Autocuidado'],
+    ['packaging',       '📦 Packaging y Presentación'],
     ['tecnologia',      '💻 Tecnología'],
   ].map(([v, l]) => `<option value="${v}"${cat === v ? ' selected' : ''}>${l}</option>`).join('');
   const subcats = SUBCATS[cat] || [];
