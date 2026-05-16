@@ -385,18 +385,13 @@
             <select class="filter-select" onchange="filtrarTabla('', this.value)">
               <option value="">Todas las categorías</option>
               <option value="bolsos_mochilas">Bolsos y Mochilas</option>
-              <option value="capacitacion">Capacitación y Eventos</option>
               <option value="drinkware">Drinkware</option>
-              <option value="eco">Eco y Sustentable</option>
               <option value="escritorio">Escritorio y Oficina</option>
               <option value="escritura">Escritura</option>
-              <option value="fechas">Fechas Especiales</option>
               <option value="indumentaria">Indumentaria Corporativa</option>
               <option value="llaveros">Llaveros y Accesorios</option>
-              <option value="onboarding">Onboarding y Bienvenida</option>
               <option value="outdoors">Outdoors y Bienestar</option>
               <option value="packaging">Packaging y Presentación</option>
-              <option value="reconocimiento">Reconocimiento y Premios</option>
               <option value="tecnologia">Tecnología</option>
             </select>
             <select class="filter-select" onchange="filtrarTablaEstado(this.value)">
@@ -498,18 +493,13 @@
                   <select id="agregar-f-categoria" onchange="actualizarSubcatsAgregar(this.value)">
                     <option value="">Seleccioná...</option>
                     <option value="bolsos_mochilas">Bolsos y Mochilas</option>
-                    <option value="capacitacion">Capacitación y Eventos</option>
                     <option value="drinkware">Drinkware</option>
-                    <option value="eco">Eco y Sustentable</option>
                     <option value="escritorio">Escritorio y Oficina</option>
                     <option value="escritura">Escritura</option>
-                    <option value="fechas">Fechas Especiales</option>
                     <option value="indumentaria">Indumentaria Corporativa</option>
                     <option value="llaveros">Llaveros y Accesorios</option>
-                    <option value="onboarding">Onboarding y Bienvenida</option>
                     <option value="outdoors">Outdoors y Bienestar</option>
                     <option value="packaging">Packaging y Presentación</option>
-                    <option value="reconocimiento">Reconocimiento y Premios</option>
                     <option value="tecnologia">Tecnología</option>
                   </select>
                 </div>
@@ -717,18 +707,13 @@
           <select id="f-categoria" onchange="actualizarSubcats(this.value)">
             <option value="">Seleccioná...</option>
             <option value="bolsos_mochilas">Bolsos y Mochilas</option>
-            <option value="capacitacion">Capacitación y Eventos</option>
             <option value="drinkware">Drinkware</option>
-            <option value="eco">Eco y Sustentable</option>
             <option value="escritorio">Escritorio y Oficina</option>
             <option value="escritura">Escritura</option>
-            <option value="fechas">Fechas Especiales</option>
             <option value="indumentaria">Indumentaria Corporativa</option>
             <option value="llaveros">Llaveros y Accesorios</option>
-            <option value="onboarding">Onboarding y Bienvenida</option>
             <option value="outdoors">Outdoors y Bienestar</option>
             <option value="packaging">Packaging y Presentación</option>
-            <option value="reconocimiento">Reconocimiento y Premios</option>
             <option value="tecnologia">Tecnología</option>
           </select>
         </div>
@@ -1069,6 +1054,7 @@ async function guardarProducto(estado) {
     destinatarios: getChecked('dest-group'),
     ocasiones: getChecked('occ-group'),
     badges: getChecked('badges-group'),
+    tags: getChecked('badges-group').includes('ecofriendly') ? ['eco'] : [],
     proveedor: document.getElementById('f-proveedor').value === '__otro__'
       ? document.getElementById('f-proveedor-otro').value.trim()
       : document.getElementById('f-proveedor').value,
@@ -1262,18 +1248,13 @@ async function renderDashboard() {
 // ============================================================
 const CATS = [
   { id:'bolsos_mochilas', nombre:'Bolsos y Mochilas', icon:'👜', subcats:['Bolsos','Maletines y portfolios','Mochilas','Neceseres y accesorios','Viaje'] },
-  { id:'capacitacion', nombre:'Capacitación y Eventos', icon:'📚', subcats:[] },
   { id:'drinkware', nombre:'Drinkware', icon:'🥤', subcats:['Botellas standard','Botellas térmicas','Tazas mugs y jarros','Termos y mates'] },
-  { id:'eco', nombre:'Eco y Sustentable', icon:'♻️', subcats:['Bambu y madera','Reciclados','Tote bags y bolsas'] },
   { id:'escritorio', nombre:'Escritorio y Oficina', icon:'📓', subcats:['Cuadernos y agendas','Organizadores'] },
   { id:'escritura', nombre:'Escritura', icon:'✏️', subcats:['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'] },
-  { id:'fechas', nombre:'Fechas Especiales', icon:'🎉', subcats:[] },
   { id:'indumentaria', nombre:'Indumentaria Corporativa', icon:'👕', subcats:['Abrigos','Camisas','Delantales y pecheras','Gorras','Remeras y chombas'] },
   { id:'llaveros', nombre:'Llaveros y Accesorios', icon:'🔑', subcats:['Llaveros de madera','Llaveros metálicos','Llaveros plásticos','Multipropósito'] },
-  { id:'onboarding', nombre:'Onboarding y Bienvenida', icon:'🎁', subcats:[] },
   { id:'outdoors', nombre:'Outdoors y Bienestar', icon:'🌿', subcats:['Coolers y loncheras','Cuidado personal','Deporte y fitness','Gastronomía','Paraguas'] },
   { id:'packaging', nombre:'Packaging y Presentación', icon:'📦', subcats:['Bolsas y papel','Cajas'] },
-  { id:'reconocimiento', nombre:'Reconocimiento y Premios', icon:'🏆', subcats:[] },
   { id:'tecnologia', nombre:'Tecnología', icon:'💻', subcats:['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'] },
 ];
 
