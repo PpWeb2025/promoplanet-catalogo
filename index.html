@@ -811,7 +811,6 @@
   .como-paso-texto { display: flex; flex-direction: column; }
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
 </head>
 <body>
 
@@ -881,8 +880,9 @@
       </div>
       <div class="search-wrap cats-search">
         <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" style="cursor:pointer" onclick="buscarYScrollear()"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
-        <input type="text" id="search-input" placeholder="Buscar producto, código..." oninput="filtrar()" onkeydown="if(event.key==='Enter') buscarYScrollear()">
+        <input type="text" id="search-input" placeholder="Buscar producto, código..." oninput="filtrarDebounced()" onkeydown="if(event.key==='Enter'){clearTimeout(_searchTimer);filtrar();buscarYScrollear()}">
       </div>
+      <div id="search-hint" style="display:none;font-size:0.75rem;margin-top:0.35rem;padding:0 0.25rem"></div>
     </div>
     <div class="cats-grid" id="cats-grid"></div>
   </div>
@@ -1428,38 +1428,84 @@ function toggleTag(el) {
 
 
 function normalizar(str) {
-  return (str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return (str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-let _fuse = null;
-function buildFuse() {
-  const data = PRODUCTOS.map(p => ({
-    id: p.id,
-    _nombre:      normalizar(p.nombre),
-    _codigo:      normalizar(p.codigo),
-    _descripcion: normalizar(p.descripcion),
-    _material:    normalizar(p.material),
-    _subcat:      normalizar(p.subcategoria),
-  }));
-  _fuse = new Fuse(data, {
-    threshold: 0.35,
-    minMatchCharLength: 2,
-    keys: ['_nombre', '_codigo', '_descripcion', '_material', '_subcat'],
-  });
+function similitudPalabra(a, b) {
+  if (a.includes(b) || b.includes(a)) return true;
+  if (b.length <= 3) return a === b;
+  const maxErrores = Math.floor(b.length / 4);
+  if (maxErrores === 0) return a === b;
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) > maxErrores + 1) return false;
+  const dp = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0)
+  );
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i-1] === b[j-1]
+        ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  return dp[m][n] <= maxErrores;
+}
+
+function buscarProductos(productos, query) {
+  if (!query || query.trim() === '') return productos;
+  const queryNorm = normalizar(query);
+  const palabras = queryNorm.split(' ').filter(p => p.length > 0);
+  if (!palabras.length) return productos;
+
+  return productos
+    .map(prod => {
+      const textoCompleto = normalizar([
+        prod.nombre, prod.descripcion, prod.categoria, prod.subcategoria,
+        prod.material, prod.colores, prod.medidas,
+        Array.isArray(prod.badges)  ? prod.badges.join(' ')  : (prod.badges  || ''),
+        Array.isArray(prod.tecnicas)? prod.tecnicas.join(' '): (prod.tecnicas|| ''),
+        prod.codigo,
+      ].join(' '));
+      const palabrasTexto = textoCompleto.split(' ').filter(p => p.length > 0);
+      const nombreNorm = normalizar(prod.nombre);
+
+      let score = 0;
+      let todasMatchean = true;
+
+      for (const pb of palabras) {
+        let matchea = false;
+        if (textoCompleto.includes(pb)) { score += 10; matchea = true; }
+        if (!matchea) {
+          for (const pt of palabrasTexto) {
+            if (similitudPalabra(pt, pb)) { score += 5; matchea = true; break; }
+          }
+        }
+        if (nombreNorm.includes(pb)) score += 15;
+        if (!matchea) todasMatchean = false;
+      }
+      return { prod, score, match: todasMatchean };
+    })
+    .filter(item => item.match)
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.prod);
+}
+
+let _searchTimer;
+function filtrarDebounced() {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(filtrar, 250);
 }
 
 function filtrar() {
-  const q = normalizar(document.getElementById('search-input').value);
+  const q = document.getElementById('search-input').value;
 
-  let base = PRODUCTOS;
-  if (q.length >= 2 && _fuse) {
-    const ids = new Set(_fuse.search(q).map(r => r.item.id));
-    base = PRODUCTOS.filter(p => ids.has(p.id));
-  } else if (q.length === 1) {
-    base = PRODUCTOS.filter(p =>
-      normalizar(p.nombre).includes(q) || normalizar(p.codigo).includes(q)
-    );
-  }
+  let base = q.trim() ? buscarProductos(PRODUCTOS, q) : PRODUCTOS;
 
   const visible = base.filter(p => {
     if (catActiva !== 'todos' && p.categoria !== catActiva) return false;
@@ -1472,7 +1518,24 @@ function filtrar() {
 
   if (sortActivo === 'az') visible.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
   else if (sortActivo === 'za') visible.sort((a, b) => b.nombre.localeCompare(a.nombre, 'es'));
-  else visible.sort((a, b) => (b.id || 0) - (a.id || 0));
+  else if (!q.trim()) visible.sort((a, b) => (b.id || 0) - (a.id || 0));
+
+  // Indicador visual de búsqueda
+  const hint = document.getElementById('search-hint');
+  if (hint) {
+    if (q.trim()) {
+      if (visible.length === 0) {
+        hint.textContent = `No se encontraron productos para "${q.trim()}". Probá con otras palabras.`;
+        hint.style.color = 'var(--texto-suave)';
+      } else {
+        hint.textContent = `${visible.length} producto${visible.length !== 1 ? 's' : ''} encontrado${visible.length !== 1 ? 's' : ''}`;
+        hint.style.color = 'var(--celeste)';
+      }
+      hint.style.display = 'block';
+    } else {
+      hint.style.display = 'none';
+    }
+  }
 
   renderProductos(visible);
 }
@@ -1798,7 +1861,6 @@ async function init() {
   } catch {
     PRODUCTOS = [];
   }
-  buildFuse();
   renderCatSidebar();
   renderNavMobileCats();
   renderCatGrid();
