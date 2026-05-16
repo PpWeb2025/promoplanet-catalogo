@@ -897,18 +897,12 @@
       <div id="cat-list"></div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-title">Destinatario</div>
-      <button class="cat-item active" data-dest="todos" onclick="toggleDest(this)">
+      <div class="sidebar-title">Sustentabilidad</div>
+      <button class="cat-item active" data-tag="todos" onclick="toggleTag(this)">
         <span class="cat-dot" style="background:var(--celeste)"></span> Todos
       </button>
-      <button class="cat-item" data-dest="colaborador" onclick="toggleDest(this)">
-        <span class="cat-dot" style="background:#6366f1"></span> 👤 Colaborador
-      </button>
-      <button class="cat-item" data-dest="cliente" onclick="toggleDest(this)">
-        <span class="cat-dot" style="background:#22c55e"></span> 🤝 Cliente
-      </button>
-      <button class="cat-item" data-dest="directivo" onclick="toggleDest(this)">
-        <span class="cat-dot" style="background:#f59e0b"></span> ⭐ Directivo
+      <button class="cat-item" data-tag="eco" onclick="toggleTag(this)">
+        <span class="cat-dot" style="background:#16a34a"></span> 🌿 Eco y Sustentable
       </button>
     </div>
     <div class="sidebar-section">
@@ -933,12 +927,18 @@
       </button>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-title">Sustentabilidad</div>
-      <button class="cat-item active" data-tag="todos" onclick="toggleTag(this)">
+      <div class="sidebar-title">Destinatario</div>
+      <button class="cat-item active" data-dest="todos" onclick="toggleDest(this)">
         <span class="cat-dot" style="background:var(--celeste)"></span> Todos
       </button>
-      <button class="cat-item" data-tag="eco" onclick="toggleTag(this)">
-        <span class="cat-dot" style="background:#16a34a"></span> 🌿 Eco y Sustentable
+      <button class="cat-item" data-dest="colaborador" onclick="toggleDest(this)">
+        <span class="cat-dot" style="background:#6366f1"></span> 👤 Colaborador
+      </button>
+      <button class="cat-item" data-dest="cliente" onclick="toggleDest(this)">
+        <span class="cat-dot" style="background:#22c55e"></span> 🤝 Cliente
+      </button>
+      <button class="cat-item" data-dest="directivo" onclick="toggleDest(this)">
+        <span class="cat-dot" style="background:#f59e0b"></span> ⭐ Directivo
       </button>
     </div>
   </aside>
