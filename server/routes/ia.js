@@ -122,7 +122,7 @@ const SUBCATEGORIAS = {
 };
 
 router.post('/analizar-fotos', requireAdmin, async (req, res) => {
-  const { fotos } = req.body;
+  const { fotos, urlProveedor } = req.body;
   if (!Array.isArray(fotos) || !fotos.length) {
     return res.status(400).json({ error: 'Se esperaba un array de fotos' });
   }
@@ -139,12 +139,31 @@ router.post('/analizar-fotos', requireAdmin, async (req, res) => {
     source: { type: 'base64', media_type: f.mimeType, data: f.base64 },
   }));
 
-  const prompt = `Estas son fotos de un producto promocional corporativo argentino. Analizá las imágenes y respondé con un JSON:
+  // Si se pasó una URL de proveedor, incorporar su texto al prompt
+  let textoProveedor = '';
+  if (urlProveedor) {
+    try {
+      textoProveedor = await fetchTextoDesdeURL(urlProveedor);
+    } catch {
+      // Si no se puede leer, ignorar y seguir solo con la imagen
+    }
+  }
+
+  const contextoProveedor = textoProveedor
+    ? `\n\n## Información del proveedor (prioritaria para el nombre y descripción)\n${textoProveedor.slice(0, 3000)}`
+    : '';
+
+  const prompt = `Analizá las imágenes de este producto promocional corporativo argentino${textoProveedor ? ' y la información del proveedor incluida abajo' : ''}.
+
+${textoProveedor ? 'Priorizá el nombre y la descripción del proveedor sobre lo que muestra la imagen sola, ya que la imagen puede ser genérica o de catálogo.' : ''}
+
+Respondé con un JSON:
 {
   "nombre": "Nombre descriptivo y comercial del producto, sin código ni marca de proveedor, en español",
   "categoria": "ID de categoría de esta lista:\n${catList}",
   "subcategoria": "Nombre exacto de subcategoría de la lista de arriba, o cadena vacía si no aplica"
-}
+}${contextoProveedor}
+
 Respondé SOLO con el JSON, sin texto adicional.`;
 
   try {
