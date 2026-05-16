@@ -1797,10 +1797,26 @@ function renderConfirmFotos() {
       <img src="${url}">
       ${esPrincipal ? '<span class="foto-badge-principal">Principal</span>' : ''}
       <div class="foto-overlay">
-        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipalAgregar(${i})">⭐</button>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="marcarPrincipalAgregar(${i})">⭐</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function marcarPrincipalAgregar(index) {
+  _agregarPrincipalIdx = index;
+  document.querySelectorAll('#agregar-fotos-confirm .foto-item').forEach((el, i) => {
+    el.classList.toggle('principal', i === index);
+    const badge = el.querySelector('.foto-badge-principal');
+    if (badge) badge.remove();
+    if (i === index) {
+      const b = document.createElement('span');
+      b.className = 'foto-badge-principal';
+      b.textContent = 'Principal';
+      el.appendChild(b);
+    }
+  });
+  actualizarNombresPreview();
 }
 
 function actualizarNombresPreview() {
