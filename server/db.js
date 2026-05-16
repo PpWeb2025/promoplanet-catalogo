@@ -2,6 +2,13 @@ const { createClient } = require('@libsql/client');
 
 const JSON_FIELDS = ['tecnicas', 'destinatarios', 'ocasiones', 'fotos', 'badges'];
 
+const KNOWN_COLUMNS = new Set([
+  'id', 'codigo', 'nombre', 'categoria', 'rango', 'minimo', 'material',
+  'medidas', 'colores', 'descripcion', 'tecnicas', 'destinatarios', 'ocasiones',
+  'proveedor', 'notas', 'drive_code', 'subcategoria', 'estado', 'fecha_carga',
+  'emoji', 'badge', 'badges', 'fotos', 'precio_proveedor',
+]);
+
 let client;
 
 function parseRow(obj) {
@@ -14,7 +21,10 @@ function parseRow(obj) {
 }
 
 function serializeRow(data) {
-  const out = { ...data };
+  const out = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (KNOWN_COLUMNS.has(k)) out[k] = v;
+  }
   for (const f of JSON_FIELDS) {
     if (Array.isArray(out[f])) out[f] = JSON.stringify(out[f]);
   }
@@ -60,15 +70,17 @@ async function initDb() {
       subcategoria  TEXT DEFAULT '',
       estado        TEXT NOT NULL DEFAULT 'borrador',
       fecha_carga   TEXT NOT NULL,
-      emoji         TEXT DEFAULT '📦',
-      badge         TEXT DEFAULT '',
-      fotos         TEXT DEFAULT '[]'
+      emoji            TEXT DEFAULT '📦',
+      badge            TEXT DEFAULT '',
+      fotos            TEXT DEFAULT '[]',
+      precio_proveedor REAL DEFAULT NULL
     )
   `);
 
   for (const col of [
     "ALTER TABLE productos ADD COLUMN subcategoria TEXT DEFAULT ''",
     "ALTER TABLE productos ADD COLUMN badges TEXT DEFAULT '[]'",
+    "ALTER TABLE productos ADD COLUMN precio_proveedor REAL DEFAULT NULL",
   ]) {
     try { await client.execute(col); } catch {}
   }

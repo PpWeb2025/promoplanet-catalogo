@@ -43,6 +43,7 @@ router.get('/admin/list', requireAdmin, async (req, res) => {
 
 router.post('/admin', requireAdmin, async (req, res) => {
   const data = req.body;
+  console.log('POST /api/productos/admin body:', JSON.stringify(data, null, 2));
   if (!data.codigo || !data.nombre || !data.categoria) {
     return res.status(400).json({ error: 'Faltan campos requeridos: codigo, nombre, categoria' });
   }
@@ -50,10 +51,11 @@ router.post('/admin', requireAdmin, async (req, res) => {
     const nuevo = await db.insertProducto(data);
     res.status(201).json(nuevo);
   } catch (err) {
+    console.error('Error insertProducto:', err.message);
     if (err.message.includes('UNIQUE')) {
       return res.status(409).json({ error: `Ya existe un producto con el código ${data.codigo}` });
     }
-    throw err;
+    return res.status(500).json({ error: err.message });
   }
 });
 
