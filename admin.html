@@ -1483,15 +1483,16 @@ async function renderDashboard() {
 // CATEGORÍAS ADMIN
 // ============================================================
 const CATS = [
-  { id:'bolsos_mochilas', nombre:'Bolsos y Mochilas', icon:'👜', subcats:['Bolsos','Maletines y portfolios','Mochilas','Neceseres y accesorios','Viaje'] },
-  { id:'drinkware', nombre:'Drinkware', icon:'🥤', subcats:['Botellas standard','Botellas térmicas','Tazas mugs y jarros','Termos y mates'] },
-  { id:'escritorio', nombre:'Escritorio y Oficina', icon:'📓', subcats:['Cuadernos y agendas','Organizadores'] },
-  { id:'escritura', nombre:'Escritura', icon:'✏️', subcats:['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'] },
-  { id:'indumentaria', nombre:'Indumentaria Corporativa', icon:'👕', subcats:['Abrigos','Camisas','Delantales y pecheras','Gorras','Remeras y chombas'] },
-  { id:'llaveros', nombre:'Llaveros y Accesorios', icon:'🔑', subcats:['Llaveros de madera','Llaveros metálicos','Llaveros plásticos','Multipropósito'] },
-  { id:'outdoors', nombre:'Outdoors y Bienestar', icon:'🌿', subcats:['Coolers y loncheras','Cuidado personal','Deporte y fitness','Gastronomía','Paraguas'] },
-  { id:'packaging', nombre:'Packaging y Presentación', icon:'📦', subcats:['Bolsas y papel','Cajas'] },
-  { id:'tecnologia', nombre:'Tecnología', icon:'💻', subcats:['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'] },
+  { id:'bolsos_mochilas', nombre:'Bolsos y Mochilas',       icon:'🎒', subcats:['Bolsos','Maletines y portfolios','Mochilas','Necessaires y accesorios','Tote bags y bolsas','Valijas y carry on'] },
+  { id:'drinkware',       nombre:'Drinkware',               icon:'🥤', subcats:['Botellas standard','Botellas térmicas','Jarros y mugs','Mates y accesorios','Termos'] },
+  { id:'escritorio',      nombre:'Escritorio y Oficina',    icon:'📋', subcats:['Cuadernos y agendas','Organizadores'] },
+  { id:'escritura',       nombre:'Escritura',               icon:'✏️', subcats:['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'] },
+  { id:'indumentaria',    nombre:'Indumentaria Corporativa',icon:'👕', subcats:['Abrigos','Delantales y pecheras','Gorras','Remeras y chombas'] },
+  { id:'llaveros',        nombre:'Llaveros y Accesorios',   icon:'🔑', subcats:['Llaveros ecológicos','Llaveros plásticos','Llaveros metálicos','Llaveros multipropósito'] },
+  { id:'outdoors',        nombre:'Outdoors y Fitness',      icon:'⛺', subcats:['Camping','Gastronomía','Paraguas','Cooler y loncheras'] },
+  { id:'bienestar',       nombre:'Bienestar y Autocuidado', icon:'🌿', subcats:['Cuidado personal','Ambientación'] },
+  { id:'packaging',       nombre:'Packaging y Presentación',icon:'📦', subcats:['Bolsas','Cajas'] },
+  { id:'tecnologia',      nombre:'Tecnología',              icon:'💻', subcats:['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'] },
 ];
 
 // Mapa automático subcategoría → categorías
@@ -1508,10 +1509,9 @@ function normalizar(str) {
 }
 
 const CAT_FOLDER_MAP = {
-  'capacitacion y eventos': 'capacitacion',
-  'fechas especiales': 'fechas',
-  'onboarding y bienvenida': 'onboarding',
-  'reconocimiento y premios': 'reconocimiento',
+  'outdoors y bienestar':    'outdoors',
+  'outdoors y fitness':      'outdoors',
+  'bienestar y autocuidado': 'bienestar',
 };
 
 function resolverCategoria(folderName) {
