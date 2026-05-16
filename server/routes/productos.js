@@ -66,6 +66,14 @@ router.put('/admin/:id', requireAdmin, async (req, res) => {
   res.json(actualizado);
 });
 
+router.patch('/admin/:id', requireAdmin, async (req, res) => {
+  const p = await db.getProductoById(req.params.id);
+  if (!p) return res.status(404).json({ error: 'No encontrado' });
+  if (!Object.keys(req.body).length) return res.status(400).json({ error: 'Sin datos' });
+  const actualizado = await db.updateProducto(req.params.id, req.body);
+  res.json(actualizado);
+});
+
 router.delete('/admin/:id', requireAdmin, async (req, res) => {
   const p = await db.getProductoById(req.params.id);
   if (!p) return res.status(404).json({ error: 'No encontrado' });
