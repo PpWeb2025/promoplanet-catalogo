@@ -196,6 +196,8 @@
   .foto-item img { width: 100%; height: 100%; object-fit: cover; }
   .foto-item .foto-overlay { position: absolute; inset: 0; background: rgba(0,36,78,0.5); display: flex; align-items: center; justify-content: center; gap: 4px; opacity: 0; transition: opacity 0.15s; }
   .foto-item:hover .foto-overlay { opacity: 1; }
+  .foto-item[draggable="true"] { cursor: grab; }
+  .foto-item.drag-over { outline: 2px dashed var(--celeste); outline-offset: 2px; }
   .foto-badge-principal { position: absolute; top: 4px; left: 4px; background: var(--celeste); color: var(--blanco); font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 4px; }
 
   /* DRIVE IMPORT */
@@ -967,6 +969,61 @@ async function logout() {
   document.getElementById('pwd-input').value = '';
 }
 
+// ============================================================
+// DRAG & DROP — reordenar imágenes en los grids de fotos
+// ============================================================
+function initFotosDnD(grid, afterDrop) {
+  let dragged = null;
+  grid.addEventListener('dragstart', e => {
+    dragged = e.target.closest('.foto-item[draggable]');
+    if (!dragged) return;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => { if (dragged) dragged.style.opacity = '0.4'; }, 0);
+  });
+  grid.addEventListener('dragend', () => {
+    if (dragged) dragged.style.opacity = '';
+    grid.querySelectorAll('.foto-item').forEach(el => el.classList.remove('drag-over'));
+    dragged = null;
+  });
+  grid.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const target = e.target.closest('.foto-item');
+    if (!target || target === dragged) return;
+    grid.querySelectorAll('.foto-item').forEach(el => el.classList.remove('drag-over'));
+    target.classList.add('drag-over');
+  });
+  grid.addEventListener('dragleave', e => {
+    const target = e.target.closest('.foto-item');
+    if (target) target.classList.remove('drag-over');
+  });
+  grid.addEventListener('drop', e => {
+    e.preventDefault();
+    const target = e.target.closest('.foto-item');
+    if (!target || !dragged || target === dragged) return;
+    target.classList.remove('drag-over');
+    const items = [...grid.querySelectorAll('.foto-item')];
+    const fromIdx = items.indexOf(dragged);
+    const toIdx = items.indexOf(target);
+    if (fromIdx < toIdx) grid.insertBefore(dragged, target.nextSibling);
+    else grid.insertBefore(dragged, target);
+    if (afterDrop) afterDrop();
+  });
+}
+
+function syncAgregarFilesFromDOM() {
+  const items = [...document.querySelectorAll('#agregar-fotos-confirm .foto-item')];
+  const newOrder = items.map(el => parseInt(el.dataset.fileindex));
+  _agregarFiles = newOrder.map(i => _agregarFiles[i]);
+  const principalPos = items.findIndex(el => el.classList.contains('principal'));
+  _agregarPrincipalIdx = principalPos >= 0 ? principalPos : 0;
+  items.forEach((el, i) => { el.dataset.fileindex = i; });
+  actualizarNombresPreview();
+}
+
+initFotosDnD(document.getElementById('fotos-preview'));
+initFotosDnD(document.getElementById('agregar-fotos-confirm'), syncAgregarFilesFromDOM);
+
 // Verificar sesión activa al cargar la página
 (async () => {
   const res = await fetch('/api/auth/me');
@@ -1095,6 +1152,7 @@ function mostrarFotosExistentes(fotos) {
   fotos.forEach((fotoId, i) => {
     const div = document.createElement('div');
     div.className = 'foto-item' + (i === 0 ? ' principal' : '');
+    div.draggable = true;
     div.innerHTML = `<img src="${fotoSrc(fotoId)}" data-fotoid="${fotoId}">
       ${i === 0 ? '<span class="foto-badge-principal">Principal</span>' : ''}
       <div class="foto-overlay">
@@ -1110,6 +1168,7 @@ function agregarFotoAlGrid(url) {
   const esPrimera = !grid.querySelector('.foto-item');
   const div = document.createElement('div');
   div.className = 'foto-item' + (esPrimera ? ' principal' : '');
+  div.draggable = true;
   div.innerHTML = `<img src="${url}" data-fotoid="${url}">
     ${esPrimera ? '<span class="foto-badge-principal">Principal</span>' : ''}
     <div class="foto-overlay">
@@ -1953,7 +2012,7 @@ function renderConfirmFotos() {
   grid.innerHTML = _agregarFiles.map((file, i) => {
     const url = URL.createObjectURL(file);
     const esPrincipal = i === _agregarPrincipalIdx;
-    return `<div class="foto-item${esPrincipal ? ' principal' : ''}">
+    return `<div class="foto-item${esPrincipal ? ' principal' : ''}" draggable="true" data-fileindex="${i}">
       <img src="${url}">
       ${esPrincipal ? '<span class="foto-badge-principal">Principal</span>' : ''}
       <div class="foto-overlay">

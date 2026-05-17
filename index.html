@@ -1412,6 +1412,7 @@ function setCat(id, el) {
   el.classList.add('active');
   renderSubcatSidebar();
   filtrar();
+  document.querySelector('main').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderSubcatSidebar() {
@@ -1424,6 +1425,7 @@ function setSubcat(id, el) {
   el.classList.add('active');
   renderSubcatSidebar();
   filtrar();
+  document.querySelector('main').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function toggleDest(el) {
