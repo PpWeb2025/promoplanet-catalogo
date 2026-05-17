@@ -344,8 +344,8 @@
   .product-tags { display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 0.4rem; }
   .product-tag { background: var(--gris); color: var(--texto-suave); font-size: 0.62rem; padding: 1px 5px; border-radius: 4px; }
   .product-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
-  .rango-precio { font-size: 0.67rem; color: var(--texto-suave); }
-  .rango-precio strong { color: var(--azul); }
+  .rango-precio { display: none !important; }
+  .rango-badge  { display: none !important; }
   .btn-add {
     background: var(--azul); color: var(--blanco);
     border: none; border-radius: 8px;
@@ -1764,7 +1764,7 @@ function verProducto(id) {
   document.getElementById('mp-meta').innerHTML = `
     <span class="badge tag-cat">${cat?.nombre || ''}</span>
     ${p.minimo ? `<span class="badge tag-min">Mín. ${p.minimo} unidades</span>` : ""}
-    ${p.rango ? `<span class="badge tag-tec">${RANGO_LABEL[p.rango]}</span>` : `<span class="badge tag-tec" style="font-style:italic">Consultar precio</span>`}
+    <span class="rango-badge">${p.rango ? `<span class="badge tag-tec">${RANGO_LABEL[p.rango]}</span>` : `<span class="badge tag-tec" style="font-style:italic">Consultar precio</span>`}</span>
     ${p.tecnicas.map(t => `<span class="badge tag-tec">${TECNICA_LABEL[t] || t}</span>`).join('')}
   `;
   document.getElementById('mp-desc').textContent = p.descripcion;
