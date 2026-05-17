@@ -267,8 +267,12 @@
     <h2>Panel de administración</h2>
     <p>Acceso restringido — solo uso interno</p>
     <div class="login-field">
+      <label>Usuario</label>
+      <input type="text" id="user-input" placeholder="Usuario" autocomplete="username" onkeydown="if(event.key==='Enter') login()">
+    </div>
+    <div class="login-field">
       <label>Contraseña</label>
-      <input type="password" id="pwd-input" placeholder="••••••••" onkeydown="if(event.key==='Enter') login()">
+      <input type="password" id="pwd-input" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()">
     </div>
     <button class="btn-login" onclick="login()">Ingresar</button>
     <div class="login-error" id="login-error">Contraseña incorrecta</div>
@@ -938,11 +942,12 @@
 // AUTH — via API
 // ============================================================
 async function login() {
+  const username = document.getElementById('user-input').value;
   const password = document.getElementById('pwd-input').value;
   const res = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password }),
+    body: JSON.stringify({ username, password }),
   });
   if (res.ok) {
     document.getElementById('login-screen').style.display = 'none';
@@ -958,6 +963,7 @@ async function logout() {
   await fetch('/api/auth/logout', { method: 'POST' });
   document.getElementById('app').classList.remove('visible');
   document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('user-input').value = '';
   document.getElementById('pwd-input').value = '';
 }
 
