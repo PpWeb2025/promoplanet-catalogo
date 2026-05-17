@@ -408,9 +408,9 @@
           <div class="table-toolbar">
             <div class="search-input-wrap">
               <span class="si">🔍</span>
-              <input type="text" placeholder="Buscar por nombre, código..." oninput="filtrarTabla(this.value)">
+              <input id="buscar-tabla" type="text" placeholder="Buscar por nombre, código..." oninput="filtrarTabla()">
             </div>
-            <select id="filtro-categoria" class="filter-select" onchange="filtrarTabla('', this.value)">
+            <select id="filtro-categoria" class="filter-select" onchange="filtrarTabla()">
               <option value="">Todas las categorías</option>
               <option value="bolsos_mochilas">Bolsos y Mochilas</option>
               <option value="drinkware">Drinkware</option>
@@ -423,7 +423,7 @@
               <option value="packaging">Packaging y Presentación</option>
               <option value="tecnologia">Tecnología</option>
             </select>
-            <select class="filter-select" onchange="filtrarTablaEstado(this.value)">
+            <select id="filtro-estado" class="filter-select" onchange="filtrarTabla()">
               <option value="">Todos los estados</option>
               <option value="publicado">Publicados</option>
               <option value="borrador">Borradores</option>
@@ -823,6 +823,22 @@
         </div>
       </div>
 
+      <!-- ANALIZAR CON IA -->
+      <div id="edit-ia-section" style="margin-bottom:1.5rem;padding:1rem;background:linear-gradient(135deg,rgba(0,168,180,0.06),rgba(0,52,113,0.06));border:1.5px solid rgba(0,168,180,0.25);border-radius:10px">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem">
+          <span style="font-size:1rem">✨</span>
+          <span style="font-size:0.8rem;font-weight:600;color:var(--azul)">Completar con IA</span>
+          <span style="font-size:0.72rem;color:var(--texto-suave)">— usa las fotos ya cargadas y/o la página del proveedor</span>
+        </div>
+        <div style="display:flex;gap:0.5rem">
+          <input type="url" id="edit-url-proveedor"
+            placeholder="URL del proveedor (opcional)"
+            style="flex:1;padding:0.5rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem;background:var(--blanco)">
+          <button type="button" class="btn btn-celeste" style="white-space:nowrap;font-size:0.82rem;padding:0.5rem 1rem" onclick="analizarConIAEdicion(this)">✨ Analizar →</button>
+        </div>
+        <div id="edit-ia-hint" style="font-size:0.72rem;color:var(--texto-suave);margin-top:0.4rem">Pegá la URL del proveedor y/o asegurate de tener fotos cargadas arriba — la IA pre-completará los campos para que los revises</div>
+      </div>
+
       <div class="form-grid">
         <div class="form-group">
           <label>Código *</label>
@@ -1164,7 +1180,7 @@ async function verCategoria(catId) {
   showSection('productos', document.querySelectorAll('.nav-item')[1], true);
   const sel = document.getElementById('filtro-categoria');
   if (sel) sel.value = catId;
-  await filtrarTabla('', catId);
+  await filtrarTabla();
 }
 
 // ============================================================
@@ -1542,17 +1558,30 @@ async function cambiarSubcatInline(selectEl, productoId) {
   }
 }
 
-async function filtrarTabla(q, cat) {
-  let lista = await getProductos();
-  if (q) lista = lista.filter(p => p.nombre.toLowerCase().includes(q.toLowerCase()) || p.codigo.toLowerCase().includes(q.toLowerCase()));
+async function filtrarTabla() {
+  const q = (document.getElementById('buscar-tabla')?.value || '').trim();
+  const cat = document.getElementById('filtro-categoria')?.value || '';
+  const estado = document.getElementById('filtro-estado')?.value || '';
+  let lista = _tablaCache.length ? _tablaCache : await getProductos();
+  if (q) {
+    // Normalizar quitando guiones para que "pp217" matchee "PP-217"
+    const qNorm = q.toLowerCase().replace(/-/g, '');
+    lista = lista.filter(p => {
+      const codigoNorm = (p.codigo || '').toLowerCase().replace(/-/g, '');
+      return (p.nombre || '').toLowerCase().includes(q.toLowerCase())
+        || codigoNorm.includes(qNorm)
+        || (p.descripcion || '').toLowerCase().includes(q.toLowerCase());
+    });
+  }
   if (cat) lista = lista.filter(p => p.categoria === cat);
+  if (estado) lista = lista.filter(p => p.estado === estado);
   renderTabla(lista);
 }
 
-async function filtrarTablaEstado(estado) {
-  let lista = await getProductos();
-  if (estado) lista = lista.filter(p => p.estado === estado);
-  renderTabla(lista);
+function filtrarTablaEstado(estado) {
+  const sel = document.getElementById('filtro-estado');
+  if (sel) sel.value = estado;
+  filtrarTabla();
 }
 
 async function editarProducto(id) {
@@ -2590,6 +2619,134 @@ function cargarEnFormulario() {
 
   document.getElementById('modal-producto').classList.add('open');
   showToast('✅ Formulario pre-completado — revisá y completá los datos que faltan', 'success');
+}
+
+// ============================================================
+// ANALIZAR CON IA — MODAL DE EDICIÓN
+// ============================================================
+function _resizarDesdeURL(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      if (width > 1024) { height = Math.round(height * 1024 / width); width = 1024; }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      try {
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+      } catch {
+        reject(new Error('CORS'));
+      }
+    };
+    img.onerror = () => reject(new Error('load'));
+    // Cache-busting para evitar respuesta cacheada sin cabecera CORS
+    img.src = src.startsWith('http') ? src + (src.includes('?') ? '&' : '?') + '_cc=' + Date.now() : src;
+  });
+}
+
+async function analizarConIAEdicion(btn) {
+  const urlProveedor = (document.getElementById('edit-url-proveedor')?.value || '').trim();
+  const imgEls = Array.from(document.querySelectorAll('#fotos-preview .foto-item img')).slice(0, 4);
+  const tieneFortos = imgEls.length > 0;
+
+  if (!tieneFortos && !urlProveedor) {
+    showToast('Cargá fotos y/o pegá la URL del proveedor primero', 'error');
+    return;
+  }
+
+  const origText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = tieneFortos && urlProveedor
+    ? '⏳ Leyendo página + analizando imágenes…'
+    : tieneFortos ? '⏳ Analizando imágenes…' : '⏳ Leyendo página…';
+
+  const hint = document.getElementById('edit-ia-hint');
+  hint.style.color = 'var(--texto-suave)';
+  hint.textContent = 'Procesando con IA…';
+
+  try {
+    // Convertir imágenes ya cargadas a base64 (omitir las que fallen por CORS)
+    const fotosResolved = tieneFortos
+      ? (await Promise.allSettled(imgEls.map(el => _resizarDesdeURL(el.src))))
+          .filter(r => r.status === 'fulfilled')
+          .map(r => r.value)
+      : [];
+
+    const [dataFotos, dataURL] = await Promise.all([
+      fotosResolved.length
+        ? fetch('/api/ia/analizar-fotos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fotos: fotosResolved, urlProveedor }),
+          }).then(r => r.ok ? r.json() : null).catch(() => null)
+        : Promise.resolve(null),
+      urlProveedor
+        ? fetch('/api/ia/adaptar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: urlProveedor }),
+          }).then(r => r.ok ? r.json() : null).catch(() => null)
+        : Promise.resolve(null),
+    ]);
+
+    if (!dataFotos && !dataURL) {
+      showToast('La IA no pudo analizar el producto. Intentá de nuevo.', 'error');
+      hint.textContent = 'Error al analizar — intentá de nuevo';
+      return;
+    }
+
+    // Prioridad: URL tiene más contexto de texto; fotos para categoría/subcategoría visual
+    const nombre    = dataURL?.nombre    || dataFotos?.nombre    || '';
+    const categoria = dataFotos?.categoria || dataURL?.categoria || '';
+    const subcategoria = dataFotos?.subcategoria || '';
+
+    if (nombre)    document.getElementById('f-nombre').value    = nombre;
+    if (dataURL?.descripcion) document.getElementById('f-descripcion').value = dataURL.descripcion;
+    if (dataURL?.material)    document.getElementById('f-material').value    = dataURL.material;
+    if (dataURL?.medidas)     document.getElementById('f-medidas').value     = dataURL.medidas;
+    if (dataURL?.colores)     document.getElementById('f-colores').value     = dataURL.colores;
+    if (dataURL?.rango)       document.getElementById('f-rango').value       = dataURL.rango;
+    if (categoria) {
+      document.getElementById('f-categoria').value = categoria;
+      actualizarSubcats(categoria);
+      if (subcategoria) document.getElementById('f-subcategoria').value = subcategoria;
+    }
+
+    // Pre-seleccionar chips
+    const iaChips = {
+      tecnicas:      dataURL?.tecnicas      || dataFotos?.tecnicas      || [],
+      destinatarios: dataURL?.destinatarios || dataFotos?.destinatarios || [],
+      ocasiones:     dataURL?.ocasiones     || dataFotos?.ocasiones     || [],
+      badges:        dataURL?.badges        || dataFotos?.badges        || [],
+    };
+    [
+      ['tecnicas-group', 'tecnicas'],
+      ['dest-group',     'destinatarios'],
+      ['occ-group',      'ocasiones'],
+      ['badges-group',   'badges'],
+    ].forEach(([gid, field]) => {
+      document.querySelectorAll(`#${gid} .check-chip`).forEach(chip => {
+        const val = chip.querySelector('input').value;
+        const checked = (iaChips[field] || []).includes(val);
+        chip.classList.toggle('checked', checked);
+        chip.querySelector('input').checked = checked;
+      });
+    });
+
+    hint.textContent = '✅ Campos pre-completados — revisalos antes de guardar';
+    hint.style.color = 'var(--celeste)';
+    showToast('✅ Análisis completado — revisá y ajustá los campos', 'success');
+  } catch (err) {
+    showToast(err.message || 'Error al analizar', 'error');
+    hint.textContent = 'Error al analizar — intentá de nuevo';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origText;
+  }
 }
 
 // ============================================================
