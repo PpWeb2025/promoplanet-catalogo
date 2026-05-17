@@ -337,16 +337,15 @@
   }
   /* MARCA BADGE */
   .marca-logo-badge {
-    position: absolute; bottom: 7px; right: 7px;
-    width: 34px; height: 34px;
-    background: #fff; border-radius: 8px;
-    box-shadow: 0 2px 7px rgba(0,0,0,0.16);
+    position: absolute; bottom: 8px; right: 8px;
+    width: 50px; height: 50px;
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
     display: flex; align-items: center; justify-content: center;
     overflow: hidden; pointer-events: none; z-index: 3;
   }
   .marca-logo-badge img {
-    width: 100%; height: 100%; object-fit: contain; padding: 4px; box-sizing: border-box;
-    opacity: 0.92;
+    width: 100%; height: 100%; object-fit: contain; padding: 6px; box-sizing: border-box;
   }
 
   .product-info { padding: 0.45rem 0.55rem 0.5rem; flex: 1; display: flex; flex-direction: column; }
@@ -1050,6 +1049,10 @@
       <div>
         <h2 id="mp-nombre"></h2>
         <p id="mp-codigo"></p>
+        <div id="mp-marca" style="display:none;align-items:center;gap:8px;margin-top:6px">
+          <img id="mp-marca-logo" src="" alt="" style="height:28px;width:auto;max-width:72px;object-fit:contain;border-radius:5px;background:#f3f4f6;padding:3px;box-sizing:border-box">
+          <span id="mp-marca-nombre" style="font-size:0.8rem;font-weight:600;color:var(--texto-suave)"></span>
+        </div>
       </div>
       <button class="modal-close" onclick="cerrarProducto()">✕</button>
     </div>
@@ -1763,6 +1766,16 @@ function verProducto(id) {
   productoActual = p;
   document.getElementById('mp-nombre').textContent = p.nombre;
   document.getElementById('mp-codigo').textContent = `Código: ${p.codigo}`;
+  const mpMarca = document.getElementById('mp-marca');
+  const marca = p.marca_id && MARCAS[p.marca_id];
+  if (marca && marca.logo_url) {
+    document.getElementById('mp-marca-logo').src = marca.logo_url;
+    document.getElementById('mp-marca-logo').alt = marca.nombre;
+    document.getElementById('mp-marca-nombre').textContent = marca.nombre;
+    mpMarca.style.display = 'flex';
+  } else {
+    mpMarca.style.display = 'none';
+  }
   const mpImg = document.getElementById('mp-img');
   if (p.fotos && p.fotos.length > 0) {
     window._galFotos = p.fotos;
