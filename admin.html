@@ -979,19 +979,34 @@
 
 <!-- MODAL MARCA -->
 <div class="modal-overlay" id="modal-marca">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:460px">
     <div class="modal-header">
       <h3 id="modal-marca-title">Nueva marca</h3>
       <button class="modal-close" onclick="closeModal('modal-marca')">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Nombre *</label>
-        <input type="text" id="fm-nombre" placeholder="Ej: Parker, BIC, Moleskine">
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:1.25rem">
+      <div class="form-group" style="margin:0">
+        <label>Logo de la marca</label>
+        <div style="display:flex;align-items:flex-start;gap:1rem;margin-top:0.5rem">
+          <div id="fm-logo-wrap"
+               style="width:96px;height:96px;border-radius:10px;border:2px dashed var(--gris-borde);background:var(--gris);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0;transition:border-color .15s"
+               onclick="document.getElementById('fm-logo-file').click()"
+               onmouseenter="this.style.borderColor='var(--celeste)'"
+               onmouseleave="this.style.borderColor='var(--gris-borde)'">
+            <img id="fm-logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box">
+            <span id="fm-logo-placeholder" style="font-size:2.2rem;user-select:none">🏷️</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:0.5rem;padding-top:0.25rem">
+            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('fm-logo-file').click()">📁 Subir imagen</button>
+            <input type="file" id="fm-logo-file" accept="image/*" style="display:none" onchange="subirLogoMarca(this)">
+            <div id="fm-logo-status" style="font-size:0.75rem;color:var(--texto-suave);min-height:1.2em"></div>
+            <input type="hidden" id="fm-logo-url">
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label>URL del logo</label>
-        <input type="text" id="fm-logo-url" placeholder="https://...">
+      <div class="form-group" style="margin:0">
+        <label>Nombre *</label>
+        <input type="text" id="fm-nombre" placeholder="Ej: Parker, BIC, Moleskine" style="margin-top:0.4rem">
       </div>
     </div>
     <div class="modal-footer">
@@ -1753,19 +1768,25 @@ async function renderMarcas() {
   const el = document.getElementById('marcas-list');
   if (!el) return;
   if (!_marcasCache.length) {
-    el.innerHTML = '<p style="color:var(--texto-suave);font-size:0.88rem">No hay marcas cargadas todavía. Hacé clic en "+ Nueva marca" para agregar.</p>';
+    el.innerHTML = '<p style="color:var(--texto-suave);font-size:0.88rem;padding:0.5rem 0">No hay marcas cargadas todavía. Hacé clic en &ldquo;+ Nueva marca&rdquo; para agregar.</p>';
     return;
   }
-  el.innerHTML = _marcasCache.map(m => `
-    <div style="display:flex;align-items:center;gap:1rem;padding:0.75rem 0;border-bottom:1px solid var(--gris-borde)">
-      ${m.logo_url
-        ? `<img src="${m.logo_url}" alt="${m.nombre}" style="height:32px;width:56px;object-fit:contain;border-radius:4px;background:#fff;padding:2px">`
-        : `<div style="width:56px;height:32px;border-radius:4px;background:var(--gris-borde);display:flex;align-items:center;justify-content:center;font-size:1.1rem">🏷️</div>`}
-      <span style="flex:1;font-weight:600;font-size:0.9rem">${m.nombre}</span>
-      <button class="btn btn-outline btn-sm" onclick="abrirModalMarca(${m.id})">✏️ Editar</button>
-      <button class="btn btn-danger btn-sm" onclick="eliminarMarca(${m.id})">🗑️</button>
-    </div>
-  `).join('');
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(156px,1fr));gap:1rem">
+    ${_marcasCache.map(m => `
+      <div style="background:var(--gris);border-radius:12px;padding:1.25rem 1rem 1rem;display:flex;flex-direction:column;align-items:center;gap:0.6rem">
+        <div style="width:80px;height:80px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);flex-shrink:0">
+          ${m.logo_url
+            ? `<img src="${m.logo_url}" alt="${m.nombre}" style="width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box">`
+            : `<span style="font-size:2rem">🏷️</span>`}
+        </div>
+        <div style="font-weight:700;font-size:0.88rem;text-align:center;word-break:break-word;line-height:1.3">${m.nombre}</div>
+        <div style="display:flex;gap:0.4rem;margin-top:auto">
+          <button class="btn btn-outline btn-sm" onclick="abrirModalMarca(${m.id})" title="Editar">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarMarca(${m.id})" title="Eliminar">🗑️</button>
+        </div>
+      </div>
+    `).join('')}
+  </div>`;
 }
 
 function abrirModalMarca(id) {
@@ -1774,7 +1795,44 @@ function abrirModalMarca(id) {
   const m = id ? _marcasCache.find(x => x.id === id) : null;
   document.getElementById('fm-nombre').value = m ? m.nombre : '';
   document.getElementById('fm-logo-url').value = m ? (m.logo_url || '') : '';
+  document.getElementById('fm-logo-status').textContent = '';
+  document.getElementById('fm-logo-file').value = '';
+  const img = document.getElementById('fm-logo-preview-img');
+  const placeholder = document.getElementById('fm-logo-placeholder');
+  if (m && m.logo_url) {
+    img.src = m.logo_url;
+    img.style.display = '';
+    placeholder.style.display = 'none';
+  } else {
+    img.src = '';
+    img.style.display = 'none';
+    placeholder.style.display = '';
+  }
   document.getElementById('modal-marca').classList.add('open');
+}
+
+async function subirLogoMarca(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('fm-logo-status');
+  status.textContent = 'Subiendo...';
+  const fd = new FormData();
+  fd.append('foto', file);
+  try {
+    const r = await fetch('/api/marcas/upload-logo', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error al subir');
+    document.getElementById('fm-logo-url').value = data.url;
+    const img = document.getElementById('fm-logo-preview-img');
+    img.src = data.url;
+    img.style.display = '';
+    document.getElementById('fm-logo-placeholder').style.display = 'none';
+    status.textContent = '✅ Logo subido';
+  } catch (err) {
+    status.textContent = '❌ ' + err.message;
+  } finally {
+    input.value = '';
+  }
 }
 
 async function guardarMarca() {
