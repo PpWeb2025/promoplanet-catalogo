@@ -470,9 +470,10 @@
     padding: 2rem 2rem 2.25rem;
   }
   .cats-inner { max-width: 1100px; margin: 0 auto; }
-  .cats-header { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-bottom: 1.25rem; }
+  .cats-header { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-bottom: 0.75rem; }
   .cats-header-text { flex: 1; }
-  .cats-search { flex: 0 0 260px; }
+  .cats-search-bar { max-width: 600px; width: 100%; margin: 0 auto 1.25rem; }
+  .cats-search-bar .search-wrap input { background: var(--blanco); border-color: var(--celeste); }
   .section-title { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--azul); margin-bottom: 0.3rem; }
   .section-sub { color: var(--texto-suave); font-size: 0.9rem; }
   .cats-grid {
@@ -585,8 +586,7 @@
     .hero { padding: 3rem 1.25rem; }
     .banda-confianza { display: none; }
     .cats-grid { grid-template-columns: repeat(2, 1fr); }
-    .cats-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
-    .cats-search { flex: 1 1 auto; width: 100%; }
+    .cats-search-bar { max-width: 100%; }
   }
 
 /* ── Overlay técnicas ─────────────────────────────────── */
@@ -878,7 +878,9 @@
         <h2 class="section-title">Explorá por categoría</h2>
         <p class="section-sub">Productos para cada momento, equipo y ocasión.</p>
       </div>
-      <div class="search-wrap cats-search">
+    </div>
+    <div class="cats-search-bar">
+      <div class="search-wrap">
         <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" style="cursor:pointer" onclick="buscarYScrollear()"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
         <input type="text" id="search-input" placeholder="Buscar producto, código..." oninput="filtrarDebounced()" onkeydown="if(event.key==='Enter'){clearTimeout(_searchTimer);filtrar();buscarYScrollear()}">
       </div>
@@ -934,7 +936,7 @@
   <!-- PRODUCT GRID -->
   <main>
     <div class="products-header">
-      <span class="products-count" id="prod-count"></span>
+
       <div style="display:flex;align-items:center;gap:0.75rem">
         <select id="sort-select" onchange="sortActivo=this.value;filtrar()" style="padding:0.35rem 0.65rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem;background:var(--blanco);color:var(--texto);cursor:pointer">
           <option value="nuevo">Más nuevos</option>
@@ -1584,7 +1586,7 @@ function renderProductos(lista) {
   const empty = document.getElementById('empty-state');
   const count = document.getElementById('prod-count');
 
-  count.textContent = ecoActivo
+  if (count) count.textContent = ecoActivo
     ? `${lista.length} producto${lista.length !== 1 ? 's' : ''} eco`
     : `${lista.length} producto${lista.length !== 1 ? 's' : ''}`;
 
