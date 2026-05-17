@@ -277,7 +277,7 @@
   .toggle-item:hover { color: var(--azul); }
 
   /* GRID PRODUCTOS */
-  .products-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+  .products-header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1.25rem; }
   .products-count { font-size: 0.85rem; color: var(--texto-suave); }
   .view-toggle { display: flex; gap: 4px; }
   .view-btn { width: 30px; height: 30px; border: 1.5px solid var(--gris-borde); border-radius: 6px; background: var(--blanco); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
@@ -472,7 +472,7 @@
   .cats-inner { max-width: 1100px; margin: 0 auto; }
   .cats-header { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-bottom: 0.75rem; }
   .cats-header-text { flex: 1; }
-  .cats-search-bar { max-width: 600px; width: 100%; margin: 0 auto 1.25rem; }
+  .cats-search-bar { max-width: 600px; width: 100%; margin: 1.25rem auto 0; }
   .cats-search-bar .search-wrap input { background: var(--blanco); border-color: var(--celeste); }
   .section-title { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--azul); margin-bottom: 0.3rem; }
   .section-sub { color: var(--texto-suave); font-size: 0.9rem; }
@@ -879,6 +879,7 @@
         <p class="section-sub">Productos para cada momento, equipo y ocasión.</p>
       </div>
     </div>
+    <div class="cats-grid" id="cats-grid"></div>
     <div class="cats-search-bar">
       <div class="search-wrap">
         <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" style="cursor:pointer" onclick="buscarYScrollear()"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
@@ -886,7 +887,6 @@
       </div>
       <div id="search-hint" style="display:none;font-size:0.75rem;margin-top:0.35rem;padding:0 0.25rem"></div>
     </div>
-    <div class="cats-grid" id="cats-grid"></div>
   </div>
 </section>
 
