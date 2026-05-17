@@ -1319,6 +1319,8 @@ async function cambiarCategoriaInline(selectEl, productoId) {
       body: JSON.stringify({ categoria: nuevaCategoria, subcategoria: '' }),
     });
     if (!res.ok) throw new Error();
+    const prod = _tablaCache.find(p => p.id === productoId);
+    if (prod) { prod.categoria = nuevaCategoria; prod.subcategoria = ''; }
     setTimeout(() => {
       selectEl.style.background = 'var(--gris)';
       selectEl.style.borderColor = 'transparent';
@@ -1352,6 +1354,8 @@ async function cambiarSubcatInline(selectEl, productoId) {
       body: JSON.stringify({ subcategoria: nuevaSubcat }),
     });
     if (!res.ok) throw new Error();
+    const prod = _tablaCache.find(p => p.id === productoId);
+    if (prod) prod.subcategoria = nuevaSubcat;
     setTimeout(() => {
       selectEl.style.background = 'var(--gris)';
       selectEl.style.borderColor = 'transparent';
