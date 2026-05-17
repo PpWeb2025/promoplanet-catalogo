@@ -327,6 +327,9 @@
       <button class="nav-item" onclick="showSection('categorias', this)" title="Categorías">
         <span class="icon">🗂️</span> <span class="nav-label">Categorías</span>
       </button>
+      <button class="nav-item" onclick="showSection('marcas', this)" title="Marcas">
+        <span class="icon">🏷️</span> <span class="nav-label">Marcas</span>
+      </button>
       <button class="nav-item" onclick="showSection('exportar', this)" title="Exportar datos">
         <span class="icon">📤</span> <span class="nav-label">Exportar datos</span>
       </button>
@@ -749,6 +752,19 @@
         </div>
       </div>
 
+      <!-- MARCAS -->
+      <div class="section" id="sec-marcas">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">🏷️ Marcas</span>
+            <button class="btn btn-celeste btn-sm" onclick="abrirModalMarca()">+ Nueva marca</button>
+          </div>
+          <div class="panel-body">
+            <div id="marcas-list"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- EXPORTAR -->
       <div class="section" id="sec-exportar">
         <div class="panel">
@@ -922,6 +938,12 @@
           </div>
         </div>
         <div class="form-group">
+          <label>Marca</label>
+          <select id="f-marca">
+            <option value="">Sin marca</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>Proveedor</label>
           <select id="f-proveedor" onchange="toggleProveedorOtro()">
             <option value="">Seleccioná...</option>
@@ -955,6 +977,30 @@
   </div>
 </div>
 
+<!-- MODAL MARCA -->
+<div class="modal-overlay" id="modal-marca">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3 id="modal-marca-title">Nueva marca</h3>
+      <button class="modal-close" onclick="closeModal('modal-marca')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nombre *</label>
+        <input type="text" id="fm-nombre" placeholder="Ej: Parker, BIC, Moleskine">
+      </div>
+      <div class="form-group">
+        <label>URL del logo</label>
+        <input type="text" id="fm-logo-url" placeholder="https://...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-marca')">Cancelar</button>
+      <button class="btn btn-celeste" onclick="guardarMarca()">Guardar marca</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -973,7 +1019,7 @@ async function login() {
   if (res.ok) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').classList.add('visible');
-    await Promise.all([renderTabla(), renderDashboard()]);
+    await Promise.all([renderTabla(), renderDashboard(), cargarMarcas()]);
     renderCatAdmin();
   } else {
     document.getElementById('login-error').style.display = 'block';
@@ -1068,7 +1114,7 @@ function toggleSidebar() {
   if (res.ok) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').classList.add('visible');
-    await Promise.all([renderTabla(), renderDashboard()]);
+    await Promise.all([renderTabla(), renderDashboard(), cargarMarcas()]);
     renderCatAdmin();
   }
 })();
@@ -1085,7 +1131,7 @@ async function getProductos() {
 // ============================================================
 // NAVEGACIÓN
 // ============================================================
-const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', agregar:'Agregar producto', proveedor:'Importar de proveedor', importar:'Importar de Drive', categorias:'Categorías', exportar:'Exportar datos' };
+const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', agregar:'Agregar producto', proveedor:'Importar de proveedor', importar:'Importar de Drive', categorias:'Categorías', marcas:'Marcas', exportar:'Exportar datos' };
 
 function showSection(id, btn, skipRender) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -1096,6 +1142,7 @@ function showSection(id, btn, skipRender) {
   if (id === 'productos' && !skipRender) renderTabla();
   if (id === 'dashboard') renderDashboard();
   if (id === 'agregar') initAgregarSection();
+  if (id === 'marcas') renderMarcas();
 }
 
 async function verCategoria(catId) {
@@ -1135,7 +1182,7 @@ function limpiarForm() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  ['f-categoria','f-rango','f-proveedor'].forEach(id => {
+  ['f-categoria','f-rango','f-proveedor','f-marca'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
@@ -1265,6 +1312,7 @@ async function guardarProducto(estado) {
       : document.getElementById('f-proveedor').value,
     precio_proveedor: parseFloat(document.getElementById('f-precio-proveedor').value) || 0,
     notas: document.getElementById('f-notas').value,
+    marca_id: parseInt(document.getElementById('f-marca').value) || null,
     drive_code: document.getElementById('foto-drive-url').value,
     estado: estado || document.getElementById('f-estado').value,
     emoji: '📦',
@@ -1526,6 +1574,7 @@ async function editarProducto(id) {
     _provOtroInp.style.display = '';
   }
   document.getElementById('f-estado').value = p.estado || 'publicado';
+  document.getElementById('f-marca').value = p.marca_id || '';
   document.getElementById('foto-drive-url').value = p.drive_code || '';
   ['tecnicas-group','dest-group','occ-group','badges-group'].forEach(gid => {
     const field = gid === 'tecnicas-group' ? 'tecnicas' : gid === 'dest-group' ? 'destinatarios' : gid === 'badges-group' ? 'badges' : 'ocasiones';
@@ -1670,6 +1719,95 @@ async function renderCatAdmin() {
       ${subcatsHtml}
     </div>`;
   }).join('');
+}
+
+// ============================================================
+// MARCAS
+// ============================================================
+let _marcasCache = [];
+let _editandoMarcaId = null;
+
+async function cargarMarcas() {
+  try {
+    const res = await fetch('/api/marcas');
+    if (res.ok) { _marcasCache = await res.json(); poblarSelectMarca(); }
+  } catch {}
+}
+
+function poblarSelectMarca() {
+  const sel = document.getElementById('f-marca');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Sin marca</option>';
+  _marcasCache.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.nombre;
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
+}
+
+async function renderMarcas() {
+  if (!_marcasCache.length) await cargarMarcas();
+  const el = document.getElementById('marcas-list');
+  if (!el) return;
+  if (!_marcasCache.length) {
+    el.innerHTML = '<p style="color:var(--texto-suave);font-size:0.88rem">No hay marcas cargadas todavía. Hacé clic en "+ Nueva marca" para agregar.</p>';
+    return;
+  }
+  el.innerHTML = _marcasCache.map(m => `
+    <div style="display:flex;align-items:center;gap:1rem;padding:0.75rem 0;border-bottom:1px solid var(--gris-borde)">
+      ${m.logo_url
+        ? `<img src="${m.logo_url}" alt="${m.nombre}" style="height:32px;width:56px;object-fit:contain;border-radius:4px;background:#fff;padding:2px">`
+        : `<div style="width:56px;height:32px;border-radius:4px;background:var(--gris-borde);display:flex;align-items:center;justify-content:center;font-size:1.1rem">🏷️</div>`}
+      <span style="flex:1;font-weight:600;font-size:0.9rem">${m.nombre}</span>
+      <button class="btn btn-outline btn-sm" onclick="abrirModalMarca(${m.id})">✏️ Editar</button>
+      <button class="btn btn-danger btn-sm" onclick="eliminarMarca(${m.id})">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function abrirModalMarca(id) {
+  _editandoMarcaId = id || null;
+  document.getElementById('modal-marca-title').textContent = id ? 'Editar marca' : 'Nueva marca';
+  const m = id ? _marcasCache.find(x => x.id === id) : null;
+  document.getElementById('fm-nombre').value = m ? m.nombre : '';
+  document.getElementById('fm-logo-url').value = m ? (m.logo_url || '') : '';
+  document.getElementById('modal-marca').classList.add('open');
+}
+
+async function guardarMarca() {
+  const nombre = document.getElementById('fm-nombre').value.trim();
+  if (!nombre) { showToast('El nombre es obligatorio', 'error'); return; }
+  const logo_url = document.getElementById('fm-logo-url').value.trim();
+  const url = _editandoMarcaId ? `/api/marcas/${_editandoMarcaId}` : '/api/marcas';
+  const method = _editandoMarcaId ? 'PUT' : 'POST';
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre, logo_url }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    showToast(e.error || 'Error al guardar', 'error');
+    return;
+  }
+  closeModal('modal-marca');
+  _marcasCache = [];
+  await cargarMarcas();
+  renderMarcas();
+  showToast(_editandoMarcaId ? '✅ Marca actualizada' : '✅ Marca creada', 'success');
+}
+
+async function eliminarMarca(id) {
+  if (!confirm('¿Eliminar esta marca?')) return;
+  const res = await fetch(`/api/marcas/${id}`, { method: 'DELETE' });
+  if (!res.ok) { showToast('Error al eliminar', 'error'); return; }
+  _marcasCache = [];
+  await cargarMarcas();
+  renderMarcas();
+  showToast('Marca eliminada');
 }
 
 // ============================================================

@@ -20,6 +20,7 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: false, limit: '20mb' }));
 
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/marcas', require('./routes/marcas'));
 app.use('/api/productos', require('./routes/productos'));
 app.use('/api/drive', require('./routes/drive'));
 app.use('/api/consultas', require('./routes/consultas'));

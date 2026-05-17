@@ -6,7 +6,7 @@ const KNOWN_COLUMNS = new Set([
   'id', 'codigo', 'nombre', 'categoria', 'rango', 'minimo', 'material',
   'medidas', 'colores', 'descripcion', 'tecnicas', 'destinatarios', 'ocasiones',
   'proveedor', 'notas', 'drive_code', 'subcategoria', 'estado', 'fecha_carga',
-  'emoji', 'badge', 'badges', 'fotos', 'precio_proveedor',
+  'emoji', 'badge', 'badges', 'fotos', 'precio_proveedor', 'marca_id',
 ]);
 
 let client;
@@ -50,6 +50,14 @@ async function initDb() {
   );
 
   await client.execute(`
+    CREATE TABLE IF NOT EXISTS marcas (
+      id       INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre   TEXT NOT NULL UNIQUE,
+      logo_url TEXT DEFAULT ''
+    )
+  `);
+
+  await client.execute(`
     CREATE TABLE IF NOT EXISTS productos (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       codigo        TEXT NOT NULL UNIQUE,
@@ -81,6 +89,7 @@ async function initDb() {
     "ALTER TABLE productos ADD COLUMN subcategoria TEXT DEFAULT ''",
     "ALTER TABLE productos ADD COLUMN badges TEXT DEFAULT '[]'",
     "ALTER TABLE productos ADD COLUMN precio_proveedor REAL DEFAULT NULL",
+    "ALTER TABLE productos ADD COLUMN marca_id INTEGER DEFAULT NULL",
   ]) {
     try { await client.execute(col); } catch {}
   }
@@ -150,4 +159,36 @@ async function getProductoByCodigo(codigo) {
   return queryOne('SELECT * FROM productos WHERE codigo = ?', [codigo]);
 }
 
-module.exports = { initDb, getProductos, getProductoById, insertProducto, updateProducto, deleteProducto, getProductoByCodigo };
+async function getMarcas() {
+  return query('SELECT * FROM marcas ORDER BY nombre ASC');
+}
+
+async function getMarcaById(id) {
+  return queryOne('SELECT * FROM marcas WHERE id = ?', [id]);
+}
+
+async function insertMarca(data) {
+  const result = await client.execute({
+    sql: 'INSERT INTO marcas (nombre, logo_url) VALUES (?, ?)',
+    args: [data.nombre, data.logo_url || ''],
+  });
+  return getMarcaById(Number(result.lastInsertRowid));
+}
+
+async function updateMarca(id, data) {
+  await client.execute({
+    sql: 'UPDATE marcas SET nombre = ?, logo_url = ? WHERE id = ?',
+    args: [data.nombre, data.logo_url || '', id],
+  });
+  return getMarcaById(id);
+}
+
+async function deleteMarca(id) {
+  await client.execute({ sql: 'DELETE FROM marcas WHERE id = ?', args: [id] });
+}
+
+module.exports = {
+  initDb,
+  getProductos, getProductoById, insertProducto, updateProducto, deleteProducto, getProductoByCodigo,
+  getMarcas, getMarcaById, insertMarca, updateMarca, deleteMarca,
+};
