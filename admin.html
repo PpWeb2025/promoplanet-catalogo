@@ -488,6 +488,13 @@
                   style="width:100%;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.85rem;box-sizing:border-box"
                   oninput="actualizarBtnAnalizar()">
               </div>
+              <div style="margin-top:0.5rem">
+                <label style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:0.3rem;color:var(--texto-suave)">O pegá el texto de la página del proveedor</label>
+                <textarea id="agregar-texto-proveedor"
+                  placeholder="Seleccioná todo el texto de la web del proveedor (Ctrl+A, Ctrl+C) y pegalo acá"
+                  style="width:100%;padding:0.6rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem;box-sizing:border-box;min-height:80px;resize:vertical"
+                  oninput="actualizarBtnAnalizar()"></textarea>
+              </div>
 
               <div id="agregar-ia-wrap" style="margin-top:1rem;display:none;align-items:center;gap:0.75rem">
                 <button class="btn btn-celeste" onclick="analizarConIA(this)">✨ Analizar →</button>
@@ -830,13 +837,19 @@
           <span style="font-size:0.8rem;font-weight:600;color:var(--azul)">Completar con IA</span>
           <span style="font-size:0.72rem;color:var(--texto-suave)">— usa las fotos ya cargadas y/o la página del proveedor</span>
         </div>
-        <div style="display:flex;gap:0.5rem">
+        <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
           <input type="url" id="edit-url-proveedor"
             placeholder="URL del proveedor (opcional)"
             style="flex:1;padding:0.5rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem;background:var(--blanco)">
           <button type="button" class="btn btn-celeste" style="white-space:nowrap;font-size:0.82rem;padding:0.5rem 1rem" onclick="analizarConIAEdicion(this)">✨ Analizar →</button>
         </div>
-        <div id="edit-ia-hint" style="font-size:0.72rem;color:var(--texto-suave);margin-top:0.4rem">Pegá la URL del proveedor y/o asegurate de tener fotos cargadas arriba — la IA pre-completará los campos para que los revises</div>
+        <div style="margin-bottom:0.5rem">
+          <label style="font-size:0.75rem;font-weight:600;display:block;margin-bottom:0.3rem;color:var(--texto-suave)">O pegá el texto de la página del proveedor</label>
+          <textarea id="edit-texto-proveedor"
+            placeholder="Seleccioná todo el texto de la web del proveedor (Ctrl+A, Ctrl+C) y pegalo acá"
+            style="width:100%;padding:0.5rem 0.875rem;border:1.5px solid var(--gris-borde);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.82rem;box-sizing:border-box;min-height:80px;resize:vertical;background:var(--blanco)"></textarea>
+        </div>
+        <div id="edit-ia-hint" style="font-size:0.72rem;color:var(--texto-suave);margin-top:0.2rem">Pegá la URL y/o el texto del proveedor, y/o asegurate de tener fotos cargadas — la IA pre-completará los campos para que los revises</div>
       </div>
 
       <div class="form-grid">
@@ -2117,14 +2130,15 @@ function agregarFilesAlPreview(newFiles) {
 
 function actualizarBtnAnalizar() {
   const url = (document.getElementById('agregar-url-proveedor')?.value || '').trim();
+  const texto = (document.getElementById('agregar-texto-proveedor')?.value || '').trim();
   const wrap = document.getElementById('agregar-ia-wrap');
   const hint = document.getElementById('agregar-ia-hint');
   const tieneFortos = _agregarFiles.length > 0;
-  const tieneURL = url.length > 0;
-  wrap.style.display = (tieneFortos || tieneURL) ? 'flex' : 'none';
-  if (tieneFortos && tieneURL) hint.textContent = 'La IA analizará las fotos y la página del proveedor en paralelo';
+  const tieneTextoOURL = !!(url || texto);
+  wrap.style.display = (tieneFortos || tieneTextoOURL) ? 'flex' : 'none';
+  if (tieneFortos && tieneTextoOURL) hint.textContent = 'La IA analizará las fotos y la información del proveedor en paralelo';
   else if (tieneFortos) hint.textContent = 'La IA analiza las fotos y sugiere nombre y categoría';
-  else hint.textContent = 'La IA leerá la página y completará todos los campos';
+  else hint.textContent = 'La IA leerá la información del proveedor y completará todos los campos';
 }
 
 function renderAgregarPreview() {
@@ -2182,12 +2196,14 @@ function _resizarParaIA(file) {
 
 async function analizarConIA(btn) {
   const urlProveedor = document.getElementById('agregar-url-proveedor').value.trim();
+  const textoManual = (document.getElementById('agregar-texto-proveedor')?.value || '').trim();
   const tieneFortos = _agregarFiles.length > 0;
-  if (!tieneFortos && !urlProveedor) return;
+  if (!tieneFortos && !urlProveedor && !textoManual) return;
 
   btn.disabled = true;
-  btn.innerHTML = tieneFortos && urlProveedor
-    ? '⏳ Leyendo página + analizando imágenes…'
+  const tieneTextoOURL = !!(urlProveedor || textoManual);
+  btn.innerHTML = tieneFortos && tieneTextoOURL
+    ? '⏳ Leyendo info + analizando imágenes…'
     : '⏳ Analizando…';
 
   try {
@@ -2197,14 +2213,14 @@ async function analizarConIA(btn) {
             .then(fotos => fetch('/api/ia/analizar-fotos', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ fotos, urlProveedor }),
+              body: JSON.stringify({ fotos, urlProveedor, textoManual }),
             }).then(r => r.ok ? r.json() : null).catch(() => null))
         : Promise.resolve(null),
-      urlProveedor
+      tieneTextoOURL
         ? fetch('/api/ia/adaptar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: urlProveedor }),
+            body: JSON.stringify({ url: urlProveedor || undefined, textoManual }),
           }).then(r => r.ok ? r.json() : null).catch(() => null)
         : Promise.resolve(null),
     ]);
@@ -2650,19 +2666,21 @@ function _resizarDesdeURL(src) {
 
 async function analizarConIAEdicion(btn) {
   const urlProveedor = (document.getElementById('edit-url-proveedor')?.value || '').trim();
+  const textoManual  = (document.getElementById('edit-texto-proveedor')?.value || '').trim();
   const imgEls = Array.from(document.querySelectorAll('#fotos-preview .foto-item img')).slice(0, 4);
   const tieneFortos = imgEls.length > 0;
+  const tieneTextoOURL = !!(urlProveedor || textoManual);
 
-  if (!tieneFortos && !urlProveedor) {
-    showToast('Cargá fotos y/o pegá la URL del proveedor primero', 'error');
+  if (!tieneFortos && !tieneTextoOURL) {
+    showToast('Cargá fotos y/o pegá la URL o el texto del proveedor primero', 'error');
     return;
   }
 
   const origText = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = tieneFortos && urlProveedor
-    ? '⏳ Leyendo página + analizando imágenes…'
-    : tieneFortos ? '⏳ Analizando imágenes…' : '⏳ Leyendo página…';
+  btn.innerHTML = tieneFortos && tieneTextoOURL
+    ? '⏳ Leyendo info + analizando imágenes…'
+    : tieneFortos ? '⏳ Analizando imágenes…' : '⏳ Leyendo información…';
 
   const hint = document.getElementById('edit-ia-hint');
   hint.style.color = 'var(--texto-suave)';
@@ -2681,14 +2699,14 @@ async function analizarConIAEdicion(btn) {
         ? fetch('/api/ia/analizar-fotos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fotos: fotosResolved, urlProveedor }),
+            body: JSON.stringify({ fotos: fotosResolved, urlProveedor, textoManual }),
           }).then(r => r.ok ? r.json() : null).catch(() => null)
         : Promise.resolve(null),
-      urlProveedor
+      tieneTextoOURL
         ? fetch('/api/ia/adaptar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: urlProveedor }),
+            body: JSON.stringify({ url: urlProveedor || undefined, textoManual }),
           }).then(r => r.ok ? r.json() : null).catch(() => null)
         : Promise.resolve(null),
     ]);

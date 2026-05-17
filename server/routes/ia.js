@@ -43,18 +43,32 @@ const CATEGORIAS = {
 };
 
 router.post('/adaptar', requireAdmin, async (req, res) => {
-  let { texto, url } = req.body;
-  if (!texto && !url) return res.status(400).json({ error: 'Enviá texto o URL del producto' });
+  let { texto, url, textoManual } = req.body;
 
-  // Si se recibió una URL, hacer fetch del contenido
+  // Scrapear URL (no fatal — si falla, textoManual actúa como fallback)
+  let textoScraped = '';
   if (url) {
     try {
-      texto = await fetchTextoDesdeURL(url);
+      textoScraped = await fetchTextoDesdeURL(url);
     } catch (err) {
       console.error('Error al scrapear URL:', err.message);
-      return res.status(400).json({ error: `No se pudo acceder a la página: ${err.message}` });
     }
   }
+
+  // Construir contexto: textoManual tiene prioridad, luego scraped, luego texto legacy
+  const partes = [];
+  if (textoManual?.trim()) partes.push(`## Texto pegado por el usuario (prioritario)\n${textoManual.trim()}`);
+  if (textoScraped)        partes.push(`## Contenido de la página del proveedor\n${textoScraped}`);
+  if (texto?.trim() && !textoScraped && !textoManual) partes.push(texto.trim());
+
+  const contenidoFuente = partes.join('\n\n---\n\n');
+  if (!contenidoFuente) return res.status(400).json({ error: 'Enviá texto o URL del producto' });
+
+  const fuenteLabel = [
+    textoManual?.trim() ? 'texto pegado manualmente' : null,
+    textoScraped        ? `página web: ${url}`        : null,
+    texto?.trim() && !textoScraped && !textoManual ? 'texto' : null,
+  ].filter(Boolean).join(' + ') || 'texto';
 
   // Tomar hasta 8 productos publicados como referencia de estilo
   const muestra = (await db.getProductos({ soloPublicados: true }))
@@ -62,9 +76,6 @@ router.post('/adaptar', requireAdmin, async (req, res) => {
     .slice(0, 8)
     .map(p => `Producto: ${p.nombre}\nDescripción: ${p.descripcion}\nCategoría: ${CATEGORIAS[p.categoria] || p.categoria}${p.material ? `\nMaterial: ${p.material}` : ''}${p.tecnicas?.length ? `\nTécnicas: ${p.tecnicas.join(', ')}` : ''}`)
     .join('\n\n---\n\n');
-
-  const fuenteLabel = url ? `Página web: ${url}` : 'Texto pegado manualmente';
-  const contenidoFuente = texto;
 
   const prompt = `Sos el asistente de contenido de PromoPlanet, una empresa argentina de productos promocionales corporativos.
 
@@ -122,7 +133,7 @@ const SUBCATEGORIAS = {
 };
 
 router.post('/analizar-fotos', requireAdmin, async (req, res) => {
-  const { fotos, urlProveedor } = req.body;
+  const { fotos, urlProveedor, textoManual } = req.body;
   if (!Array.isArray(fotos) || !fotos.length) {
     return res.status(400).json({ error: 'Se esperaba un array de fotos' });
   }
@@ -139,23 +150,26 @@ router.post('/analizar-fotos', requireAdmin, async (req, res) => {
     source: { type: 'base64', media_type: f.mimeType, data: f.base64 },
   }));
 
-  // Si se pasó una URL de proveedor, incorporar su texto al prompt
-  let textoProveedor = '';
+  // Texto del proveedor por URL (no fatal si falla)
+  let textoScraped = '';
   if (urlProveedor) {
     try {
-      textoProveedor = await fetchTextoDesdeURL(urlProveedor);
-    } catch {
-      // Si no se puede leer, ignorar y seguir solo con la imagen
-    }
+      textoScraped = await fetchTextoDesdeURL(urlProveedor);
+    } catch { /* ignorar */ }
   }
 
-  const contextoProveedor = textoProveedor
-    ? `\n\n## Información del proveedor (prioritaria para el nombre y descripción)\n${textoProveedor.slice(0, 3000)}`
+  // Combinar contextos: textoManual tiene prioridad
+  const contextoParts = [];
+  if (textoManual?.trim()) contextoParts.push(`## Texto pegado por el usuario (prioritario)\n${textoManual.trim().slice(0, 2000)}`);
+  if (textoScraped)        contextoParts.push(`## Contenido de la página del proveedor\n${textoScraped.slice(0, 3000)}`);
+  const tieneContexto = contextoParts.length > 0;
+  const contextoProveedor = tieneContexto
+    ? `\n\n## Información del proveedor (prioritaria para el nombre y descripción)\n${contextoParts.join('\n\n---\n\n')}`
     : '';
 
-  const prompt = `Analizá las imágenes de este producto promocional corporativo argentino${textoProveedor ? ' y la información del proveedor incluida abajo' : ''}.
+  const prompt = `Analizá las imágenes de este producto promocional corporativo argentino${tieneContexto ? ' y la información del proveedor incluida abajo' : ''}.
 
-${textoProveedor ? 'Priorizá el nombre y la descripción del proveedor sobre lo que muestra la imagen sola, ya que la imagen puede ser genérica o de catálogo.' : ''}
+${tieneContexto ? 'Priorizá el nombre y la descripción del proveedor sobre lo que muestra la imagen sola, ya que la imagen puede ser genérica o de catálogo.' : ''}
 
 Respondé con un JSON:
 {
