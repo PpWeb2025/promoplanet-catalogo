@@ -382,7 +382,7 @@
               <span class="si">🔍</span>
               <input type="text" placeholder="Buscar por nombre, código..." oninput="filtrarTabla(this.value)">
             </div>
-            <select class="filter-select" onchange="filtrarTabla('', this.value)">
+            <select id="filtro-categoria" class="filter-select" onchange="filtrarTabla('', this.value)">
               <option value="">Todas las categorías</option>
               <option value="bolsos_mochilas">Bolsos y Mochilas</option>
               <option value="drinkware">Drinkware</option>
@@ -986,19 +986,21 @@ async function getProductos() {
 // ============================================================
 const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', agregar:'Agregar producto', proveedor:'Importar de proveedor', importar:'Importar de Drive', categorias:'Categorías', exportar:'Exportar datos' };
 
-function showSection(id, btn) {
+function showSection(id, btn, skipRender) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('sec-' + id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.getElementById('topbar-title').textContent = SEC_TITLES[id] || id;
-  if (id === 'productos') renderTabla();
+  if (id === 'productos' && !skipRender) renderTabla();
   if (id === 'dashboard') renderDashboard();
   if (id === 'agregar') initAgregarSection();
 }
 
 async function verCategoria(catId) {
-  showSection('productos', document.querySelectorAll('.nav-item')[1]);
+  showSection('productos', document.querySelectorAll('.nav-item')[1], true);
+  const sel = document.getElementById('filtro-categoria');
+  if (sel) sel.value = catId;
   await filtrarTabla('', catId);
 }
 
