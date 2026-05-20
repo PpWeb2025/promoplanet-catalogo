@@ -597,41 +597,51 @@
     .hero { padding: 3rem 1.25rem; }
     .banda-confianza { display: none; }
     .cats-grid {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      flex-wrap: unset !important;
-      gap: 10px;
-    }
-    .cat-card {
-      flex: unset;
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
       gap: 8px;
-      text-align: left;
-      padding: 10px 12px;
-      border-radius: 12px;
-      background: var(--cat-bg, #f0f4f8);
-      min-width: 0;
+      padding: 4px 4px 12px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .cats-grid::-webkit-scrollbar { display: none; }
+    .cat-card {
+      flex: 0 0 auto !important;
+      display: flex !important;
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      background: var(--cat-bg, #f0f4f8);
+      border: 1.5px solid transparent;
+      white-space: nowrap;
+      min-width: unset;
+    }
+    .cat-card.cat-active {
+      border-color: var(--cat-color, var(--celeste));
+      background: var(--cat-bg, #f0f4f8);
+    }
+    .cat-card:hover { transform: none; box-shadow: none; }
+    .cat-card::after { display: none; }
+    .cat-card.cat-wide { grid-column: unset; }
     .cat-icon-wrap { display: none; }
     .cat-emoji {
       display: block;
-      font-size: 1.3rem;
+      font-size: 1rem;
       flex-shrink: 0;
-      margin-top: 1px;
       line-height: 1;
     }
     .cat-name {
       font-size: 13px;
-      white-space: normal !important;
-      overflow: visible !important;
-      text-overflow: clip !important;
-      line-height: 1.2;
-      word-break: break-word;
-      min-width: 0;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+      color: var(--azul);
     }
-    .cat-card.cat-wide { grid-column: span 2; }
     .cats-search-bar { max-width: 100%; }
   }
 
@@ -925,7 +935,7 @@
         <p class="section-sub">Productos para cada momento, equipo y ocasión.</p>
       </div>
     </div>
-    <div class="cats-grid" id="cats-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;flex-wrap:unset"></div>
+    <div class="cats-grid" id="cats-grid"></div>
     <div class="cats-search-bar">
       <div class="search-wrap">
         <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" style="cursor:pointer" onclick="buscarYScrollear()"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
