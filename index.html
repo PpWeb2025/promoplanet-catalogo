@@ -596,21 +596,42 @@
     .nav-hamburger { display: flex; }
     .hero { padding: 3rem 1.25rem; }
     .banda-confianza { display: none; }
-    .cats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 4px; }
+    .cats-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      flex-wrap: unset !important;
+      gap: 10px;
+    }
     .cat-card {
       flex: unset;
-      display: flex; flex-direction: row; align-items: flex-start;
-      gap: 8px; text-align: left;
-      padding: 10px 12px; border-radius: 12px;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 8px;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 12px;
       background: var(--cat-bg, #f0f4f8);
+      min-width: 0;
     }
-    .cat-card:hover { transform: none; box-shadow: none; border-color: var(--gris-borde); }
-    .cat-card::after { display: none; }
-    .cat-card.cat-active { border-color: var(--cat-color, var(--celeste)); border-width: 2px; }
-    .cat-card.cat-wide { grid-column: span 2; }
     .cat-icon-wrap { display: none; }
-    .cat-emoji { display: block; font-size: 1.3rem; flex-shrink: 0; line-height: 1; margin-top: 1px; }
-    .cat-name { font-size: 13px; white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }
+    .cat-emoji {
+      display: block;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+      line-height: 1;
+    }
+    .cat-name {
+      font-size: 13px;
+      white-space: normal !important;
+      overflow: visible !important;
+      text-overflow: clip !important;
+      line-height: 1.2;
+      word-break: break-word;
+      min-width: 0;
+    }
+    .cat-card.cat-wide { grid-column: span 2; }
     .cats-search-bar { max-width: 100%; }
   }
 
