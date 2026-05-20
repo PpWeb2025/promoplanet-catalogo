@@ -597,50 +597,49 @@
     .hero { padding: 3rem 1.25rem; }
     .banda-confianza { display: none; }
     .cats-grid {
-      display: flex !important;
-      flex-direction: row !important;
-      flex-wrap: nowrap !important;
-      overflow-x: auto !important;
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
-      padding: 4px 4px 12px;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
+      overflow-x: unset;
+      flex-wrap: unset;
+      padding: 0;
     }
-    .cats-grid::-webkit-scrollbar { display: none; }
     .cat-card {
-      flex: 0 0 auto !important;
-      display: flex !important;
+      flex: unset;
+      display: flex;
       flex-direction: row;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      border-radius: 20px;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
       background: var(--cat-bg, #f0f4f8);
       border: 1.5px solid transparent;
-      white-space: nowrap;
-      min-width: unset;
+      white-space: unset;
+      min-width: 0;
+      width: 100%;
     }
-    .cat-card.cat-active {
-      border-color: var(--cat-color, var(--celeste));
-      background: var(--cat-bg, #f0f4f8);
-    }
+    .cat-card.cat-active { border-color: var(--cat-color, var(--celeste)); }
     .cat-card:hover { transform: none; box-shadow: none; }
     .cat-card::after { display: none; }
-    .cat-card.cat-wide { grid-column: unset; }
+    .cat-card.cat-wide { grid-column: span 2; }
     .cat-icon-wrap { display: none; }
     .cat-emoji {
       display: block;
-      font-size: 1rem;
+      font-size: 1.2rem;
       flex-shrink: 0;
+      margin-top: 1px;
       line-height: 1;
     }
     .cat-name {
       font-size: 13px;
       font-weight: 600;
-      white-space: nowrap;
+      color: var(--azul);
+      white-space: normal;
       overflow: visible;
       text-overflow: clip;
-      color: var(--azul);
+      line-height: 1.25;
+      word-break: break-word;
+      min-width: 0;
     }
     .cats-search-bar { max-width: 100%; }
   }
