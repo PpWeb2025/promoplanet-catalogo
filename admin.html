@@ -323,6 +323,9 @@
       <button class="nav-item" onclick="showSection('importar', this)" title="Importar de Drive">
         <span class="icon">☁️</span> <span class="nav-label">Importar de Drive</span>
       </button>
+      <button class="nav-item" onclick="showSection('clientes', this)" title="Clientes">
+        <span class="icon">👥</span> <span class="nav-label">Clientes</span>
+      </button>
       <div class="nav-section">Configuración</div>
       <button class="nav-item" onclick="showSection('categorias', this)" title="Categorías">
         <span class="icon">🗂️</span> <span class="nav-label">Categorías</span>
@@ -808,6 +811,41 @@
         </div>
       </div>
 
+      <!-- CLIENTES -->
+      <div class="section" id="sec-clientes">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">👥 Clientes</span>
+            <button class="btn btn-celeste" onclick="abrirModalCliente()">+ Nuevo cliente</button>
+          </div>
+          <div class="table-toolbar">
+            <div class="search-input-wrap">
+              <span class="si">🔍</span>
+              <input id="buscar-clientes" type="text" placeholder="Buscar por razón social..." oninput="buscarClientesDebounce()">
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Razón Social</th>
+                  <th>Contacto</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Condición de pago</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-clientes"></tbody>
+            </table>
+            <div class="empty-table" id="clientes-empty" style="display:none">
+              <div class="icon">👥</div>
+              <p>No hay clientes cargados todavía.<br>Hacé clic en "+ Nuevo cliente" para agregar el primero.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /page-content -->
   </div><!-- /main-content -->
 </div><!-- /app -->
@@ -1051,6 +1089,64 @@
   </div>
 </div>
 
+<!-- MODAL CLIENTE -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <h3 id="modal-cliente-title">Nuevo cliente</h3>
+      <button class="modal-close" onclick="closeModal('modal-cliente')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Razón Social *</label>
+          <input type="text" id="fc-razon-social" placeholder="Ej: Empresa S.A.">
+        </div>
+        <div class="form-group">
+          <label>Contacto</label>
+          <input type="text" id="fc-contacto" placeholder="Nombre completo">
+        </div>
+        <div class="form-group">
+          <label>Cargo</label>
+          <input type="text" id="fc-cargo" placeholder="Ej: Gerente de RRHH">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="fc-email" placeholder="correo@empresa.com">
+        </div>
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="text" id="fc-telefono" placeholder="Ej: +54 11 1234-5678">
+        </div>
+        <div class="form-group full">
+          <label>Condición de pago</label>
+          <textarea id="fc-condicion-pago" rows="2">30 días corridos desde la fecha de factura</textarea>
+        </div>
+        <div class="form-group">
+          <label>Plazo de entrega</label>
+          <input type="text" id="fc-plazo-entrega" value="15 días hábiles">
+        </div>
+        <div class="form-group">
+          <label>Envío</label>
+          <input type="text" id="fc-envio" value="Sin costo dentro de CABA y Buenos Aires (primer cordón)">
+        </div>
+        <div class="form-group full">
+          <label>Validez del presupuesto (días hábiles)</label>
+          <input type="number" id="fc-validez" value="7" min="1">
+        </div>
+        <div class="form-group full">
+          <label>Notas internas</label>
+          <textarea id="fc-notas" rows="3" placeholder="Solo visible en el admin, no aparece en las propuestas"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-celeste" id="btn-guardar-cliente" onclick="guardarCliente()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1181,7 +1277,7 @@ async function getProductos() {
 // ============================================================
 // NAVEGACIÓN
 // ============================================================
-const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', agregar:'Agregar producto', proveedor:'Importar de proveedor', importar:'Importar de Drive', categorias:'Categorías', marcas:'Marcas', exportar:'Exportar datos' };
+const SEC_TITLES = { dashboard:'Dashboard', productos:'Productos', agregar:'Agregar producto', proveedor:'Importar de proveedor', importar:'Importar de Drive', clientes:'Clientes', categorias:'Categorías', marcas:'Marcas', exportar:'Exportar datos' };
 
 function showSection(id, btn, skipRender) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -1193,6 +1289,7 @@ function showSection(id, btn, skipRender) {
   if (id === 'dashboard') renderDashboard();
   if (id === 'agregar') initAgregarSection();
   if (id === 'marcas') renderMarcas();
+  if (id === 'clientes') renderClientes();
 }
 
 async function verCategoria(catId) {
@@ -2782,6 +2879,136 @@ async function analizarConIAEdicion(btn) {
     btn.disabled = false;
     btn.innerHTML = origText;
   }
+}
+
+// ============================================================
+// CLIENTES
+// ============================================================
+let _editandoClienteId = null;
+let _clientesBuscarTimer = null;
+
+function buscarClientesDebounce() {
+  clearTimeout(_clientesBuscarTimer);
+  _clientesBuscarTimer = setTimeout(renderClientes, 300);
+}
+
+async function renderClientes() {
+  const q = (document.getElementById('buscar-clientes')?.value || '').trim();
+  let url = '/api/clientes';
+  if (q) url += '?q=' + encodeURIComponent(q);
+  let lista = [];
+  try {
+    const res = await fetch(url);
+    if (res.ok) lista = await res.json();
+  } catch {}
+
+  const tbody = document.getElementById('tabla-clientes');
+  const empty = document.getElementById('clientes-empty');
+  if (!lista.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = lista.map(c => `
+    <tr>
+      <td><strong>${c.razon_social}</strong></td>
+      <td>${c.contacto ? `${c.contacto}${c.cargo ? `<br><span style="font-size:0.72rem;color:var(--texto-suave)">${c.cargo}</span>` : ''}` : '<span style="color:var(--texto-suave)">—</span>'}</td>
+      <td>${c.email || '<span style="color:var(--texto-suave)">—</span>'}</td>
+      <td>${c.telefono || '<span style="color:var(--texto-suave)">—</span>'}</td>
+      <td style="font-size:0.8rem;color:var(--texto-suave);max-width:200px">${c.condicion_pago || '—'}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-outline btn-sm" onclick="editarCliente(${c.id})">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarCliente(${c.id})">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function abrirModalCliente(id) {
+  _editandoClienteId = id || null;
+  document.getElementById('modal-cliente-title').textContent = id ? 'Editar cliente' : 'Nuevo cliente';
+  document.getElementById('btn-guardar-cliente').textContent = id ? 'Guardar cambios' : 'Guardar cliente';
+  document.getElementById('fc-razon-social').value = '';
+  document.getElementById('fc-contacto').value = '';
+  document.getElementById('fc-cargo').value = '';
+  document.getElementById('fc-email').value = '';
+  document.getElementById('fc-telefono').value = '';
+  document.getElementById('fc-condicion-pago').value = '30 días corridos desde la fecha de factura';
+  document.getElementById('fc-plazo-entrega').value = '15 días hábiles';
+  document.getElementById('fc-envio').value = 'Sin costo dentro de CABA y Buenos Aires (primer cordón)';
+  document.getElementById('fc-validez').value = '7';
+  document.getElementById('fc-notas').value = '';
+  document.getElementById('modal-cliente').classList.add('open');
+}
+
+async function editarCliente(id) {
+  let c = null;
+  try {
+    const res = await fetch(`/api/clientes/${id}`);
+    if (res.ok) c = await res.json();
+  } catch {}
+  if (!c) { showToast('No se pudo cargar el cliente', 'error'); return; }
+
+  _editandoClienteId = id;
+  document.getElementById('modal-cliente-title').textContent = 'Editar cliente';
+  document.getElementById('btn-guardar-cliente').textContent = 'Guardar cambios';
+  document.getElementById('fc-razon-social').value = c.razon_social || '';
+  document.getElementById('fc-contacto').value = c.contacto || '';
+  document.getElementById('fc-cargo').value = c.cargo || '';
+  document.getElementById('fc-email').value = c.email || '';
+  document.getElementById('fc-telefono').value = c.telefono || '';
+  document.getElementById('fc-condicion-pago').value = c.condicion_pago || '30 días corridos desde la fecha de factura';
+  document.getElementById('fc-plazo-entrega').value = c.plazo_entrega || '15 días hábiles';
+  document.getElementById('fc-envio').value = c.envio || 'Sin costo dentro de CABA y Buenos Aires (primer cordón)';
+  document.getElementById('fc-validez').value = c.validez_presupuesto ?? 7;
+  document.getElementById('fc-notas').value = c.notas || '';
+  document.getElementById('modal-cliente').classList.add('open');
+}
+
+async function guardarCliente() {
+  const razon_social = document.getElementById('fc-razon-social').value.trim();
+  if (!razon_social) { showToast('La razón social es obligatoria', 'error'); return; }
+
+  const payload = {
+    razon_social,
+    contacto:            document.getElementById('fc-contacto').value.trim(),
+    cargo:               document.getElementById('fc-cargo').value.trim(),
+    email:               document.getElementById('fc-email').value.trim(),
+    telefono:            document.getElementById('fc-telefono').value.trim(),
+    condicion_pago:      document.getElementById('fc-condicion-pago').value.trim(),
+    plazo_entrega:       document.getElementById('fc-plazo-entrega').value.trim(),
+    envio:               document.getElementById('fc-envio').value.trim(),
+    validez_presupuesto: parseInt(document.getElementById('fc-validez').value) || 7,
+    notas:               document.getElementById('fc-notas').value.trim(),
+  };
+
+  const url = _editandoClienteId ? `/api/clientes/${_editandoClienteId}` : '/api/clientes';
+  const method = _editandoClienteId ? 'PUT' : 'POST';
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    showToast(e.error || 'Error al guardar', 'error');
+    return;
+  }
+
+  closeModal('modal-cliente');
+  await renderClientes();
+  showToast(_editandoClienteId ? '✅ Cliente actualizado' : '✅ Cliente creado', 'success');
+}
+
+async function eliminarCliente(id) {
+  if (!confirm('¿Eliminar este cliente?')) return;
+  const res = await fetch(`/api/clientes/${id}`, { method: 'DELETE' });
+  if (!res.ok) { showToast('Error al eliminar', 'error'); return; }
+  await renderClientes();
+  showToast('Cliente eliminado');
 }
 
 // ============================================================

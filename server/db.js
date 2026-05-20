@@ -104,6 +104,23 @@ async function initDb() {
   for (const [viejo, nuevo] of migracionCats) {
     await client.execute({ sql: 'UPDATE productos SET categoria = ? WHERE categoria = ?', args: [nuevo, viejo] });
   }
+
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS clientes (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      razon_social        TEXT NOT NULL,
+      contacto            TEXT,
+      cargo               TEXT,
+      email               TEXT,
+      telefono            TEXT,
+      condicion_pago      TEXT DEFAULT '30 días corridos desde la fecha de factura',
+      plazo_entrega       TEXT DEFAULT '15 días hábiles',
+      envio               TEXT DEFAULT 'Sin costo dentro de CABA y Buenos Aires (primer cordón)',
+      validez_presupuesto INTEGER DEFAULT 7,
+      notas               TEXT,
+      fecha_alta          TEXT
+    )
+  `);
 }
 
 async function getProductos({ soloPublicados = false, cat = null, q = null } = {}) {
@@ -187,8 +204,49 @@ async function deleteMarca(id) {
   await client.execute({ sql: 'DELETE FROM marcas WHERE id = ?', args: [id] });
 }
 
+const CLIENTE_COLS = ['razon_social','contacto','cargo','email','telefono','condicion_pago','plazo_entrega','envio','validez_presupuesto','notas'];
+
+async function getClientes(q = null) {
+  let sql = 'SELECT * FROM clientes';
+  const args = [];
+  if (q) { sql += ' WHERE razon_social LIKE ?'; args.push(`%${q}%`); }
+  sql += ' ORDER BY razon_social ASC';
+  return query(sql, args);
+}
+
+async function getClienteById(id) {
+  return queryOne('SELECT * FROM clientes WHERE id = ?', [id]);
+}
+
+async function insertCliente(data) {
+  const row = {};
+  for (const c of [...CLIENTE_COLS, 'fecha_alta']) if (data[c] !== undefined) row[c] = data[c];
+  const keys = Object.keys(row);
+  const result = await client.execute({
+    sql: `INSERT INTO clientes (${keys.join(',')}) VALUES (${keys.map(() => '?').join(',')})`,
+    args: keys.map(k => row[k]),
+  });
+  return getClienteById(Number(result.lastInsertRowid));
+}
+
+async function updateCliente(id, data) {
+  const row = {};
+  for (const c of CLIENTE_COLS) if (data[c] !== undefined) row[c] = data[c];
+  const keys = Object.keys(row);
+  await client.execute({
+    sql: `UPDATE clientes SET ${keys.map(c => `${c} = ?`).join(', ')} WHERE id = ?`,
+    args: [...keys.map(k => row[k]), id],
+  });
+  return getClienteById(id);
+}
+
+async function deleteCliente(id) {
+  await client.execute({ sql: 'DELETE FROM clientes WHERE id = ?', args: [id] });
+}
+
 module.exports = {
   initDb,
   getProductos, getProductoById, insertProducto, updateProducto, deleteProducto, getProductoByCodigo,
   getMarcas, getMarcaById, insertMarca, updateMarca, deleteMarca,
+  getClientes, getClienteById, insertCliente, updateCliente, deleteCliente,
 };

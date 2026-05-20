@@ -26,6 +26,7 @@ app.use('/api/drive', require('./routes/drive'));
 app.use('/api/consultas', require('./routes/consultas'));
 app.use('/api/ia', require('./routes/ia'));
 app.use('/api/suscripciones', require('./routes/suscripciones'));
+app.use('/api/clientes', require('./routes/clientes'));
 
 app.use(express.static(path.join(__dirname, '..')));
 
