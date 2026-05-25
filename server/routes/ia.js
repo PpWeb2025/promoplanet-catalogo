@@ -11,7 +11,6 @@ async function fetchTextoDesdeURL(url) {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status} al acceder a ${url}`);
   const html = await res.text();
-  // Eliminar scripts, estilos y etiquetas HTML; colapsar espacios
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -22,30 +21,43 @@ async function fetchTextoDesdeURL(url) {
     .replace(/&gt;/gi, '>')
     .replace(/\s{2,}/g, ' ')
     .trim()
-    .slice(0, 6000); // Limitar para no exceder tokens
+    .slice(0, 6000);
 }
 
 const CATEGORIAS = {
   bolsos_mochilas: 'Bolsos y Mochilas',
-  capacitacion: 'Capacitación y Eventos',
-  drinkware: 'Drinkware',
-  eco: 'Eco y Sustentable',
-  escritorio: 'Escritorio y Oficina',
-  escritura: 'Escritura',
-  fechas: 'Fechas Especiales',
-  indumentaria: 'Indumentaria Corporativa',
-  llaveros: 'Llaveros y Accesorios',
-  onboarding: 'Onboarding y Bienvenida',
-  outdoors: 'Outdoors y Bienestar',
-  packaging: 'Packaging y Presentación',
-  reconocimiento: 'Reconocimiento y Premios',
-  tecnologia: 'Tecnología',
+  drinkware:       'Drinkware',
+  escritorio:      'Escritorio y Oficina',
+  escritura:       'Escritura',
+  indumentaria:    'Indumentaria Corporativa',
+  llaveros:        'Llaveros y Accesorios',
+  outdoors:        'Outdoors y Fitness',
+  bienestar:       'Bienestar y Autocuidado',
+  packaging:       'Packaging y Presentación',
+  tecnologia:      'Tecnología',
+  hogar:           'Hogar y Cocina',
 };
+
+const SUBCATEGORIAS = {
+  bolsos_mochilas: ['Bolsos','Maletines y portfolios','Mochilas','Necessaires y accesorios','Tote bags y bolsas','Valijas y carry on'],
+  drinkware:       ['Botellas standard','Botellas térmicas','Jarros y mugs','Mates y accesorios','Termos'],
+  escritorio:      ['Cuadernos y agendas','Organizadores'],
+  escritura:       ['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'],
+  indumentaria:    ['Abrigos','Delantales y pecheras','Gorras','Remeras y chombas'],
+  llaveros:        ['Llaveros ecológicos','Llaveros plásticos','Llaveros metálicos','Llaveros multipropósito','Pins','Portacredenciales'],
+  outdoors:        ['Camping','Gastronomía','Paraguas','Cooler y loncheras'],
+  bienestar:       ['Cuidado personal','Ambientación'],
+  packaging:       ['Bolsas','Cajas','Stickers'],
+  tecnologia:      ['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'],
+  hogar:           ['Accesorios de cocina','Loncheras','Sets de vino y accesorios','Decoración'],
+};
+
+// Lista de IDs válidos generada desde CATEGORIAS (fuente única de verdad)
+const CATEGORIA_IDS = Object.keys(CATEGORIAS).join(', ');
 
 router.post('/adaptar', requireAdmin, async (req, res) => {
   let { texto, url, textoManual } = req.body;
 
-  // Scrapear URL (no fatal — si falla, textoManual actúa como fallback)
   let textoScraped = '';
   if (url) {
     try {
@@ -55,7 +67,6 @@ router.post('/adaptar', requireAdmin, async (req, res) => {
     }
   }
 
-  // Construir contexto: textoManual tiene prioridad, luego scraped, luego texto legacy
   const partes = [];
   if (textoManual?.trim()) partes.push(`## Texto pegado por el usuario (prioritario)\n${textoManual.trim()}`);
   if (textoScraped)        partes.push(`## Contenido de la página del proveedor\n${textoScraped}`);
@@ -70,7 +81,6 @@ router.post('/adaptar', requireAdmin, async (req, res) => {
     texto?.trim() && !textoScraped && !textoManual ? 'texto' : null,
   ].filter(Boolean).join(' + ') || 'texto';
 
-  // Tomar hasta 8 productos publicados como referencia de estilo
   const muestra = (await db.getProductos({ soloPublicados: true }))
     .filter(p => p.descripcion && p.descripcion.length > 40)
     .slice(0, 8)
@@ -94,7 +104,7 @@ ${contenidoFuente}
   "material": "Material principal del producto",
   "medidas": "Medidas si las hay, sino vacío",
   "colores": "Colores disponibles si los hay, sino vacío",
-  "categoria": "Una de estas exactas: bolsos_mochilas, capacitacion, drinkware, eco, escritorio, escritura, fechas, indumentaria, llaveros, onboarding, outdoors, packaging, reconocimiento, tecnologia",
+  "categoria": "Una de estas exactas: ${CATEGORIA_IDS}",
   "tecnicas": ["array", "con", "técnicas de personalización sugeridas de esta lista: laser, dtf, tampografia, bordado, sublimacion, hotstamping, serigrafia, dtf-textil"],
   "badges": ["array con badges sugeridos de: sale, oportunidad, nuevo, ecofriendly, termico, premium, popular, exclusivo, corporativo, importado, kit, limitado"],
   "rango": "economico, intermedio o premium según el perfil del producto"
@@ -119,19 +129,6 @@ Respondé SOLO con el JSON, sin texto adicional antes ni después.`;
   }
 });
 
-const SUBCATEGORIAS = {
-  bolsos_mochilas: ['Bolsos','Maletines y portfolios','Mochilas','Neceseres y accesorios','Viaje'],
-  drinkware: ['Botellas standard','Botellas térmicas','Tazas mugs y jarros','Termos y mates'],
-  eco: ['Bambu y madera','Reciclados','Tote bags y bolsas'],
-  escritorio: ['Cuadernos y agendas','Organizadores'],
-  escritura: ['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'],
-  indumentaria: ['Abrigos','Camisas','Delantales y pecheras','Gorras','Remeras y chombas'],
-  llaveros: ['Llaveros de madera','Llaveros metálicos','Llaveros plásticos','Multipropósito'],
-  outdoors: ['Coolers y loncheras','Cuidado personal','Deporte y fitness','Gastronomía','Paraguas'],
-  packaging: ['Bolsas y papel','Cajas'],
-  tecnologia: ['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'],
-};
-
 router.post('/analizar-fotos', requireAdmin, async (req, res) => {
   const { fotos, urlProveedor, textoManual } = req.body;
   if (!Array.isArray(fotos) || !fotos.length) {
@@ -150,7 +147,6 @@ router.post('/analizar-fotos', requireAdmin, async (req, res) => {
     source: { type: 'base64', media_type: f.mimeType, data: f.base64 },
   }));
 
-  // Texto del proveedor por URL (no fatal si falla)
   let textoScraped = '';
   if (urlProveedor) {
     try {
@@ -158,7 +154,6 @@ router.post('/analizar-fotos', requireAdmin, async (req, res) => {
     } catch { /* ignorar */ }
   }
 
-  // Combinar contextos: textoManual tiene prioridad
   const contextoParts = [];
   if (textoManual?.trim()) contextoParts.push(`## Texto pegado por el usuario (prioritario)\n${textoManual.trim().slice(0, 2000)}`);
   if (textoScraped)        contextoParts.push(`## Contenido de la página del proveedor\n${textoScraped.slice(0, 3000)}`);
