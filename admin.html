@@ -2343,7 +2343,12 @@ async function analizarConIA(btn) {
     document.getElementById('agregar-f-nombre').value = nombre;
     document.getElementById('agregar-f-categoria').value = categoria;
     actualizarSubcatsAgregar(categoria, subcategoria);
-    if (dataURL?.descripcion) document.getElementById('agregar-f-descripcion').value = dataURL.descripcion;
+    if (dataURL?.descripcion) {
+      const descFormateada = dataURL.descripcion
+        .replace(/([.!?])\s+/g, '$1\n')
+        .trim();
+      document.getElementById('agregar-f-descripcion').value = descFormateada;
+    }
     if (dataURL?.material)    document.getElementById('agregar-f-material').value    = dataURL.material;
     if (dataURL?.medidas)     document.getElementById('agregar-f-medidas').value     = dataURL.medidas;
     if (dataURL?.colores)     document.getElementById('agregar-f-colores').value     = dataURL.colores;
