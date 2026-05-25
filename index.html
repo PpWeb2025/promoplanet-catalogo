@@ -1352,6 +1352,7 @@ const CATEGORIAS = [
   { id: 'packaging', nombre: 'Packaging y Presentación', emoji: '📦', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`, color: '#f97316' },
 
   { id: 'tecnologia', nombre: 'Tecnología', emoji: '💻', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>`, color: '#7c3aed' },
+  { id: 'hogar', nombre: 'Hogar y Cocina', emoji: '🏠', icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`, color: '#f59e0b' },
 ];
 
 const CAT_NAMES = {
@@ -1365,6 +1366,7 @@ const CAT_NAMES = {
   bienestar:       'Bienestar y Autocuidado',
   packaging:       'Packaging y Presentación',
   tecnologia:      'Tecnología',
+  hogar:           'Hogar y Cocina',
 };
 
 const SUBCATS = {
@@ -1378,6 +1380,7 @@ const SUBCATS = {
   bienestar:       ['Cuidado personal','Ambientación'],
   packaging:       ['Bolsas','Cajas'],
   tecnologia:      ['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'],
+  hogar:           ['Accesorios de cocina','Loncheras','Sets de vino y accesorios','Decoración'],
 };
 
 // ============================================================
@@ -1852,7 +1855,7 @@ function verProducto(id) {
     <span class="rango-badge">${p.rango ? `<span class="badge tag-tec">${RANGO_LABEL[p.rango]}</span>` : `<span class="badge tag-tec" style="font-style:italic">Consultar precio</span>`}</span>
     ${p.tecnicas.map(t => `<span class="badge tag-tec">${TECNICA_LABEL[t] || t}</span>`).join('')}
   `;
-  document.getElementById('mp-desc').textContent = p.descripcion;
+  document.getElementById('mp-desc').innerHTML = (p.descripcion || '').replace(/\n/g, '<br>');
   document.getElementById('mp-specs').innerHTML = `
     <div class="spec-item"><div class="spec-label">Material</div><div class="spec-val">${p.material}</div></div>
     <div class="spec-item"><div class="spec-label">Medidas</div><div class="spec-val">${p.medidas}</div></div>

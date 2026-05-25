@@ -425,6 +425,7 @@
               <option value="bienestar">Bienestar y Autocuidado</option>
               <option value="packaging">Packaging y Presentación</option>
               <option value="tecnologia">Tecnología</option>
+              <option value="hogar">Hogar y Cocina</option>
             </select>
             <select id="filtro-estado" class="filter-select" onchange="filtrarTabla()">
               <option value="">Todos los estados</option>
@@ -541,6 +542,7 @@
                     <option value="bienestar">🌿 Bienestar y Autocuidado</option>
                     <option value="packaging">📦 Packaging y Presentación</option>
                     <option value="tecnologia">💻 Tecnología</option>
+                    <option value="hogar">🏠 Hogar y Cocina</option>
                   </select>
                 </div>
                 <div class="form-group" id="agregar-subcat-group" style="display:none">
@@ -920,6 +922,7 @@
             <option value="bienestar">🌿 Bienestar y Autocuidado</option>
             <option value="packaging">📦 Packaging y Presentación</option>
             <option value="tecnologia">💻 Tecnología</option>
+            <option value="hogar">🏠 Hogar y Cocina</option>
           </select>
         </div>
         <div class="form-group" id="f-subcategoria-group" style="display:none">
@@ -1502,6 +1505,7 @@ const CAT_NAMES = {
   bienestar:       'Bienestar y Autocuidado',
   packaging:       'Packaging y Presentación',
   tecnologia:      'Tecnología',
+  hogar:           'Hogar y Cocina',
 };
 const RANGO_NAMES = { economico:'Económico', intermedio:'Intermedio', premium:'Premium' };
 const EMOJIS = {
@@ -1515,6 +1519,7 @@ const EMOJIS = {
   bienestar:       '🌿',
   packaging:       '📦',
   tecnologia:      '💻',
+  hogar:           '🏠',
 };
 const SUBCATS = {
   bolsos_mochilas: ['Bolsos','Maletines y portfolios','Mochilas','Necessaires y accesorios','Tote bags y bolsas','Valijas y carry on'],
@@ -1527,6 +1532,7 @@ const SUBCATS = {
   bienestar:       ['Cuidado personal','Ambientación'],
   packaging:       ['Bolsas','Cajas','Stickers'],
   tecnologia:      ['Accesorios de escritorio','Accesorios para celular','Audio','Carga y conectividad'],
+  hogar:           ['Accesorios de cocina','Loncheras','Sets de vino y accesorios','Decoración'],
 };
 
 // cache en memoria para la tabla actual (se recarga con renderTabla())
@@ -1581,6 +1587,7 @@ function catSelectHTML(id, cat, subcat) {
     ['bienestar',       '🌿 Bienestar y Autocuidado'],
     ['packaging',       '📦 Packaging y Presentación'],
     ['tecnologia',      '💻 Tecnología'],
+    ['hogar',          '🏠 Hogar y Cocina'],
   ].map(([v, l]) => `<option value="${v}"${cat === v ? ' selected' : ''}>${l}</option>`).join('');
   const subcats = SUBCATS[cat] || [];
   const subOpts = ['<option value="">Sin subcategoría</option>',
