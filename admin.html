@@ -2207,6 +2207,8 @@ let _agregarCodigo = '';
 
 async function initAgregarSection() {
   _agregarCodigo = '';
+  document.getElementById('agregar-url-proveedor').value = '';
+  document.getElementById('agregar-texto-proveedor').value = '';
   document.getElementById('agregar-codigo').textContent = '…';
   try {
     const res = await fetch('/api/productos/admin/next-code');
