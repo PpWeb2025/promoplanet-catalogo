@@ -338,7 +338,7 @@
       </button>
     </nav>
     <div class="sidebar-footer">
-      <a href="index.html" target="_blank">← Ver catálogo público</a>
+      <a href="https://promoplanet.ar" target="_blank">← Ver catálogo público</a>
     </div>
   </div>
 
@@ -348,7 +348,7 @@
       <span class="topbar-title" id="topbar-title">Dashboard</span>
       <div class="topbar-actions">
         <button class="btn btn-celeste" onclick="showSection('agregar', document.querySelector('.nav-item[onclick*=agregar]'))">+ Nuevo producto</button>
-        <a href="index.html" target="_blank" class="btn btn-outline">Ver catálogo →</a>
+        <a href="https://promoplanet.ar" target="_blank" class="btn btn-outline">Ver catálogo →</a>
         <button class="btn btn-outline" onclick="logout()">Salir</button>
       </div>
     </div>
@@ -415,17 +415,17 @@
             </div>
             <select id="filtro-categoria" class="filter-select" onchange="filtrarTabla()">
               <option value="">Todas las categorías</option>
+              <option value="bienestar">Bienestar y Autocuidado</option>
               <option value="bolsos_mochilas">Bolsos y Mochilas</option>
               <option value="drinkware">Drinkware</option>
               <option value="escritorio">Escritorio y Oficina</option>
               <option value="escritura">Escritura</option>
+              <option value="hogar">Hogar y Cocina</option>
               <option value="indumentaria">Indumentaria Corporativa</option>
               <option value="llaveros">Llaveros y Accesorios</option>
               <option value="outdoors">Outdoors y Fitness</option>
-              <option value="bienestar">Bienestar y Autocuidado</option>
               <option value="packaging">Packaging y Presentación</option>
               <option value="tecnologia">Tecnología</option>
-              <option value="hogar">Hogar y Cocina</option>
             </select>
             <select id="filtro-estado" class="filter-select" onchange="filtrarTabla()">
               <option value="">Todos los estados</option>
@@ -532,17 +532,17 @@
                   <label>Categoría *</label>
                   <select id="agregar-f-categoria" onchange="actualizarSubcatsAgregar(this.value)">
                     <option value="">Seleccioná...</option>
+                    <option value="bienestar">🌿 Bienestar y Autocuidado</option>
                     <option value="bolsos_mochilas">🎒 Bolsos y Mochilas</option>
                     <option value="drinkware">🥤 Drinkware</option>
                     <option value="escritorio">📋 Escritorio y Oficina</option>
                     <option value="escritura">✏️ Escritura</option>
+                    <option value="hogar">🏠 Hogar y Cocina</option>
                     <option value="indumentaria">👕 Indumentaria Corporativa</option>
                     <option value="llaveros">🔑 Llaveros y Accesorios</option>
                     <option value="outdoors">⛺ Outdoors y Fitness</option>
-                    <option value="bienestar">🌿 Bienestar y Autocuidado</option>
                     <option value="packaging">📦 Packaging y Presentación</option>
                     <option value="tecnologia">💻 Tecnología</option>
-                    <option value="hogar">🏠 Hogar y Cocina</option>
                   </select>
                 </div>
                 <div class="form-group" id="agregar-subcat-group" style="display:none">
@@ -912,17 +912,17 @@
           <label>Categoría *</label>
           <select id="f-categoria" onchange="actualizarSubcats(this.value)">
             <option value="">Seleccioná...</option>
+            <option value="bienestar">🌿 Bienestar y Autocuidado</option>
             <option value="bolsos_mochilas">🎒 Bolsos y Mochilas</option>
             <option value="drinkware">🥤 Drinkware</option>
             <option value="escritorio">📋 Escritorio y Oficina</option>
             <option value="escritura">✏️ Escritura</option>
+            <option value="hogar">🏠 Hogar y Cocina</option>
             <option value="indumentaria">👕 Indumentaria Corporativa</option>
             <option value="llaveros">🔑 Llaveros y Accesorios</option>
             <option value="outdoors">⛺ Outdoors y Fitness</option>
-            <option value="bienestar">🌿 Bienestar y Autocuidado</option>
             <option value="packaging">📦 Packaging y Presentación</option>
             <option value="tecnologia">💻 Tecnología</option>
-            <option value="hogar">🏠 Hogar y Cocina</option>
           </select>
         </div>
         <div class="form-group" id="f-subcategoria-group" style="display:none">
@@ -1577,17 +1577,17 @@ async function renderTabla(lista) {
 function catSelectHTML(id, cat, subcat) {
   const sel = `padding:0.22rem 0.4rem;border:1.5px solid transparent;border-radius:6px;font-family:'DM Sans',sans-serif;background:var(--gris);color:var(--texto);cursor:pointer;width:100%;display:block;`;
   const catOpts = [
+    ['bienestar',       '🌿 Bienestar y Autocuidado'],
     ['bolsos_mochilas', '🎒 Bolsos y Mochilas'],
     ['drinkware',       '🥤 Drinkware'],
     ['escritorio',      '📋 Escritorio y Oficina'],
     ['escritura',       '✏️ Escritura'],
+    ['hogar',           '🏠 Hogar y Cocina'],
     ['indumentaria',    '👕 Indumentaria Corporativa'],
     ['llaveros',        '🔑 Llaveros y Accesorios'],
     ['outdoors',        '⛺ Outdoors y Fitness'],
-    ['bienestar',       '🌿 Bienestar y Autocuidado'],
     ['packaging',       '📦 Packaging y Presentación'],
     ['tecnologia',      '💻 Tecnología'],
-    ['hogar',          '🏠 Hogar y Cocina'],
   ].map(([v, l]) => `<option value="${v}"${cat === v ? ' selected' : ''}>${l}</option>`).join('');
   const subcats = SUBCATS[cat] || [];
   const subOpts = ['<option value="">Sin subcategoría</option>',
@@ -2194,7 +2194,7 @@ async function generarCatalogo() {
   const lista = await getProductos();
   const publicados = lista.filter(p => p.estado === 'publicado').length;
   if (!publicados) { showToast('No hay productos publicados aún', 'error'); return; }
-  window.open('/', '_blank');
+  window.open('https://promoplanet.ar', '_blank');
   showToast(`✅ Catálogo con ${publicados} productos publicados`, 'success');
 }
 
