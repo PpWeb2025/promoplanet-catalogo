@@ -2519,7 +2519,7 @@ document.addEventListener('keydown', e => {
       codigo:         p.codigo,
       descripcion:    p.descripcion || '',
       emoji:          p.emoji || '📦',
-      foto:           (p.fotos && p.fotos.length > 0) ? p.fotos[0] : null,
+      foto:           (() => { if (!p.fotos || !p.fotos.length) return null; const f = p.fotos[0]; return typeof f === 'string' ? f : (f.driveId || null); })(),
       cantidad:       p.cantidadConsulta || p.minimo || '',
       impresion:      '',
       precioUnitario: '',
