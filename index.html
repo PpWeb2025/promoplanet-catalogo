@@ -2460,15 +2460,17 @@ document.addEventListener('keydown', e => {
 
   /* ── Login ────────────────────────────────────────────── */
   async function iniciarAdmin() {
-    const pwd = prompt('Contraseña de administrador:');
+    const username = prompt('Usuario:');
+    if (username === null) return;
+    const pwd = prompt('Contraseña:');
     if (pwd === null) return;
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'admin', password: pwd }),
+        body: JSON.stringify({ username, password: pwd }),
       });
-      if (!res.ok) { alert('Contraseña incorrecta'); return; }
+      if (!res.ok) { alert('Credenciales incorrectas'); return; }
     } catch {
       alert('No se pudo conectar con el servidor');
       return;
