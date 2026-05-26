@@ -74,7 +74,26 @@ app.get('/producto/:codigo', async (req, res) => {
       `<meta property="og:url" content="${url}">`,
       `<meta property="og:type" content="product">`,
     ].join('\n');
-    res.send(baseHtml.replace('<title>PromoPlanet — Productos promocionales y regalos corporativos en Buenos Aires</title>', meta));
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: p.nombre || '',
+      description: (p.descripcion || '').replace(/\n/g, ' ').slice(0, 500),
+      sku: p.codigo || '',
+      brand: { '@type': 'Brand', name: 'PromoPlanet' },
+      offers: {
+        '@type': 'Offer',
+        availability: 'https://schema.org/InStock',
+        priceCurrency: 'ARS',
+        seller: { '@type': 'Organization', name: 'PromoPlanet' },
+      },
+    };
+    const jsonLdScript = `<script type="application/ld+json">\n${JSON.stringify(jsonLd, null, 2)}\n</script>`;
+    res.send(
+      baseHtml
+        .replace('<title>PromoPlanet — Productos promocionales y regalos corporativos en Buenos Aires</title>', meta)
+        .replace('</head>', `${jsonLdScript}\n</head>`)
+    );
   } catch {
     res.send(baseHtml);
   }
