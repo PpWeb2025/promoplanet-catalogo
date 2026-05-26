@@ -30,7 +30,7 @@ app.use('/api/clientes', require('./routes/clientes'));
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send('User-agent: *\nAllow: /\nSitemap: https://promoplanet.ar/sitemap.xml\n');
+  res.send('User-agent: *\nAllow: /\nSitemap: https://promoplanet.ar/sitemap.xml');
 });
 
 app.get('/sitemap.xml', async (req, res) => {
