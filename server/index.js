@@ -80,6 +80,7 @@ app.get('/producto/:codigo', async (req, res) => {
       name: p.nombre || '',
       description: (p.descripcion || '').replace(/\n/g, ' ').slice(0, 500),
       sku: p.codigo || '',
+      image,
       brand: { '@type': 'Brand', name: 'PromoPlanet' },
       offers: {
         '@type': 'Offer',
