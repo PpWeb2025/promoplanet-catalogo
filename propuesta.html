@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de propuestas — PromoPlanet</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #003471;
+    --celeste: #00A8B4;
+    --azul-light: #e8eef6;
+    --celeste-light: #e0f7f9;
+    --gris: #f4f5f7;
+    --gris-borde: #e2e4e8;
+    --texto: #1a1f2e;
+    --texto-suave: #5a6070;
+    --blanco: #ffffff;
+    --radio: 10px;
+    --sombra: 0 2px 16px rgba(0,52,113,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: var(--texto); background: var(--gris); font-size: 15px; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--azul); color: var(--blanco);
+    padding: 0 2rem; height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; text-decoration: none; }
+  .topbar-logo span:first-child { color: var(--blanco); }
+  .topbar-logo span:last-child  { color: var(--celeste); }
+  .topbar-title { font-size: 0.8rem; color: rgba(255,255,255,0.65); letter-spacing: 0.08em; text-transform: uppercase; }
+  .topbar-actions { display: flex; gap: 0.75rem; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1.1rem; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.25); background: transparent; color: var(--blanco); font-size: 0.85rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; text-decoration: none; }
+  .btn:hover { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.08); }
+  .btn-celeste { background: var(--celeste); border-color: var(--celeste); color: var(--blanco); }
+  .btn-celeste:hover { background: #009aaa; border-color: #009aaa; }
+  .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+
+  /* ── MAIN LAYOUT ── */
+  .layout { max-width: 1100px; margin: 0 auto; padding: 1.5rem; display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; }
+
+  /* ── CARD ── */
+  .card { background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: var(--radio); padding: 1.25rem; box-shadow: var(--sombra); }
+  .card-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--texto-suave); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--gris-borde); }
+
+  /* ── FORM ELEMENTS ── */
+  .fld { margin-bottom: 0.85rem; }
+  .fld label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--texto-suave); margin-bottom: 0.3rem; }
+  .fld input, .fld select, .fld textarea {
+    width: 100%; padding: 0.55rem 0.85rem;
+    border: 1.5px solid var(--gris-borde); border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--texto);
+    background: var(--blanco); transition: border-color 0.15s;
+  }
+  .fld input:focus, .fld select:focus, .fld textarea:focus { outline: none; border-color: var(--celeste); }
+  .fld textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+  .fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .fld-row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 0.65rem; }
+
+  /* ── CLIENTE ── */
+  .cliente-select-wrap { margin-bottom: 0.85rem; }
+  .cond-section { margin-top: 1rem; }
+  .cond-section .card-title { margin-top: 0; }
+  .btn-guardar-cliente { width: 100%; margin-top: 0.5rem; background: var(--celeste); border: none; color: var(--blanco); border-radius: 8px; padding: 0.6rem; font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.15s; }
+  .btn-guardar-cliente:hover { background: #009aaa; }
+  .cliente-saved-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--celeste-light); color: var(--celeste); border-radius: 20px; padding: 3px 10px; font-size: 0.78rem; font-weight: 600; margin-bottom: 10px; }
+
+  /* ── PRODUCTOS ── */
+  .productos-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .productos-count { font-size: 0.82rem; color: var(--texto-suave); }
+  .empty-productos { text-align: center; padding: 3rem 2rem; color: var(--texto-suave); font-size: 0.9rem; }
+  .empty-productos .icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
+
+  .producto-row {
+    background: var(--blanco); border: 1px solid var(--gris-borde);
+    border-radius: var(--radio); overflow: hidden; margin-bottom: 1rem;
+  }
+  .producto-row-top { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--gris-borde); }
+  .producto-img {
+    width: 80px; height: 80px; border-radius: 8px;
+    background: var(--gris); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .producto-img img { width: 100%; height: 100%; object-fit: contain; }
+  .producto-img .emoji { font-size: 2rem; opacity: 0.4; }
+  .producto-info { flex: 1; }
+  .producto-nombre { font-size: 0.95rem; font-weight: 600; color: var(--azul); }
+  .producto-codigo { font-size: 0.78rem; color: var(--texto-suave); margin-top: 2px; }
+  .producto-desc-edit { margin-top: 0.5rem; }
+  .producto-desc-edit textarea {
+    width: 100%; font-size: 0.82rem; line-height: 1.55;
+    border: 1.5px solid var(--gris-borde); border-radius: 6px;
+    padding: 0.4rem 0.65rem; font-family: 'DM Sans', sans-serif; color: var(--texto);
+    resize: vertical; min-height: 60px; background: var(--gris);
+    transition: border-color 0.15s;
+  }
+  .producto-desc-edit textarea:focus { outline: none; border-color: var(--celeste); background: var(--blanco); }
+  .desc-label { font-size: 0.7rem; color: var(--texto-suave); font-weight: 600; margin-bottom: 3px; letter-spacing: 0.04em; }
+  .producto-row-fields { padding: 0.75rem 1rem; background: var(--gris); }
+  .producto-row-fields .fld-row-3 { margin: 0; }
+  .producto-row-fields .fld { margin-bottom: 0; }
+  .btn-quitar { background: none; border: none; color: var(--texto-suave); cursor: pointer; font-size: 1rem; padding: 4px; border-radius: 4px; transition: color 0.15s; }
+  .btn-quitar:hover { color: #c0392b; }
+
+  /* ── ACCIONES ── */
+  .acciones-bar {
+    position: sticky; bottom: 0; z-index: 50;
+    background: var(--blanco); border-top: 1px solid var(--gris-borde);
+    padding: 0.85rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 -4px 16px rgba(0,52,113,0.07);
+  }
+  .acciones-info { font-size: 0.82rem; color: var(--texto-suave); }
+  .acciones-info strong { color: var(--azul); }
+  .btn-preview {
+    background: var(--azul); color: var(--blanco); border: none;
+    border-radius: 8px; padding: 0.7rem 1.75rem;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: background 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-preview:hover { background: #004a9e; }
+  .btn-preview:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ════════════════════════════════════════════════
+     PROPUESTA — vista de impresión
+  ════════════════════════════════════════════════ */
+  #vista-propuesta { display: none; }
+
+  .prop-toolbar {
+    background: var(--azul); color: var(--blanco);
+    padding: 0.75rem 2rem; display: flex; align-items: center; gap: 1rem;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .prop-toolbar h2 { font-size: 0.9rem; font-weight: 500; flex: 1; }
+  .btn-imprimir {
+    background: var(--celeste); color: var(--blanco); border: none;
+    border-radius: 8px; padding: 0.55rem 1.25rem;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 6px;
+    transition: background 0.15s;
+  }
+  .btn-imprimir:hover { background: #009aaa; }
+
+  /* Documento propuesta */
+  .prop-doc { max-width: 800px; margin: 1.5rem auto; font-family: 'DM Sans', sans-serif; }
+  .prop-page { background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden; }
+
+  .prop-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 14px 28px; border-bottom: 3px solid #00A8B4; }
+  .prop-logo { font-family: 'DM Serif Display', serif; font-size: 1.4rem; }
+  .prop-logo span:first-child { color: #003471; }
+  .prop-logo span:last-child  { color: #00A8B4; }
+  .prop-contact { text-align: right; font-size: 10.5px; color: #666; line-height: 1.85; }
+
+  .prop-intro { padding: 16px 28px 4px; font-size: 13px; }
+  .prop-date { text-align: right; font-size: 13px; margin-bottom: 14px; color: #333; }
+  .prop-saludo { font-size: 13px; line-height: 2.1; color: #333; }
+  .prop-apertura { text-align: center; font-size: 13px; margin: 10px 0 14px; color: #333; }
+
+  .prop-product-card { margin: 10px 28px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; page-break-inside: avoid; }
+  .prop-card-inner { display: flex; }
+  .prop-card-img {
+    width: 210px; flex-shrink: 0; background: #f8f8f8;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 14px; border-right: 1px solid #ddd;
+  }
+  .prop-card-img img { max-width: 100%; max-height: 145px; object-fit: contain; }
+  .prop-card-img .p-emoji { font-size: 3rem; opacity: 0.25; }
+  .prop-card-img-nombre { font-size: 11.5px; font-weight: 600; color: #003471; text-align: center; margin-top: 8px; }
+  .prop-card-img-codigo { font-size: 10.5px; color: #777; text-align: center; margin-top: 2px; }
+  .prop-card-desc { flex: 1; }
+  .prop-desc-header { background: #003471; color: #fff; padding: 7px 13px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .prop-desc-text { padding: 10px 13px; font-size: 12px; line-height: 1.75; color: #333; }
+  .prop-price-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .prop-price-table th { background: #f2f2f2; padding: 7px 13px; font-weight: 600; border-top: 1px solid #ddd; text-align: left; }
+  .prop-price-table td { padding: 7px 13px; }
+  .prop-price-table .col-r { text-align: right; }
+  .prop-price-table .col-c { text-align: center; }
+
+  .prop-footer { text-align: right; padding: 6px 28px 10px; font-size: 10.5px; color: #bbb; font-style: italic; }
+
+  /* Página condiciones */
+  .prop-cond-wrap { padding: 18px 28px 24px; }
+  .prop-cond-title-main { font-size: 12.5px; font-weight: 700; color: #00A8B4; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+  .prop-cond-bloque { margin-bottom: 13px; }
+  .prop-cond-label { font-weight: 700; font-size: 10.5px; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 3px; color: #333; }
+  .prop-cond-text  { font-size: 12px; line-height: 1.65; color: #444; }
+  .prop-cond-firma { margin-top: 28px; text-align: center; font-size: 11px; color: #999; }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    .topbar, .layout, .acciones-bar, .prop-toolbar, #vista-editor { display: none !important; }
+    #vista-propuesta { display: block !important; }
+    .prop-doc { margin: 0; }
+    .prop-page { border: none; border-radius: 0; margin-bottom: 0; page-break-after: always; box-shadow: none; }
+    .prop-page:last-child { page-break-after: avoid; }
+    body { background: white; }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    .fld-row-3 { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     VISTA EDITOR
+══════════════════════════════════════════ -->
+<div id="vista-editor">
+
+  <div class="topbar">
+    <a href="index.html" class="topbar-logo" target="_blank">
+      <span>Promo</span><span>Planet</span>
+    </a>
+    <span class="topbar-title">Generador de propuestas</span>
+    <div class="topbar-actions">
+      <a href="index.html" class="btn btn-sm">← Volver al catálogo</a>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- ── COLUMNA IZQUIERDA: CLIENTE ── -->
+    <div>
+      <div class="card">
+        <div class="card-title">Cliente</div>
+
+        <div class="cliente-select-wrap">
+          <div class="fld">
+            <label>Seleccionar cliente existente</label>
+            <select id="select-cliente" onchange="onSelectCliente(this.value)">
+              <option value="">— Nuevo cliente —</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="form-cliente">
+          <div class="fld">
+            <label>Empresa *</label>
+            <input type="text" id="cf-empresa" placeholder="Nombre de la empresa" />
+          </div>
+          <div class="fld">
+            <label>Atención</label>
+            <input type="text" id="cf-atencion" placeholder="Nombre y apellido del contacto" />
+          </div>
+
+          <div class="cond-section">
+            <div class="card-title">Condiciones para este cliente</div>
+            <div class="fld">
+              <label>Validez del presupuesto</label>
+              <textarea id="cf-validez" rows="2"></textarea>
+            </div>
+            <div class="fld">
+              <label>Condiciones de pago</label>
+              <textarea id="cf-pago" rows="2"></textarea>
+            </div>
+            <div class="fld">
+              <label>Plazo de entrega</label>
+              <textarea id="cf-entrega" rows="2"></textarea>
+            </div>
+            <div class="fld">
+              <label>Producción personalizada</label>
+              <textarea id="cf-produccion" rows="2"></textarea>
+            </div>
+            <div class="fld">
+              <label>Envío</label>
+              <textarea id="cf-envio" rows="2"></textarea>
+            </div>
+          </div>
+
+          <button class="btn-guardar-cliente" onclick="guardarCliente()">
+            Guardar cliente
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COLUMNA DERECHA: PRODUCTOS ── -->
+    <div>
+      <div class="card">
+        <div class="productos-header">
+          <div class="card-title" style="margin-bottom:0;border:none;padding:0">Productos de la propuesta</div>
+          <span class="productos-count" id="prod-count"></span>
+        </div>
+        <div id="productos-lista"></div>
+      </div>
+    </div>
+
+  </div><!-- /layout -->
+
+  <!-- Barra de acción fija abajo -->
+  <div class="acciones-bar">
+    <div class="acciones-info" id="acciones-info"></div>
+    <button class="btn-preview" id="btn-preview" onclick="mostrarPropuesta()">
+      Ver propuesta
+    </button>
+  </div>
+
+</div><!-- /vista-editor -->
+
+
+<!-- ══════════════════════════════════════════
+     VISTA PROPUESTA (imprimible)
+══════════════════════════════════════════ -->
+<div id="vista-propuesta">
+
+  <div class="prop-toolbar">
+    <button class="btn" onclick="volverEditor()" style="background:rgba(255,255,255,0.1)">← Volver</button>
+    <h2>Propuesta comercial</h2>
+    <button class="btn-imprimir" onclick="window.print()">
+      🖨️ Imprimir / Guardar PDF
+    </button>
+  </div>
+
+  <div class="prop-doc" id="prop-doc">
+    <!-- generado por JS -->
+  </div>
+
+</div>
+
+
+<script>
+/* ════════════════════════════════════════════════
+   CONSTANTES Y ESTADO
+════════════════════════════════════════════════ */
+const CLIENTS_KEY   = 'pp_clients';
+const TEMP_KEY      = 'pp_propuesta_temp';
+const NAVY          = '#003471';
+const TEAL          = '#00A8B4';
+
+const DEFAULT_COND = {
+  validez:    '7 días hábiles a partir de su emisión. Los precios podrán actualizarse en función de la cotización del Dólar Oficial BCRA vigente al momento del pago.',
+  pago:       'El pago deberá efectuarse dentro de los 30 días corridos desde la fecha de emisión de la factura.',
+  entrega:    'La entrega estimada será de 20 días hábiles, sujeta a confirmación según el producto y la disponibilidad de stock al momento de la compra.',
+  produccion: 'En productos personalizados con marca podrá registrarse una variación de hasta ±5% en las cantidades. La facturación se efectuará sobre el total efectivamente producido.',
+  envio:      'El presupuesto contempla un único envío sin costo adicional dentro de CABA y la Provincia de Buenos Aires, incluyendo Mar del Plata.',
+};
+
+let clientes  = {};
+let clienteId = null;  // id del cliente seleccionado/guardado
+let productos = [];    // leídos de localStorage
+
+/* ════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════ */
+(function init() {
+  /* Cargar clientes */
+  try { clientes = JSON.parse(localStorage.getItem(CLIENTS_KEY) || '{}'); } catch(e) {}
+
+  /* Cargar productos del temp */
+  try { productos = JSON.parse(localStorage.getItem(TEMP_KEY) || '[]'); } catch(e) {}
+
+  renderClientSelect();
+  resetCondiciones();
+  renderProductos();
+  actualizarAcciones();
+})();
+
+/* ════════════════════════════════════════════════
+   CLIENTE
+════════════════════════════════════════════════ */
+function renderClientSelect() {
+  const sel = document.getElementById('select-cliente');
+  // quitar opciones dinámicas previas
+  [...sel.querySelectorAll('option[data-c]')].forEach(o => o.remove());
+  Object.entries(clientes).forEach(([id, c]) => {
+    const opt = document.createElement('option');
+    opt.value = id; opt.textContent = c.empresa; opt.dataset.c = '1';
+    sel.add(opt);
+  });
+  if (clienteId && clientes[clienteId]) sel.value = clienteId;
+}
+
+function onSelectCliente(id) {
+  if (!id) {
+    clienteId = null;
+    document.getElementById('cf-empresa').value  = '';
+    document.getElementById('cf-atencion').value = '';
+    resetCondiciones();
+    return;
+  }
+  clienteId = id;
+  const c = clientes[id];
+  document.getElementById('cf-empresa').value  = c.empresa;
+  document.getElementById('cf-atencion').value = c.atencion || '';
+  setCondiciones(c.condiciones || {});
+}
+
+function resetCondiciones() { setCondiciones(DEFAULT_COND); }
+
+function setCondiciones(cond) {
+  document.getElementById('cf-validez').value    = cond.validez    || DEFAULT_COND.validez;
+  document.getElementById('cf-pago').value       = cond.pago       || DEFAULT_COND.pago;
+  document.getElementById('cf-entrega').value    = cond.entrega    || DEFAULT_COND.entrega;
+  document.getElementById('cf-produccion').value = cond.produccion || DEFAULT_COND.produccion;
+  document.getElementById('cf-envio').value      = cond.envio      || DEFAULT_COND.envio;
+}
+
+function leerClienteForm() {
+  return {
+    empresa:  document.getElementById('cf-empresa').value.trim(),
+    atencion: document.getElementById('cf-atencion').value.trim(),
+    condiciones: {
+      validez:    document.getElementById('cf-validez').value.trim(),
+      pago:       document.getElementById('cf-pago').value.trim(),
+      entrega:    document.getElementById('cf-entrega').value.trim(),
+      produccion: document.getElementById('cf-produccion').value.trim(),
+      envio:      document.getElementById('cf-envio').value.trim(),
+    }
+  };
+}
+
+function guardarCliente() {
+  const c = leerClienteForm();
+  if (!c.empresa) { alert('Ingresá el nombre de la empresa'); return; }
+  const id = clienteId || ('c_' + Date.now());
+  clientes[id] = c;
+  clienteId = id;
+  localStorage.setItem(CLIENTS_KEY, JSON.stringify(clientes));
+  renderClientSelect();
+  document.getElementById('select-cliente').value = id;
+  actualizarAcciones();
+
+  // Feedback visual
+  const btn = document.querySelector('.btn-guardar-cliente');
+  btn.textContent = '✓ Guardado';
+  setTimeout(() => btn.textContent = 'Guardar cliente', 1500);
+}
+
+/* ════════════════════════════════════════════════
+   PRODUCTOS
+════════════════════════════════════════════════ */
+function imgSrc(foto) {
+  if (!foto) return null;
+  return `/api/drive/imagen/${foto}`;
+}
+
+function renderProductos() {
+  const lista = document.getElementById('productos-lista');
+  const countEl = document.getElementById('prod-count');
+  countEl.textContent = `${productos.length} producto${productos.length !== 1 ? 's' : ''}`;
+
+  if (!productos.length) {
+    lista.innerHTML = `<div class="empty-productos">
+      <div class="icon">📋</div>
+      No hay productos. Cerrá esta ventana, seleccioná productos en el catálogo y volvé a hacer clic en "Generar propuesta".
+    </div>`;
+    return;
+  }
+
+  lista.innerHTML = productos.map((p, i) => {
+    const src = imgSrc(p.foto);
+    const imgHtml = src
+      ? `<img src="${src}" alt="${p.nombre}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      : '';
+    return `<div class="producto-row" id="prod-row-${i}">
+      <div class="producto-row-top">
+        <div class="producto-img">
+          ${imgHtml}
+          <div class="emoji" ${src ? 'style="display:none"' : ''}>${p.emoji}</div>
+        </div>
+        <div class="producto-info" style="flex:1">
+          <div class="producto-nombre">${p.nombre}</div>
+          <div class="producto-codigo">Cód. ${p.codigo}</div>
+          <div class="producto-desc-edit">
+            <div class="desc-label">Descripción (editable)</div>
+            <textarea id="p-desc-${i}" rows="3" oninput="syncProd(${i},'descripcion',this.value)">${escHtml(p.descripcion)}</textarea>
+          </div>
+        </div>
+        <button class="btn-quitar" onclick="quitarProducto(${i})" title="Quitar">✕</button>
+      </div>
+      <div class="producto-row-fields">
+        <div class="fld-row-3">
+          <div class="fld">
+            <label>Tipo de impresión</label>
+            <input type="text" value="${escHtml(p.impresion)}" placeholder="Ej: DTF Full Color" oninput="syncProd(${i},'impresion',this.value)" />
+          </div>
+          <div class="fld">
+            <label>Cantidad</label>
+            <input type="number" value="${p.cantidad}" placeholder="0" min="0" oninput="syncProd(${i},'cantidad',this.value); recalcTotal(${i})" />
+          </div>
+          <div class="fld">
+            <label>Precio/U. (AR$)</label>
+            <input type="number" value="${p.precioUnitario}" placeholder="0,00" step="0.01" oninput="syncProd(${i},'precioUnitario',this.value); recalcTotal(${i})" />
+          </div>
+          <div class="fld">
+            <label>Total (AR$)</label>
+            <input type="number" id="p-total-${i}" value="${p.total}" placeholder="0,00" step="0.01" oninput="syncProd(${i},'total',this.value)" />
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function syncProd(i, campo, val) {
+  productos[i][campo] = val;
+  actualizarAcciones();
+}
+
+function recalcTotal(i) {
+  const cant = parseFloat(productos[i].cantidad);
+  const pu   = parseFloat(productos[i].precioUnitario);
+  if (cant > 0 && pu > 0) {
+    const tot = (cant * pu).toFixed(2);
+    productos[i].total = tot;
+    const el = document.getElementById(`p-total-${i}`);
+    if (el) el.value = tot;
+  }
+  actualizarAcciones();
+}
+
+function quitarProducto(i) {
+  productos.splice(i, 1);
+  renderProductos();
+  actualizarAcciones();
+}
+
+function actualizarAcciones() {
+  const info = document.getElementById('acciones-info');
+  const btn  = document.getElementById('btn-preview');
+  const n    = productos.length;
+  const clienteOk = document.getElementById('cf-empresa').value.trim() !== '';
+  info.innerHTML = n > 0
+    ? `<strong>${n}</strong> producto${n !== 1 ? 's' : ''} · ${clienteOk ? `Cliente: <strong>${document.getElementById('cf-empresa').value.trim()}</strong>` : '<span style="color:#c0392b">Falta completar el cliente</span>'}`
+    : 'Sin productos';
+  btn.disabled = n === 0;
+}
+
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ════════════════════════════════════════════════
+   FORMATEO
+════════════════════════════════════════════════ */
+function formatARS(n) {
+  const num = parseFloat(n);
+  if (isNaN(num)) return '—';
+  return '$ ' + num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function todayStr() {
+  const d = new Date();
+  const m = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return `Buenos Aires, ${d.getDate()} de ${m[d.getMonth()]} de ${d.getFullYear()}`;
+}
+
+/* ════════════════════════════════════════════════
+   GENERACIÓN DEL DOCUMENTO
+════════════════════════════════════════════════ */
+function propHeader() {
+  return `<div class="prop-header">
+    <div class="prop-logo"><span>Promo</span><span>Planet</span></div>
+    <div class="prop-contact">www.promoplanet.ar<br>hola@promoplanet.ar<br>+54 9 11 5855 7355</div>
+  </div>`;
+}
+
+function propFooter() {
+  return `<div class="prop-footer">Regalos que dejan marca</div>`;
+}
+
+function buildDoc() {
+  const cliente = leerClienteForm();
+  const cond    = cliente.condiciones;
+  let html = '';
+
+  // Páginas de productos
+  productos.forEach((p, i) => {
+    const isLast = i === productos.length - 1;
+    const src = imgSrc(p.foto);
+    const imgHtml = src
+      ? `<img src="${src}" alt="${p.nombre}" style="max-width:100%;max-height:145px;object-fit:contain">`
+      : `<div class="p-emoji">${p.emoji}</div>`;
+    const descLines = (p.descripcion || '')
+      .split('\n').map(l => l ? `<div>${l}</div>` : '<div>&nbsp;</div>').join('');
+
+    html += `<div class="prop-page">`;
+    html += propHeader();
+
+    // Encabezado de carta (solo en el primero)
+    if (i === 0) {
+      html += `<div class="prop-intro">
+        <div class="prop-date">${todayStr()}</div>
+        <div class="prop-saludo">
+          Señores:<br>
+          <strong>${(cliente.empresa || '').toUpperCase()}.</strong><br>
+          ${cliente.atencion ? `At. ${cliente.atencion}<br>` : ''}
+          Presente
+        </div>
+        <div class="prop-apertura">
+          Tenemos el agrado de dirigirnos a ustedes a efectos de hacerles llegar la siguiente cotización:
+        </div>
+      </div>`;
+    }
+
+    html += `<div class="prop-product-card">
+      <div class="prop-card-inner">
+        <div class="prop-card-img">
+          ${imgHtml}
+          <div class="prop-card-img-nombre">${p.nombre}</div>
+          ${p.codigo ? `<div class="prop-card-img-codigo">Código ${p.codigo}</div>` : ''}
+        </div>
+        <div class="prop-card-desc">
+          <div class="prop-desc-header">Descripción</div>
+          <div class="prop-desc-text">${descLines || '<span style="color:#bbb">—</span>'}</div>
+        </div>
+      </div>
+      <table class="prop-price-table">
+        <thead><tr>
+          <th>Logo / Impresión</th>
+          <th class="col-c">Cant.</th>
+          <th class="col-r">Precio/U.</th>
+          <th class="col-r" style="color:${TEAL}">Total</th>
+        </tr></thead>
+        <tbody><tr>
+          <td>${p.impresion || '—'}</td>
+          <td class="col-c">${p.cantidad || '—'}</td>
+          <td class="col-r">${formatARS(p.precioUnitario)}</td>
+          <td class="col-r" style="font-weight:600">${formatARS(p.total)}</td>
+        </tr></tbody>
+      </table>
+    </div>`;
+    html += propFooter();
+    html += `</div>`; // prop-page
+  });
+
+  // Página condiciones
+  function condBloque(titulo, texto) {
+    if (!texto) return '';
+    return `<div class="prop-cond-bloque">
+      <div class="prop-cond-label">${titulo}</div>
+      <div class="prop-cond-text">${texto}</div>
+    </div>`;
+  }
+
+  html += `<div class="prop-page">`;
+  html += propHeader();
+  html += `<div class="prop-cond-wrap">
+    <div class="prop-cond-title-main">Condiciones Generales</div>
+    ${condBloque('Precios y Moneda', 'Los precios están expresados en Pesos Argentinos (AR$), netos de IVA (21%).')}
+    ${condBloque('Validez del Presupuesto', cond.validez)}
+    ${condBloque('Condiciones de Precios', 'Los valores indicados aplican únicamente para las cantidades detalladas. Cualquier modificación en el pedido requerirá una nueva cotización.')}
+    ${condBloque('Producción Personalizada', cond.produccion)}
+    ${condBloque('Condiciones de Pago', cond.pago)}
+    ${condBloque('Archivos para Identidad Visual', 'El cliente deberá proporcionar logotipos y diseños en formato vectorial editable (ai, cdr, psd, eps o pdf) con tipografías convertidas a curvas. Cualquier trabajo adicional de diseño será presupuestado de manera independiente.')}
+    ${condBloque('Plazo de Entrega', cond.entrega)}
+    ${condBloque('Envío', cond.envio)}
+    ${condBloque('Aceptación', 'La aprobación de este presupuesto implica la aceptación expresa de todas las condiciones generales aquí detalladas.')}
+    <div class="prop-cond-firma">
+      PromoPlanet | de Gilda R. Corones Corujo | CUIT 27-25230473-3
+    </div>
+  </div>`;
+  html += propFooter();
+  html += `</div>`;
+
+  return html;
+}
+
+/* ════════════════════════════════════════════════
+   NAVEGACIÓN
+════════════════════════════════════════════════ */
+function mostrarPropuesta() {
+  if (!productos.length) return;
+  document.getElementById('prop-doc').innerHTML = buildDoc();
+  document.getElementById('vista-editor').style.display    = 'none';
+  document.getElementById('vista-propuesta').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function volverEditor() {
+  document.getElementById('vista-propuesta').style.display = 'none';
+  document.getElementById('vista-editor').style.display    = 'block';
+}
+</script>
+</body>
+</html>
