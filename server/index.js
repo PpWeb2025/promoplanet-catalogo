@@ -3,7 +3,7 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const { initDb } = require('./db');
+const { initDb, getProductos } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +27,25 @@ app.use('/api/consultas', require('./routes/consultas'));
 app.use('/api/ia', require('./routes/ia'));
 app.use('/api/suscripciones', require('./routes/suscripciones'));
 app.use('/api/clientes', require('./routes/clientes'));
+
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('User-agent: *\nAllow: /\nSitemap: https://promoplanet.ar/sitemap.xml\n');
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const productos = await getProductos({ soloPublicados: true });
+    const items = productos.map(p =>
+      `  <url><loc>https://promoplanet.ar/#producto-${encodeURIComponent(p.codigo)}</loc><changefreq>weekly</changefreq></url>`
+    ).join('\n');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://promoplanet.ar/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n${items}\n</urlset>`;
+    res.type('application/xml');
+    res.send(xml);
+  } catch (err) {
+    res.status(500).send('Error generando sitemap');
+  }
+});
 
 app.use(express.static(path.join(__dirname, '..')));
 
