@@ -74,7 +74,7 @@ app.get('/producto/:codigo', async (req, res) => {
       `<meta property="og:url" content="${url}">`,
       `<meta property="og:type" content="product">`,
     ].join('\n');
-    res.send(baseHtml.replace('<title>PromoPlanet — Catálogo de Productos</title>', meta));
+    res.send(baseHtml.replace('<title>PromoPlanet — Productos promocionales y regalos corporativos en Buenos Aires</title>', meta));
   } catch {
     res.send(baseHtml);
   }
