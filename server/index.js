@@ -84,7 +84,10 @@ app.get('/producto/:codigo', async (req, res) => {
       offers: {
         '@type': 'Offer',
         availability: 'https://schema.org/InStock',
+        price: '0',
+        priceValidUntil: '2027-12-31',
         priceCurrency: 'ARS',
+        description: 'Precio a consultar según cantidad y personalización',
         seller: { '@type': 'Organization', name: 'PromoPlanet' },
       },
     };
