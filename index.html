@@ -2018,6 +2018,12 @@ async function init() {
   renderSubcatSidebar();
   renderMarcasFilter();
   filtrar();
+  const mProd = window.location.pathname.match(/^\/producto\/(.+)$/);
+  if (mProd) {
+    const codigo = decodeURIComponent(mProd[1]);
+    const p = PRODUCTOS.find(x => x.codigo === codigo);
+    if (p) verProducto(p.id);
+  }
 }
 init();
 
