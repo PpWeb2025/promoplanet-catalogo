@@ -437,6 +437,7 @@ function guardarCliente() {
 ════════════════════════════════════════════════ */
 function imgSrc(foto) {
   if (!foto) return null;
+  if (foto.startsWith('http') || foto.startsWith('/')) return foto;
   return `/api/drive/imagen/${foto}`;
 }
 
