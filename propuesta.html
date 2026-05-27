@@ -151,11 +151,8 @@
   .prop-doc { max-width: 800px; margin: 1.5rem auto; font-family: 'DM Sans', sans-serif; }
   .prop-page { background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden; }
 
-  .prop-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 14px 28px; border-bottom: 3px solid #00A8B4; }
-  .prop-logo { font-family: 'DM Serif Display', serif; font-size: 1.4rem; }
-  .prop-logo span:first-child { color: #003471; }
-  .prop-logo span:last-child  { color: #00A8B4; }
-  .prop-contact { text-align: right; font-size: 10.5px; color: #666; line-height: 1.85; }
+  .prop-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 28px; background: #003471; }
+  .prop-contact { text-align: right; font-size: 10px; color: rgba(255,255,255,0.85); line-height: 1.85; }
 
   .prop-intro { padding: 16px 28px 4px; font-size: 13px; }
   .prop-date { text-align: right; font-size: 13px; margin-bottom: 14px; color: #333; }
@@ -559,7 +556,7 @@ function todayStr() {
 ════════════════════════════════════════════════ */
 function propHeader() {
   return `<div class="prop-header">
-    <div class="prop-logo"><span>Promo</span><span>Planet</span></div>
+    <img src="logo-pp-color.svg" alt="PromoPlanet" style="height:55px;width:auto;display:block">
     <div class="prop-contact">www.promoplanet.ar<br>hola@promoplanet.ar<br>+54 9 11 5855 7355</div>
   </div>`;
 }
