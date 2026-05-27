@@ -191,12 +191,13 @@
 
   /* ── PRINT STYLES ── */
   @media print {
+    @page { margin: 0; }
     .topbar, .layout, .acciones-bar, .prop-toolbar, #vista-editor { display: none !important; }
     #vista-propuesta { display: block !important; }
     .prop-doc { margin: 0; }
     .prop-page { border: none; border-radius: 0; margin-bottom: 0; page-break-after: always; box-shadow: none; }
     .prop-page:last-child { page-break-after: avoid; }
-    body { background: white; }
+    body { background: white; margin: 1.5cm; }
     .prop-header, .prop-desc-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 
