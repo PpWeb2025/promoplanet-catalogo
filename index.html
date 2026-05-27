@@ -1188,7 +1188,7 @@
   </div>
   <div class="footer-bottom">
     <a href="http://qr.afip.gob.ar/?qr=qkprCTC-mWfI4VZAyt_ccg,," target="_F960AFIPInfo"><img src="http://www.afip.gob.ar/images/f960/DATAWEB.jpg" border="0" style="width:40px;height:auto;display:block"></a>
-    <span>© 2026 PromoPlanet · CUIT 27-25230473-3</span>
+    <span>© 2026 PromoPlanet · CUIT 27-25230473-3 · <a onclick="window.iniciarAdmin()" style="color:rgba(255,255,255,0.2);font-size:0.7rem;text-decoration:none;cursor:pointer">Administración</a></span>
     <span>Buenos Aires, Argentina</span>
   </div>
 </footer>
@@ -2447,6 +2447,7 @@ document.addEventListener('keydown', e => {
 <script>
 (function () {
   const SESSION_KEY = 'pp_modo_propuesta';
+  window.iniciarAdmin = iniciarAdmin;
 
   /* ── Entrada por URL ──────────────────────────────────── */
   if (new URLSearchParams(location.search).has('admin')) {
