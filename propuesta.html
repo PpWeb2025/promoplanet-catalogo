@@ -587,11 +587,18 @@ function propFooter() {
 function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
   const cliente = leerClienteForm();
   const cond    = cliente.condiciones;
-  let html = '';
 
-  // Páginas de productos
-  productos.forEach((p, i) => {
-    const isLast = i === productos.length - 1;
+  function condBloque(titulo, texto) {
+    if (!texto) return '';
+    return `<div class="prop-cond-bloque">
+      <div class="prop-cond-label">${titulo}</div>
+      <div class="prop-cond-text">${texto}</div>
+    </div>`;
+  }
+
+  // ── Sección de productos: header una sola vez, todos los productos fluyen ──
+  let prodHtml = '';
+  productos.forEach(p => {
     const src = (p.foto && imageCache[p.foto]) || imgSrc(p.foto);
     const imgHtml = src
       ? `<img src="${src}" alt="${p.nombre}" style="max-width:100%;max-height:145px;object-fit:contain">`
@@ -599,26 +606,7 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
     const descLines = (p.descripcion || '')
       .split('\n').map(l => l ? `<div>${l}</div>` : '<div>&nbsp;</div>').join('');
 
-    html += `<div class="prop-page">`;
-    html += propHeader(logoSrc);
-
-    // Encabezado de carta (solo en el primero)
-    if (i === 0) {
-      html += `<div class="prop-intro">
-        <div class="prop-date">${todayStr()}</div>
-        <div class="prop-saludo">
-          Señores:<br>
-          <strong>${(cliente.empresa || '').toUpperCase()}.</strong><br>
-          ${cliente.atencion ? `At. ${cliente.atencion}<br>` : ''}
-          Presente
-        </div>
-        <div class="prop-apertura">
-          Tenemos el agrado de dirigirnos a ustedes a efectos de hacerles llegar la siguiente cotización:
-        </div>
-      </div>`;
-    }
-
-    html += `<div class="prop-product-card">
+    prodHtml += `<div class="prop-product-card">
       <div class="prop-card-inner">
         <div class="prop-card-img">
           ${imgHtml}
@@ -645,38 +633,46 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
         </tr></tbody>
       </table>
     </div>`;
-    html += propFooter();
-    html += `</div>`; // prop-page
   });
 
-  // Página condiciones
-  function condBloque(titulo, texto) {
-    if (!texto) return '';
-    return `<div class="prop-cond-bloque">
-      <div class="prop-cond-label">${titulo}</div>
-      <div class="prop-cond-text">${texto}</div>
-    </div>`;
-  }
-
-  html += `<div class="prop-page prop-cond-page">`;
-  html += propHeader(logoSrc);
-  html += `<div class="prop-cond-wrap">
-    <div class="prop-cond-title-main">Condiciones Generales</div>
-    ${condBloque('Precios y Moneda', 'Los precios están expresados en Pesos Argentinos (AR$), netos de IVA (21%).')}
-    ${condBloque('Validez del Presupuesto', cond.validez)}
-    ${condBloque('Condiciones de Precios', 'Los valores indicados aplican únicamente para las cantidades detalladas. Cualquier modificación en el pedido requerirá una nueva cotización.')}
-    ${condBloque('Producción Personalizada', cond.produccion)}
-    ${condBloque('Condiciones de Pago', cond.pago)}
-    ${condBloque('Archivos para Identidad Visual', 'El cliente deberá proporcionar logotipos y diseños en formato vectorial editable (ai, cdr, psd, eps o pdf) con tipografías convertidas a curvas. Cualquier trabajo adicional de diseño será presupuestado de manera independiente.')}
-    ${condBloque('Plazo de Entrega', cond.entrega)}
-    ${condBloque('Envío', cond.envio)}
-    ${condBloque('Aceptación', 'La aprobación de este presupuesto implica la aceptación expresa de todas las condiciones generales aquí detalladas.')}
-    <div class="prop-cond-firma">
-      PromoPlanet | de Gilda R. Corones Corujo | CUIT 27-25230473-3
+  const html =
+    `<div class="prop-page">
+      ${propHeader(logoSrc)}
+      <div class="prop-intro">
+        <div class="prop-date">${todayStr()}</div>
+        <div class="prop-saludo">
+          Señores:<br>
+          <strong>${(cliente.empresa || '').toUpperCase()}.</strong><br>
+          ${cliente.atencion ? `At. ${cliente.atencion}<br>` : ''}
+          Presente
+        </div>
+        <div class="prop-apertura">
+          Tenemos el agrado de dirigirnos a ustedes a efectos de hacerles llegar la siguiente cotización:
+        </div>
+      </div>
+      ${prodHtml}
+      ${propFooter()}
     </div>
-  </div>`;
-  html += propFooter();
-  html += `</div>`;
+
+    <div class="prop-page prop-cond-page">
+      ${propHeader(logoSrc)}
+      <div class="prop-cond-wrap">
+        <div class="prop-cond-title-main">Condiciones Generales</div>
+        ${condBloque('Precios y Moneda', 'Los precios están expresados en Pesos Argentinos (AR$), netos de IVA (21%).')}
+        ${condBloque('Validez del Presupuesto', cond.validez)}
+        ${condBloque('Condiciones de Precios', 'Los valores indicados aplican únicamente para las cantidades detalladas. Cualquier modificación en el pedido requerirá una nueva cotización.')}
+        ${condBloque('Producción Personalizada', cond.produccion)}
+        ${condBloque('Condiciones de Pago', cond.pago)}
+        ${condBloque('Archivos para Identidad Visual', 'El cliente deberá proporcionar logotipos y diseños en formato vectorial editable (ai, cdr, psd, eps o pdf) con tipografías convertidas a curvas. Cualquier trabajo adicional de diseño será presupuestado de manera independiente.')}
+        ${condBloque('Plazo de Entrega', cond.entrega)}
+        ${condBloque('Envío', cond.envio)}
+        ${condBloque('Aceptación', 'La aprobación de este presupuesto implica la aceptación expresa de todas las condiciones generales aquí detalladas.')}
+        <div class="prop-cond-firma">
+          PromoPlanet | de Gilda R. Corones Corujo | CUIT 27-25230473-3
+        </div>
+      </div>
+      ${propFooter()}
+    </div>`;
 
   return html;
 }
