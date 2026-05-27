@@ -570,9 +570,9 @@ function todayStr() {
 /* ════════════════════════════════════════════════
    GENERACIÓN DEL DOCUMENTO
 ════════════════════════════════════════════════ */
-function propHeader() {
+function propHeader(logoSrc = 'logo-pp-color.svg') {
   return `<div class="prop-header">
-    <img src="logo-pp-color.svg" alt="PromoPlanet" style="height:55px;width:auto;display:block">
+    <img src="${logoSrc}" alt="PromoPlanet" style="height:55px;width:auto;display:block">
     <div class="prop-contact">www.promoplanet.ar<br>hola@promoplanet.ar<br>+54 9 11 5855 7355</div>
   </div>`;
 }
@@ -581,7 +581,7 @@ function propFooter() {
   return `<div class="prop-footer">Regalos que dejan marca</div>`;
 }
 
-function buildDoc(imageCache = {}) {
+function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
   const cliente = leerClienteForm();
   const cond    = cliente.condiciones;
   let html = '';
@@ -597,7 +597,7 @@ function buildDoc(imageCache = {}) {
       .split('\n').map(l => l ? `<div>${l}</div>` : '<div>&nbsp;</div>').join('');
 
     html += `<div class="prop-page">`;
-    html += propHeader();
+    html += propHeader(logoSrc);
 
     // Encabezado de carta (solo en el primero)
     if (i === 0) {
@@ -689,19 +689,21 @@ async function mostrarPropuesta() {
   btn.innerHTML = '⏳ Cargando imágenes...';
 
   const imageCache = {};
-  await Promise.all(
-    productos
+  const [logoDataUrl, ...imgResults] = await Promise.all([
+    fetchDataUrl('logo-pp-color.svg'),
+    ...productos
       .filter(p => p.foto)
       .map(async p => {
         const dataUrl = await fetchDataUrl(imgSrc(p.foto));
         if (dataUrl) imageCache[p.foto] = dataUrl;
-      })
-  );
+      }),
+  ]);
+  const logoSrc = logoDataUrl || 'logo-pp-color.svg';
 
   btn.innerHTML = 'Ver propuesta';
   btn.disabled = productos.length === 0;
 
-  document.getElementById('prop-doc').innerHTML = buildDoc(imageCache);
+  document.getElementById('prop-doc').innerHTML = buildDoc(imageCache, logoSrc);
   document.getElementById('vista-editor').style.display    = 'none';
   document.getElementById('vista-propuesta').style.display = 'block';
   window.scrollTo(0, 0);
