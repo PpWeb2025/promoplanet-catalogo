@@ -440,6 +440,22 @@ function imgSrc(foto) {
   return `/api/drive/imagen/${foto}`;
 }
 
+async function fetchDataUrl(src) {
+  try {
+    const res = await fetch(src);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 function renderProductos() {
   const lista = document.getElementById('productos-lista');
   const countEl = document.getElementById('prod-count');
@@ -565,7 +581,7 @@ function propFooter() {
   return `<div class="prop-footer">Regalos que dejan marca</div>`;
 }
 
-function buildDoc() {
+function buildDoc(imageCache = {}) {
   const cliente = leerClienteForm();
   const cond    = cliente.condiciones;
   let html = '';
@@ -573,7 +589,7 @@ function buildDoc() {
   // Páginas de productos
   productos.forEach((p, i) => {
     const isLast = i === productos.length - 1;
-    const src = imgSrc(p.foto);
+    const src = (p.foto && imageCache[p.foto]) || imgSrc(p.foto);
     const imgHtml = src
       ? `<img src="${src}" alt="${p.nombre}" style="max-width:100%;max-height:145px;object-fit:contain">`
       : `<div class="p-emoji">${p.emoji}</div>`;
@@ -665,9 +681,27 @@ function buildDoc() {
 /* ════════════════════════════════════════════════
    NAVEGACIÓN
 ════════════════════════════════════════════════ */
-function mostrarPropuesta() {
+async function mostrarPropuesta() {
   if (!productos.length) return;
-  document.getElementById('prop-doc').innerHTML = buildDoc();
+
+  const btn = document.getElementById('btn-preview');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Cargando imágenes...';
+
+  const imageCache = {};
+  await Promise.all(
+    productos
+      .filter(p => p.foto)
+      .map(async p => {
+        const dataUrl = await fetchDataUrl(imgSrc(p.foto));
+        if (dataUrl) imageCache[p.foto] = dataUrl;
+      })
+  );
+
+  btn.innerHTML = 'Ver propuesta';
+  btn.disabled = productos.length === 0;
+
+  document.getElementById('prop-doc').innerHTML = buildDoc(imageCache);
   document.getElementById('vista-editor').style.display    = 'none';
   document.getElementById('vista-propuesta').style.display = 'block';
   window.scrollTo(0, 0);
