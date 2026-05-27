@@ -162,9 +162,9 @@
   .prop-product-card { margin: 10px 28px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; page-break-inside: avoid; }
   .prop-card-inner { display: flex; }
   .prop-card-img {
-    width: 210px; flex-shrink: 0; background: #f8f8f8;
+    width: 210px; flex-shrink: 0; background: transparent;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 14px; border-right: 1px solid #ddd;
+    padding: 14px;
   }
   .prop-card-img img { max-width: 100%; max-height: 145px; object-fit: contain; }
   .prop-card-img .p-emoji { font-size: 3rem; opacity: 0.25; }
@@ -195,8 +195,8 @@
     .topbar, .layout, .acciones-bar, .prop-toolbar, #vista-editor { display: none !important; }
     #vista-propuesta { display: block !important; }
     .prop-doc { margin: 0; }
-    .prop-page { border: none; border-radius: 0; margin-bottom: 0; page-break-after: always; box-shadow: none; }
-    .prop-page:last-child { page-break-after: avoid; }
+    .prop-page { border: none; border-radius: 0; margin-bottom: 0; box-shadow: none; }
+    .prop-cond-page { page-break-before: always; }
     body { background: white; margin: 1.5cm; }
     .prop-header, .prop-desc-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
@@ -658,8 +658,8 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
     </div>`;
   }
 
-  html += `<div class="prop-page">`;
-  html += propHeader();
+  html += `<div class="prop-page prop-cond-page">`;
+  html += propHeader(logoSrc);
   html += `<div class="prop-cond-wrap">
     <div class="prop-cond-title-main">Condiciones Generales</div>
     ${condBloque('Precios y Moneda', 'Los precios están expresados en Pesos Argentinos (AR$), netos de IVA (21%).')}
