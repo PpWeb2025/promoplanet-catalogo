@@ -1541,11 +1541,10 @@ function similitudPalabra(a, b) {
   if (a.includes(b) || b.includes(a)) return true;
   if (b.length <= 3) return a === b;
 
-  // Prefijo morfológico: si la palabra más corta es prefijo de la más larga
-  const [corta, larga] = a.length <= b.length ? [a, b] : [b, a];
-  if (corta.length >= 4) {
-    const longPrefijo = Math.max(4, Math.floor(corta.length * 0.8));
-    if (larga.startsWith(corta.slice(0, longPrefijo))) return true;
+  // Prefijo morfológico: solo si el producto es más largo que el término buscado
+  if (a.length > b.length && b.length >= 4) {
+    const longPrefijo = Math.max(4, Math.floor(b.length * 0.8));
+    if (a.startsWith(b.slice(0, longPrefijo))) return true;
   }
 
   const maxErrores = Math.floor(b.length / 4);
