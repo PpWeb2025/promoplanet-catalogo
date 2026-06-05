@@ -22,7 +22,7 @@ router.post('/upload-logo', requireAdmin, upload.single('foto'), async (req, res
     const url = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         { folder: 'promoplanet/marcas', resource_type: 'image' },
-        (error, result) => error ? reject(error) : resolve(result.secure_url)
+        (error, result) => error ? reject(error) : resolve(result.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_400/'))
       );
       stream.end(req.file.buffer);
     });

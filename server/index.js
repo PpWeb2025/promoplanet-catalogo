@@ -61,9 +61,12 @@ app.get('/producto/:codigo', async (req, res) => {
     const title = escapeAttr(`${p.nombre} — PromoPlanet`);
     const desc = escapeAttr((p.descripcion || '').replace(/\n/g, ' ').slice(0, 160));
     const fotoId = Array.isArray(p.fotos) && p.fotos[0];
-    const image = fotoId
+    const rawImage = fotoId
       ? (fotoId.startsWith('http') || fotoId.startsWith('/') ? fotoId : `https://promoplanet.ar/api/drive/imagen/${fotoId}`)
       : 'https://promoplanet.ar/og-image.jpg';
+    const image = rawImage.includes('res.cloudinary.com')
+      ? rawImage.replace(/\/upload\/(?:f_auto,q_auto,w_\d+\/)?/, '/upload/f_auto,q_auto,w_1200/')
+      : rawImage;
     const url = `https://promoplanet.ar/producto/${encodeURIComponent(p.codigo)}`;
     const meta = [
       `<title>${title}</title>`,

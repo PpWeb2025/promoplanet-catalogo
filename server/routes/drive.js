@@ -187,7 +187,7 @@ router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, re
         { folder: 'promoplanet', public_id: publicId, overwrite: true, resource_type: 'image' },
         (error, result) => {
           if (error) reject(error);
-          else resolve(result.secure_url);
+          else resolve(result.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_800/'));
         }
       );
       stream.end(file.buffer);
