@@ -1303,10 +1303,11 @@ document.addEventListener('click', e => {
   }
 });
 
-function imgSrc(fotoId) {
+function imgSrc(fotoId, w) {
   if (!fotoId) return '';
   if (fotoId.startsWith('http') || fotoId.startsWith('/')) return fotoId;
-  return `/api/drive/imagen/${fotoId}`;
+  const base = `/api/drive/imagen/${fotoId}`;
+  return w ? `${base}?w=${w}` : base;
 }
 
 const BADGES = {
@@ -1685,7 +1686,7 @@ function renderProductos(lista) {
       <div class="product-img" id="card-img-${p.id}" data-idx="0">
         ${fotos
           ? `<div class="card-carousel-track" id="card-track-${p.id}">
-              ${fotos.map(f => `<img class="card-carousel-slide" src="${imgSrc(f)}" alt="${p.nombre}">`).join('')}
+              ${fotos.map(f => `<img class="card-carousel-slide" src="${imgSrc(f, 400)}" alt="${p.nombre}" loading="lazy" decoding="async" width="400" height="300">`).join('')}
              </div>`
           : `<span class="placeholder-icon">${p.emoji || '📦'}</span>`}
         ${multiImg ? `
@@ -1836,12 +1837,12 @@ function verProducto(id) {
     const thumbs = p.fotos.length > 1
       ? `<div class="gallery-thumbs">${p.fotos.map((f,i) =>
           `<div class="gallery-thumb${i===0?' active':''}" onclick="galleryGo(${i})">
-            <img src="${imgSrc(f)}" alt="${p.nombre} ${i+1}">
+            <img src="${imgSrc(f, 200)}" alt="${p.nombre} ${i+1}" loading="lazy" decoding="async">
           </div>`).join('')}</div>`
       : '';
     mpImg.innerHTML = `
       <div class="gallery-main" id="gallery-main">
-        <img id="gallery-img" src="${imgSrc(p.fotos[0])}" alt="${p.nombre}">
+        <img id="gallery-img" src="${imgSrc(p.fotos[0], 800)}" alt="${p.nombre}">
         ${arrows}
       </div>
       ${thumbs}`;
@@ -1879,7 +1880,7 @@ function galleryGo(idx) {
   const main = document.getElementById('gallery-main');
   main.classList.add('loading');
   img.onload = () => main.classList.remove('loading');
-  img.src = imgSrc(fotos[idx]);
+  img.src = imgSrc(fotos[idx], 800);
   document.querySelectorAll('.gallery-thumb').forEach((t, i) =>
     t.classList.toggle('active', i === idx)
   );

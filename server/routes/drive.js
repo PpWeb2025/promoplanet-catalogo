@@ -4,6 +4,7 @@ const { Readable } = require('stream');
 const path = require('path');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
+const sharp = require('sharp');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
 
@@ -200,9 +201,13 @@ router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, re
   }
 });
 
+const ALLOWED_WIDTHS = new Set([200, 400, 800, 1200]);
+
 // GET /api/drive/imagen/:fileId — público, proxy con cache
 router.get('/imagen/:fileId', async (req, res) => {
   const { fileId } = req.params;
+  const w = parseInt(req.query.w, 10);
+  const resize = ALLOWED_WIDTHS.has(w);
 
   try {
     const drive = getDriveClient();
@@ -215,11 +220,42 @@ router.get('/imagen/:fileId', async (req, res) => {
       setTimeout(() => imageCache.delete(fileId), 3600_000);
     }
 
-    res.setHeader('Content-Type', meta.mimeType || 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    if (!resize) {
+      // Sin ?w válido: devolver original (retrocompatibilidad)
+      res.setHeader('Content-Type', meta.mimeType || 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      const stream = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
+      stream.data.pipe(res);
+      return;
+    }
 
-    const stream = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
-    stream.data.pipe(res);
+    // Con ?w válido: bajar a buffer y convertir a WebP
+    const driveStream = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
+    const chunks = [];
+    await new Promise((resolve, reject) => {
+      driveStream.data.on('data', c => chunks.push(c));
+      driveStream.data.on('end', resolve);
+      driveStream.data.on('error', reject);
+    });
+    const buffer = Buffer.concat(chunks);
+
+    try {
+      const webp = await sharp(buffer)
+        .resize({ width: w, withoutEnlargement: true })
+        .webp({ quality: 78 })
+        .toBuffer();
+
+      res.setHeader('Content-Type', 'image/webp');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Content-Length', webp.length);
+      res.send(webp);
+    } catch (sharpErr) {
+      // Fallback: devolver original si sharp no puede procesarlo
+      console.error('Drive imagen sharp error:', sharpErr.message, '— enviando original');
+      res.setHeader('Content-Type', meta.mimeType || 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.send(buffer);
+    }
   } catch (err) {
     console.error('Drive imagen error:', err.message);
     res.status(404).send('Imagen no disponible');
