@@ -4,3 +4,5 @@ node_modules/
 service-account.json
 api_key.txt
 migrate-to-turso.js
+turso token.txt
+Brevo Api.txt
