@@ -1,14 +1,9 @@
 const router = require('express').Router();
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
+const { google } = require('googleapis');
+const { Readable } = require('stream');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -81,21 +76,37 @@ router.delete('/admin/:id', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// POST /api/productos/upload-foto — sube una imagen a Cloudinary y devuelve la URL pública
+// POST /api/productos/upload-foto — sube una imagen a Google Drive y devuelve el fileId
 router.post('/upload-foto', requireAdmin, upload.single('foto'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se recibió archivo' });
   try {
-    const url = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: 'promoplanet', resource_type: 'image' },
-        (error, result) => error ? reject(error) : resolve(result.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_800/'))
-      );
-      stream.end(req.file.buffer);
+    const oauth2 = new google.auth.OAuth2(
+      process.env.GOOGLE_OAUTH_CLIENT_ID,
+      process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+    );
+    oauth2.setCredentials({ refresh_token: process.env.GOOGLE_OAUTH_REFRESH_TOKEN });
+    const drive = google.drive({ version: 'v3', auth: oauth2 });
+    const folderId = process.env.DRIVE_UPLOAD_FOLDER_ID;
+    const saEmail = process.env.GOOGLE_SA_CREDENTIALS
+      ? JSON.parse(process.env.GOOGLE_SA_CREDENTIALS).client_email
+      : 'promoplanet-drive@promoplanet-495303.iam.gserviceaccount.com';
+    const { data } = await drive.files.create({
+      requestBody: {
+        name: req.file.originalname,
+        ...(folderId && { parents: [folderId] }),
+      },
+      media: { mimeType: req.file.mimetype, body: Readable.from(req.file.buffer) },
+      fields: 'id',
     });
-    res.json({ url });
+    await drive.permissions.create({
+      fileId: data.id,
+      requestBody: { role: 'reader', type: 'user', emailAddress: saEmail },
+      sendNotificationEmail: false,
+    });
+    res.json({ fileId: data.id });
   } catch (err) {
-    console.error('Cloudinary upload-foto error:', err.message);
-    res.status(500).json({ error: 'Error al subir a Cloudinary: ' + err.message });
+    console.error('Drive upload-foto error:', err.message);
+    res.status(500).json({ error: 'Error al subir a Drive: ' + err.message });
   }
 });
 

@@ -3,16 +3,9 @@ const { google } = require('googleapis');
 const { Readable } = require('stream');
 const path = require('path');
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
 const sharp = require('sharp');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 const uploadMem = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
@@ -36,6 +29,19 @@ function getDriveClient(write = false) {
   const auth = new google.auth.GoogleAuth(authOptions);
   return google.drive({ version: 'v3', auth });
 }
+
+function getOAuthDriveClient() {
+  const oauth2 = new google.auth.OAuth2(
+    process.env.GOOGLE_OAUTH_CLIENT_ID,
+    process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+  );
+  oauth2.setCredentials({ refresh_token: process.env.GOOGLE_OAUTH_REFRESH_TOKEN });
+  return google.drive({ version: 'v3', auth: oauth2 });
+}
+
+const SA_EMAIL = process.env.GOOGLE_SA_CREDENTIALS
+  ? JSON.parse(process.env.GOOGLE_SA_CREDENTIALS).client_email
+  : 'promoplanet-drive@promoplanet-495303.iam.gserviceaccount.com';
 
 function extraerCodigo(nombre) {
   const m = nombre.match(CODIGO_REGEX);
@@ -172,7 +178,7 @@ router.post('/importar', requireAdmin, async (req, res) => {
 
 // POST /api/drive/subir — requiere admin
 // FormData: fotos[] (archivos), nombres (JSON array de strings)
-// Sube a Cloudinary carpeta promoplanet/ y devuelve { urls }
+// Sube a Google Drive y devuelve { fileIds }
 router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, res) => {
   if (!req.files?.length) {
     return res.status(400).json({ error: 'No se recibieron archivos' });
@@ -181,23 +187,30 @@ router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, re
   const nombres = JSON.parse(req.body.nombres || '[]');
 
   try {
-    const urls = await Promise.all(req.files.map((file, i) => new Promise((resolve, reject) => {
+    const drive = getOAuthDriveClient();
+    const folderId = process.env.DRIVE_UPLOAD_FOLDER_ID;
+    const fileIds = await Promise.all(req.files.map(async (file, i) => {
       const nombre = nombres[i] || file.originalname;
-      const publicId = 'promoplanet/' + nombre.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_\- ]/g, '_');
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: 'promoplanet', public_id: publicId, overwrite: true, resource_type: 'image' },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_800/'));
-        }
-      );
-      stream.end(file.buffer);
-    })));
+      const { data } = await drive.files.create({
+        requestBody: {
+          name: nombre,
+          ...(folderId && { parents: [folderId] }),
+        },
+        media: { mimeType: file.mimetype, body: Readable.from(file.buffer) },
+        fields: 'id',
+      });
+      await drive.permissions.create({
+        fileId: data.id,
+        requestBody: { role: 'reader', type: 'user', emailAddress: SA_EMAIL },
+        sendNotificationEmail: false,
+      });
+      return data.id;
+    }));
 
-    res.json({ urls });
+    res.json({ fileIds });
   } catch (err) {
-    console.error('Cloudinary subir error:', err.message);
-    res.status(500).json({ error: 'Error al subir a Cloudinary: ' + err.message });
+    console.error('Drive subir error:', err.message);
+    res.status(500).json({ error: 'Error al subir a Drive: ' + err.message });
   }
 });
 
