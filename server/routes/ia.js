@@ -55,6 +55,25 @@ const SUBCATEGORIAS = {
 // Lista de IDs válidos generada desde CATEGORIAS (fuente única de verdad)
 const CATEGORIA_IDS = Object.keys(CATEGORIAS).join(', ');
 
+async function generarConReintento(ai, params, maxIntentos = 3) {
+  let ultimoError;
+  for (let intento = 1; intento <= maxIntentos; intento++) {
+    try {
+      return await ai.models.generateContent(params);
+    } catch (err) {
+      ultimoError = err;
+      const esSobrecarga = err?.status === 'UNAVAILABLE' || err?.status === 503 ||
+        /503|UNAVAILABLE|overloaded|high demand/i.test(err?.message || '');
+      if (esSobrecarga && intento < maxIntentos) {
+        await new Promise(r => setTimeout(r, intento * 1500)); // espera creciente: 1.5s, 3s
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw ultimoError;
+}
+
 router.post('/adaptar', requireAdmin, async (req, res) => {
   let { texto, url, textoManual } = req.body;
 
@@ -114,7 +133,7 @@ Respondé SOLO con el JSON, sin texto adicional antes ni después.`;
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await ai.models.generateContent({
+    const response = await generarConReintento(ai, {
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: { responseMimeType: 'application/json' },
@@ -170,7 +189,7 @@ Respondé SOLO con el JSON, sin texto adicional.`;
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await ai.models.generateContent({
+    const response = await generarConReintento(ai, {
       model: 'gemini-2.5-flash',
       contents: [
         ...fotos.slice(0, 4).map(f => ({ inlineData: { mimeType: f.mimeType, data: f.base64 } })),
