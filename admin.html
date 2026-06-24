@@ -2705,7 +2705,7 @@ async function adaptarConIA() {
 
   const btn = document.getElementById('btn-ia-adaptar');
   btn.disabled = true;
-  btn.textContent = esURL ? '⏳ Leyendo página...' : '⏳ Procesando con Claude...';
+  btn.textContent = esURL ? '⏳ Leyendo página...' : '⏳ Procesando con IA...';
   document.getElementById('ia-resultado').style.display = 'none';
 
   try {
@@ -2731,7 +2731,7 @@ async function adaptarConIA() {
   } catch { showToast('Error de conexión', 'error'); }
   finally {
     btn.disabled = false;
-    btn.innerHTML = '✨ Adaptar con Claude';
+    btn.innerHTML = '✨ Adaptar con IA';
   }
 }
 

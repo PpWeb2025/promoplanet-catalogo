@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenAI } = require('@google/genai');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
 
@@ -113,15 +113,13 @@ ${contenidoFuente}
 Respondé SOLO con el JSON, sin texto adicional antes ni después.`;
 
   try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: { responseMimeType: 'application/json' },
     });
-
-    const raw = message.content[0].text.trim();
-    const json = JSON.parse(raw.replace(/^```json\n?/, '').replace(/\n?```$/, ''));
+    const json = JSON.parse(response.text);
     res.json(json);
   } catch (err) {
     console.error('Error IA:', err.message);
@@ -141,11 +139,6 @@ router.post('/analizar-fotos', requireAdmin, async (req, res) => {
       return subs?.length ? `${id} (${nombre}): subcats → ${subs.join(', ')}` : `${id} (${nombre})`;
     })
     .join('\n');
-
-  const imageContent = fotos.slice(0, 4).map(f => ({
-    type: 'image',
-    source: { type: 'base64', media_type: f.mimeType, data: f.base64 },
-  }));
 
   let textoScraped = '';
   if (urlProveedor) {
@@ -176,14 +169,16 @@ Respondé con un JSON:
 Respondé SOLO con el JSON, sin texto adicional.`;
 
   try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 256,
-      messages: [{ role: 'user', content: [...imageContent, { type: 'text', text: prompt }] }],
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        ...fotos.slice(0, 4).map(f => ({ inlineData: { mimeType: f.mimeType, data: f.base64 } })),
+        { text: prompt },
+      ],
+      config: { responseMimeType: 'application/json' },
     });
-    const raw = message.content[0].text.trim();
-    const json = JSON.parse(raw.replace(/^```json\n?/, '').replace(/\n?```$/, ''));
+    const json = JSON.parse(response.text);
     res.json(json);
   } catch (err) {
     console.error('Error IA analizar-fotos:', err.message);
