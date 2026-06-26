@@ -121,6 +121,9 @@ async function initDb() {
       fecha_alta          TEXT
     )
   `);
+
+  await client.execute(`ALTER TABLE clientes ADD COLUMN produccion TEXT`)
+    .catch(e => { if (!String(e.message || e).includes('duplicate column')) console.error('ALTER clientes produccion:', e); });
 }
 
 async function getProductos({ soloPublicados = false, cat = null, q = null } = {}) {
