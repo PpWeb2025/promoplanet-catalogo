@@ -314,7 +314,7 @@
   <div class="prop-toolbar">
     <button class="btn" onclick="volverEditor()" style="background:rgba(255,255,255,0.1)">← Volver</button>
     <h2>Propuesta comercial</h2>
-    <button class="btn-imprimir" onclick="window.print()">
+    <button class="btn-imprimir" onclick="imprimirPropuesta()">
       🖨️ Imprimir / Guardar PDF
     </button>
   </div>
@@ -739,6 +739,38 @@ async function mostrarPropuesta() {
 function volverEditor() {
   document.getElementById('vista-propuesta').style.display = 'none';
   document.getElementById('vista-editor').style.display    = 'block';
+}
+
+function imprimirPropuesta() {
+  const raw = document.getElementById('cf-empresa').value.trim();
+  const cliente = raw
+    ? (raw.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '') || 'Cliente')
+    : 'Cliente';
+
+  const hoy = new Date();
+  const fecha = hoy.getFullYear() + '-' +
+    String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
+    String(hoy.getDate()).padStart(2, '0');
+
+  const verKey  = 'pp_prop_ver_' + fecha;
+  const n_actual = parseInt(localStorage.getItem(verKey) || '0', 10);
+  const n_nuevo  = n_actual + 1;
+  const ver = 'v' + String(n_nuevo).padStart(2, '0');
+
+  const titulo = `PropuestaComercial_PromoPlanet_${cliente}_${fecha}_${ver}`;
+
+  const titleOriginal = document.title;
+  document.title = titulo;
+
+  window.addEventListener('afterprint', function persist() {
+    localStorage.setItem(verKey, String(n_nuevo)); // persiste solo si efectivamente imprimió
+    document.title = titleOriginal;
+    window.removeEventListener('afterprint', persist);
+  });
+
+  setTimeout(() => { document.title = titleOriginal; }, 5000); // fallback: solo restaura el title
+
+  window.print();
 }
 </script>
 </body>
