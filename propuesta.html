@@ -159,7 +159,7 @@
   .prop-saludo { font-size: 13px; line-height: 2.1; color: #333; }
   .prop-apertura { text-align: center; font-size: 13px; margin: 10px 0 14px; color: #333; }
 
-  .prop-product-card { margin: 10px 28px; overflow: hidden; page-break-inside: avoid; }
+  .prop-product-card { margin: 10px 28px 24px; border: 1px solid #e2e6ea; border-radius: 8px; padding: 20px; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
   .prop-card-inner { display: flex; }
   .prop-card-img {
     width: 210px; flex-shrink: 0; background: transparent;
@@ -198,7 +198,7 @@
     .prop-page { border: none; border-radius: 0; margin-bottom: 0; box-shadow: none; }
     .prop-cond-page { page-break-before: always; }
     body { background: white; margin: 1.5cm; }
-    .prop-header, .prop-desc-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .prop-header, .prop-desc-header, .prop-product-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 
   /* ── RESPONSIVE ── */
