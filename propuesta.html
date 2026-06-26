@@ -160,24 +160,26 @@
   .prop-apertura { text-align: center; font-size: 13px; margin: 10px 0 14px; color: #333; }
 
   .prop-product-card { margin: 10px 28px 24px; border: 1px solid #e2e6ea; border-radius: 8px; padding: 20px; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
-  .prop-card-inner { display: flex; }
+  .prop-card-inner { display: flex; flex-direction: column; }
   .prop-card-img {
-    width: 210px; flex-shrink: 0; background: transparent;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 14px;
+    background: transparent;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 0 0 12px 0;
   }
-  .prop-card-img img { max-width: 100%; max-height: 145px; object-fit: contain; }
+  .prop-card-img img { max-width: 100%; max-height: 280px; object-fit: contain; }
   .prop-card-img .p-emoji { font-size: 3rem; opacity: 0.25; }
   .prop-card-img-nombre { font-size: 11.5px; font-weight: 600; color: #003471; text-align: center; margin-top: 8px; }
   .prop-card-img-codigo { font-size: 10.5px; color: #777; text-align: center; margin-top: 2px; }
   .prop-card-desc { flex: 1; }
-  .prop-desc-header { background: #003471; color: #fff; padding: 7px 13px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
   .prop-desc-text { padding: 10px 13px; font-size: 12px; line-height: 1.75; color: #333; }
   .prop-price-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   .prop-price-table th { background: #f2f2f2; padding: 7px 13px; font-weight: 600; border-top: 1px solid #ddd; text-align: left; }
   .prop-price-table td { padding: 7px 13px; }
   .prop-price-table .col-r { text-align: right; }
   .prop-price-table .col-c { text-align: center; }
+  .prop-thumb-strip { display: flex; gap: 8px; padding: 10px 0 4px; flex-wrap: wrap; }
+  .prop-thumb       { width: 68px; height: 68px; border-radius: 4px; border: 1px solid #e2e6ea; overflow: hidden; flex-shrink: 0; }
+  .prop-thumb img   { width: 100%; height: 100%; object-fit: contain; }
 
   .prop-footer { text-align: right; padding: 6px 28px 10px; font-size: 10.5px; color: #bbb; font-style: italic; }
 
@@ -198,7 +200,7 @@
     .prop-page { border: none; border-radius: 0; margin-bottom: 0; box-shadow: none; }
     .prop-cond-page { page-break-before: always; }
     body { background: white; margin: 1.5cm; }
-    .prop-header, .prop-desc-header, .prop-product-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .prop-header, .prop-product-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 
   /* ── RESPONSIVE ── */
@@ -613,7 +615,7 @@ function propFooter() {
   return `<div class="prop-footer">Regalos que dejan marca</div>`;
 }
 
-function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
+function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {}) {
   const cliente = leerClienteForm();
 
   function condBloque(titulo, texto) {
@@ -627,12 +629,22 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
   // ── Sección de productos: header una sola vez, todos los productos fluyen ──
   let prodHtml = '';
   productos.forEach(p => {
-    const src = (p.foto && imageCache[p.foto]) || imgSrc(p.foto);
+    const src = (p.foto && imageCache[p.foto]) || (p.foto ? imgSrc(p.foto) + '?w=800' : null);
     const imgHtml = src
-      ? `<img src="${src}" alt="${p.nombre}" style="max-width:100%;max-height:145px;object-fit:contain">`
+      ? `<img src="${src}" alt="${p.nombre}" style="max-width:100%;max-height:280px;object-fit:contain">`
       : `<div class="p-emoji">${p.emoji}</div>`;
     const descLines = (p.descripcion || '')
       .split('\n').map(l => l ? `<div>${l}</div>` : '<div>&nbsp;</div>').join('');
+
+    const thumbs = (p.fotos || []).slice(1, 5);
+    const thumbHtml = thumbs.length
+      ? `<div class="prop-thumb-strip">${
+          thumbs.map(id => {
+            const tsrc = thumbCache[id] || (imgSrc(id) + '?w=200');
+            return `<div class="prop-thumb"><img src="${tsrc}" alt="" loading="eager"></div>`;
+          }).join('')
+        }</div>`
+      : '';
 
     prodHtml += `<div class="prop-product-card">
       <div class="prop-card-inner">
@@ -640,9 +652,9 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
           ${imgHtml}
           <div class="prop-card-img-nombre">${p.nombre}</div>
           ${p.codigo ? `<div class="prop-card-img-codigo">Código ${p.codigo}</div>` : ''}
+          ${thumbHtml}
         </div>
         <div class="prop-card-desc">
-          <div class="prop-desc-header">Descripción</div>
           <div class="prop-desc-text">${descLines || '<span style="color:#bbb">—</span>'}</div>
         </div>
       </div>
@@ -721,7 +733,7 @@ async function mostrarPropuesta() {
     ...productos
       .filter(p => p.foto)
       .map(async p => {
-        const dataUrl = await fetchDataUrl(imgSrc(p.foto));
+        const dataUrl = await fetchDataUrl(imgSrc(p.foto) + '?w=800');
         if (dataUrl) imageCache[p.foto] = dataUrl;
       }),
   ]);
@@ -730,7 +742,17 @@ async function mostrarPropuesta() {
   btn.innerHTML = 'Ver propuesta';
   btn.disabled = productos.length === 0;
 
-  document.getElementById('prop-doc').innerHTML = buildDoc(imageCache, logoSrc);
+  const thumbCache = {};
+  await Promise.all(
+    productos.flatMap(p =>
+      (p.fotos || []).slice(1, 5).map(async id => {
+        const dataUrl = await fetchDataUrl(imgSrc(id) + '?w=200');
+        if (dataUrl) thumbCache[id] = dataUrl;
+      })
+    )
+  );
+
+  document.getElementById('prop-doc').innerHTML = buildDoc(imageCache, logoSrc, thumbCache);
   document.getElementById('vista-editor').style.display    = 'none';
   document.getElementById('vista-propuesta').style.display = 'block';
   window.scrollTo(0, 0);
