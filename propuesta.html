@@ -330,35 +330,33 @@
 /* ════════════════════════════════════════════════
    CONSTANTES Y ESTADO
 ════════════════════════════════════════════════ */
-const CLIENTS_KEY   = 'pp_clients';
-const TEMP_KEY      = 'pp_propuesta_temp';
-const NAVY          = '#003471';
-const TEAL          = '#00A8B4';
+const TEMP_KEY = 'pp_propuesta_temp';
+const NAVY     = '#003471';
+const TEAL     = '#00A8B4';
 
 const DEFAULT_COND = {
-  validez:    '7 días hábiles a partir de su emisión. Los precios podrán actualizarse en función de la cotización del Dólar Oficial BCRA vigente al momento del pago.',
-  pago:       'El pago deberá efectuarse dentro de los 30 días corridos desde la fecha de emisión de la factura.',
-  entrega:    'La entrega estimada será de 20 días hábiles, sujeta a confirmación según el producto y la disponibilidad de stock al momento de la compra.',
-  produccion: 'En productos personalizados con marca podrá registrarse una variación de hasta ±5% en las cantidades. La facturación se efectuará sobre el total efectivamente producido.',
-  envio:      'El presupuesto contempla un único envío sin costo adicional dentro de CABA y la Provincia de Buenos Aires, incluyendo Mar del Plata.',
+  validez_presupuesto: '7 días hábiles a partir de su emisión. Los precios podrán actualizarse en función de la cotización del Dólar Oficial BCRA vigente al momento del pago.',
+  condicion_pago:      'El pago deberá efectuarse dentro de los 30 días corridos desde la fecha de emisión de la factura.',
+  plazo_entrega:       'La entrega estimada será de 20 días hábiles, sujeta a confirmación según el producto y la disponibilidad de stock al momento de la compra.',
+  produccion:          'En productos personalizados con marca podrá registrarse una variación de hasta ±5% en las cantidades. La facturación se efectuará sobre el total efectivamente producido.',
+  envio:               'El presupuesto contempla un único envío sin costo adicional dentro de CABA y la Provincia de Buenos Aires, incluyendo Mar del Plata.',
 };
 
-let clientes  = {};
-let clienteId = null;  // id del cliente seleccionado/guardado
-let productos = [];    // leídos de localStorage
+let clienteId = null;
+let productos = [];
 
 /* ════════════════════════════════════════════════
    INIT
 ════════════════════════════════════════════════ */
-(function init() {
-  /* Cargar clientes */
-  try { clientes = JSON.parse(localStorage.getItem(CLIENTS_KEY) || '{}'); } catch(e) {}
-
-  /* Cargar productos del temp */
+(async function init() {
   try { productos = JSON.parse(localStorage.getItem(TEMP_KEY) || '[]'); } catch(e) {}
 
-  renderClientSelect();
-  resetCondiciones();
+  try {
+    const res = await fetch('/api/clientes');
+    if (res.ok) renderClientSelect(await res.json());
+  } catch(e) {}
+
+  resetClienteForm();
   renderProductos();
   actualizarAcciones();
 })();
@@ -366,72 +364,103 @@ let productos = [];    // leídos de localStorage
 /* ════════════════════════════════════════════════
    CLIENTE
 ════════════════════════════════════════════════ */
-function renderClientSelect() {
+function renderClientSelect(lista) {
   const sel = document.getElementById('select-cliente');
-  // quitar opciones dinámicas previas
   [...sel.querySelectorAll('option[data-c]')].forEach(o => o.remove());
-  Object.entries(clientes).forEach(([id, c]) => {
+  lista.forEach(c => {
     const opt = document.createElement('option');
-    opt.value = id; opt.textContent = c.empresa; opt.dataset.c = '1';
+    opt.value = c.id; opt.textContent = c.razon_social; opt.dataset.c = '1';
     sel.add(opt);
   });
-  if (clienteId && clientes[clienteId]) sel.value = clienteId;
+  if (clienteId) sel.value = clienteId;
 }
 
-function onSelectCliente(id) {
+async function onSelectCliente(id) {
   if (!id) {
     clienteId = null;
-    document.getElementById('cf-empresa').value  = '';
-    document.getElementById('cf-atencion').value = '';
-    resetCondiciones();
+    resetClienteForm();
     return;
   }
-  clienteId = id;
-  const c = clientes[id];
-  document.getElementById('cf-empresa').value  = c.empresa;
-  document.getElementById('cf-atencion').value = c.atencion || '';
-  setCondiciones(c.condiciones || {});
+  try {
+    const res = await fetch(`/api/clientes/${id}`);
+    if (!res.ok) return;
+    const c = await res.json();
+    clienteId = c.id;
+    setClienteForm(c);
+  } catch(e) {}
 }
 
-function resetCondiciones() { setCondiciones(DEFAULT_COND); }
+function resetClienteForm() { setClienteForm({}); }
 
-function setCondiciones(cond) {
-  document.getElementById('cf-validez').value    = cond.validez    || DEFAULT_COND.validez;
-  document.getElementById('cf-pago').value       = cond.pago       || DEFAULT_COND.pago;
-  document.getElementById('cf-entrega').value    = cond.entrega    || DEFAULT_COND.entrega;
-  document.getElementById('cf-produccion').value = cond.produccion || DEFAULT_COND.produccion;
-  document.getElementById('cf-envio').value      = cond.envio      || DEFAULT_COND.envio;
+function setClienteForm(c) {
+  document.getElementById('cf-empresa').value    = c.razon_social        || '';
+  document.getElementById('cf-atencion').value   = c.contacto            || '';
+  document.getElementById('cf-validez').value    = c.validez_presupuesto || DEFAULT_COND.validez_presupuesto;
+  document.getElementById('cf-pago').value       = c.condicion_pago      || DEFAULT_COND.condicion_pago;
+  document.getElementById('cf-entrega').value    = c.plazo_entrega       || DEFAULT_COND.plazo_entrega;
+  document.getElementById('cf-produccion').value = c.produccion          || DEFAULT_COND.produccion;
+  document.getElementById('cf-envio').value      = c.envio               || DEFAULT_COND.envio;
 }
 
 function leerClienteForm() {
   return {
-    empresa:  document.getElementById('cf-empresa').value.trim(),
-    atencion: document.getElementById('cf-atencion').value.trim(),
-    condiciones: {
-      validez:    document.getElementById('cf-validez').value.trim(),
-      pago:       document.getElementById('cf-pago').value.trim(),
-      entrega:    document.getElementById('cf-entrega').value.trim(),
-      produccion: document.getElementById('cf-produccion').value.trim(),
-      envio:      document.getElementById('cf-envio').value.trim(),
-    }
+    razon_social:        document.getElementById('cf-empresa').value.trim(),
+    contacto:            document.getElementById('cf-atencion').value.trim(),
+    validez_presupuesto: document.getElementById('cf-validez').value.trim(),
+    condicion_pago:      document.getElementById('cf-pago').value.trim(),
+    plazo_entrega:       document.getElementById('cf-entrega').value.trim(),
+    produccion:          document.getElementById('cf-produccion').value.trim(),
+    envio:               document.getElementById('cf-envio').value.trim(),
   };
 }
 
-function guardarCliente() {
-  const c = leerClienteForm();
-  if (!c.empresa) { alert('Ingresá el nombre de la empresa'); return; }
-  const id = clienteId || ('c_' + Date.now());
-  clientes[id] = c;
-  clienteId = id;
-  localStorage.setItem(CLIENTS_KEY, JSON.stringify(clientes));
-  renderClientSelect();
-  document.getElementById('select-cliente').value = id;
-  actualizarAcciones();
+async function guardarCliente() {
+  const data = leerClienteForm();
+  if (!data.razon_social) { alert('Ingresá el nombre de la empresa'); return; }
 
-  // Feedback visual
   const btn = document.querySelector('.btn-guardar-cliente');
-  btn.textContent = '✓ Guardado';
-  setTimeout(() => btn.textContent = 'Guardar cliente', 1500);
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try {
+    const url    = clienteId ? `/api/clientes/${clienteId}` : '/api/clientes';
+    const method = clienteId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (res.status === 401) {
+      alert('Sesión expirada. Volvé al catálogo, entrá con ?admin nuevamente y regenerá la propuesta.');
+      btn.disabled = false;
+      btn.textContent = 'Guardar cliente';
+      return;
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert('Error al guardar: ' + (err.error || res.status));
+      btn.disabled = false;
+      btn.textContent = 'Guardar cliente';
+      return;
+    }
+
+    const saved = await res.json();
+    clienteId = saved.id;
+
+    const lista = await fetch('/api/clientes').then(r => r.json());
+    renderClientSelect(lista);
+    document.getElementById('select-cliente').value = clienteId;
+    actualizarAcciones();
+
+    btn.disabled = false;
+    btn.textContent = '✓ Guardado';
+    setTimeout(() => btn.textContent = 'Guardar cliente', 1500);
+  } catch(e) {
+    alert('Error de red al guardar el cliente.');
+    btn.disabled = false;
+    btn.textContent = 'Guardar cliente';
+  }
 }
 
 /* ════════════════════════════════════════════════
@@ -586,7 +615,6 @@ function propFooter() {
 
 function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
   const cliente = leerClienteForm();
-  const cond    = cliente.condiciones;
 
   function condBloque(titulo, texto) {
     if (!texto) return '';
@@ -642,8 +670,8 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
         <div class="prop-date">${todayStr()}</div>
         <div class="prop-saludo">
           Señores:<br>
-          <strong>${(cliente.empresa || '').toUpperCase()}.</strong><br>
-          ${cliente.atencion ? `At. ${cliente.atencion}<br>` : ''}
+          <strong>${(cliente.razon_social || '').toUpperCase()}.</strong><br>
+          ${cliente.contacto ? `At. ${cliente.contacto}<br>` : ''}
           Presente
         </div>
         <div class="prop-apertura">
@@ -659,13 +687,13 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg') {
       <div class="prop-cond-wrap">
         <div class="prop-cond-title-main">Condiciones Generales</div>
         ${condBloque('Precios y Moneda', 'Los precios están expresados en Pesos Argentinos (AR$), netos de IVA (21%).')}
-        ${condBloque('Validez del Presupuesto', cond.validez)}
+        ${condBloque('Validez del Presupuesto', cliente.validez_presupuesto)}
         ${condBloque('Condiciones de Precios', 'Los valores indicados aplican únicamente para las cantidades detalladas. Cualquier modificación en el pedido requerirá una nueva cotización.')}
-        ${condBloque('Producción Personalizada', cond.produccion)}
-        ${condBloque('Condiciones de Pago', cond.pago)}
+        ${condBloque('Producción Personalizada', cliente.produccion)}
+        ${condBloque('Condiciones de Pago', cliente.condicion_pago)}
         ${condBloque('Archivos para Identidad Visual', 'El cliente deberá proporcionar logotipos y diseños en formato vectorial editable (ai, cdr, psd, eps o pdf) con tipografías convertidas a curvas. Cualquier trabajo adicional de diseño será presupuestado de manera independiente.')}
-        ${condBloque('Plazo de Entrega', cond.entrega)}
-        ${condBloque('Envío', cond.envio)}
+        ${condBloque('Plazo de Entrega', cliente.plazo_entrega)}
+        ${condBloque('Envío', cliente.envio)}
         ${condBloque('Aceptación', 'La aprobación de este presupuesto implica la aceptación expresa de todas las condiciones generales aquí detalladas.')}
         <div class="prop-cond-firma">
           PromoPlanet | de Gilda R. Corones Corujo | CUIT 27-25230473-3
