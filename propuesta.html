@@ -168,7 +168,7 @@
 
   /* Tile imagen principal */
   .prop-img-tile-main {
-    background: #f6f7f8;
+    background: #fff;
     border: 1px solid #e2e6ea;
     border-radius: 6px;
     padding: 10px;
@@ -191,8 +191,8 @@
   .prop-price-table .col-c { text-align: center; }
 
   /* Miniaturas: grilla 2×2, mismo tile */
-  .prop-thumb-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-  .prop-thumb { background: #f6f7f8; border: 1px solid #e2e6ea; border-radius: 6px; padding: 5px; display: flex; align-items: center; justify-content: center; aspect-ratio: 1; }
+  .prop-thumb-strip { display: flex; gap: 6px; flex-wrap: wrap; }
+  .prop-thumb { background: #fff; border: 1px solid #e2e6ea; border-radius: 6px; padding: 4px; width: 64px; height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
   .prop-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
   .prop-footer { text-align: right; padding: 6px 28px 10px; font-size: 10.5px; color: #bbb; font-style: italic; }
