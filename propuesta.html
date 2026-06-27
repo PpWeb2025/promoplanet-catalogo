@@ -160,26 +160,40 @@
   .prop-apertura { text-align: center; font-size: 13px; margin: 10px 0 14px; color: #333; }
 
   .prop-product-card { margin: 10px 28px 24px; border: 1px solid #e2e6ea; border-radius: 8px; padding: 20px; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
-  .prop-card-inner { display: flex; flex-direction: column; }
-  .prop-card-img {
-    background: transparent;
-    display: flex; flex-direction: column; align-items: center;
-    padding: 0 0 12px 0;
+  /* Tarjeta: dos columnas */
+  .prop-card-inner { display: flex; flex-direction: row; gap: 20px; align-items: flex-start; }
+
+  /* Columna izquierda: galería ~44% */
+  .prop-card-gallery { width: 44%; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+
+  /* Tile imagen principal */
+  .prop-img-tile-main {
+    background: #f6f7f8;
+    border: 1px solid #e2e6ea;
+    border-radius: 6px;
+    padding: 10px;
+    display: flex; align-items: center; justify-content: center;
   }
-  .prop-card-img img { max-width: 100%; max-height: 280px; object-fit: contain; }
-  .prop-card-img .p-emoji { font-size: 3rem; opacity: 0.25; }
-  .prop-card-img-nombre { font-size: 11.5px; font-weight: 600; color: #003471; text-align: center; margin-top: 8px; }
-  .prop-card-img-codigo { font-size: 10.5px; color: #777; text-align: center; margin-top: 2px; }
+  .prop-img-tile-main img { max-width: 100%; max-height: 220px; object-fit: contain; display: block; }
+  .prop-img-tile-main .p-emoji { font-size: 3rem; opacity: 0.25; }
+
+  /* Columna derecha: texto */
   .prop-card-desc { flex: 1; }
-  .prop-desc-text { padding: 10px 13px; font-size: 12px; line-height: 1.75; color: #333; }
-  .prop-price-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .prop-card-desc-nombre { font-size: 13px; font-weight: 700; color: #003471; margin-bottom: 2px; line-height: 1.35; }
+  .prop-card-desc-codigo { font-size: 10.5px; color: #777; margin-bottom: 10px; }
+  .prop-desc-text { font-size: 12px; line-height: 1.75; color: #333; }
+
+  /* Tabla de precios: separación del bloque superior */
+  .prop-price-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 16px; }
   .prop-price-table th { background: #f2f2f2; padding: 7px 13px; font-weight: 600; border-top: 1px solid #ddd; text-align: left; }
   .prop-price-table td { padding: 7px 13px; }
   .prop-price-table .col-r { text-align: right; }
   .prop-price-table .col-c { text-align: center; }
-  .prop-thumb-strip { display: flex; gap: 8px; padding: 10px 0 4px; flex-wrap: wrap; }
-  .prop-thumb       { width: 68px; height: 68px; border-radius: 4px; border: 1px solid #e2e6ea; overflow: hidden; flex-shrink: 0; }
-  .prop-thumb img   { width: 100%; height: 100%; object-fit: contain; }
+
+  /* Miniaturas: grilla 2×2, mismo tile */
+  .prop-thumb-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .prop-thumb { background: #f6f7f8; border: 1px solid #e2e6ea; border-radius: 6px; padding: 5px; display: flex; align-items: center; justify-content: center; aspect-ratio: 1; }
+  .prop-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
   .prop-footer { text-align: right; padding: 6px 28px 10px; font-size: 10.5px; color: #bbb; font-style: italic; }
 
@@ -631,7 +645,7 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
   productos.forEach(p => {
     const src = (p.foto && imageCache[p.foto]) || (p.foto ? imgSrc(p.foto) + '?w=800' : null);
     const imgHtml = src
-      ? `<img src="${src}" alt="${p.nombre}" style="max-width:100%;max-height:280px;object-fit:contain">`
+      ? `<img src="${src}" alt="${p.nombre}">`
       : `<div class="p-emoji">${p.emoji}</div>`;
     const descLines = (p.descripcion || '')
       .split('\n').map(l => l ? `<div>${l}</div>` : '<div>&nbsp;</div>').join('');
@@ -648,13 +662,13 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
 
     prodHtml += `<div class="prop-product-card">
       <div class="prop-card-inner">
-        <div class="prop-card-img">
-          ${imgHtml}
-          <div class="prop-card-img-nombre">${p.nombre}</div>
-          ${p.codigo ? `<div class="prop-card-img-codigo">Código ${p.codigo}</div>` : ''}
+        <div class="prop-card-gallery">
+          <div class="prop-img-tile-main">${imgHtml}</div>
           ${thumbHtml}
         </div>
         <div class="prop-card-desc">
+          <div class="prop-card-desc-nombre">${p.nombre}</div>
+          ${p.codigo ? `<div class="prop-card-desc-codigo">Código ${p.codigo}</div>` : ''}
           <div class="prop-desc-text">${descLines || '<span style="color:#bbb">—</span>'}</div>
         </div>
       </div>
