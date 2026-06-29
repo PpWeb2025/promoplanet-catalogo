@@ -151,12 +151,13 @@
   .prop-doc { max-width: 800px; margin: 1.5rem auto; font-family: 'DM Sans', sans-serif; }
   .prop-page { background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden; }
 
-  .prop-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 28px; background: #003471; }
+  .prop-header, .prop-running-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 28px; background: #003471; }
   .prop-contact { text-align: right; font-size: 10px; color: rgba(255,255,255,0.85); line-height: 1.85; }
+  .prop-running-header { display: none; }
 
   .prop-intro { padding: 16px 28px 4px; font-size: 13px; }
   .prop-date { text-align: right; font-size: 13px; margin-bottom: 14px; color: #333; }
-  .prop-saludo { font-size: 13px; line-height: 2.1; color: #333; }
+  .prop-saludo { font-size: 13px; line-height: 1.6; color: #333; }
   .prop-apertura { text-align: center; font-size: 13px; margin: 10px 0 14px; color: #333; }
 
   .prop-product-card { margin: 10px 28px 24px; border: 1px solid #e2e6ea; border-radius: 8px; padding: 20px; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
@@ -207,15 +208,16 @@
 
   /* ── PRINT STYLES ── */
   @media print {
-    @page { margin: 0; }
+    @page { margin: 2.7cm 1.5cm 0 1.5cm; }
     .topbar, .layout, .acciones-bar, .prop-toolbar, #vista-editor { display: none !important; }
     #vista-propuesta { display: block !important; }
     .prop-doc { margin: 0; }
     .prop-page { border: none; border-radius: 0; margin-bottom: 0; box-shadow: none; overflow: visible; }
     .prop-cond-page { page-break-before: always; }
-    body { background: white; margin: 1.5cm; }
-    .prop-header, .prop-product-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .prop-header { margin-left: -1.5cm; margin-right: -1.5cm; }
+    body { background: white; margin: 0; }
+    .prop-page > .prop-header { display: none; }
+    .prop-running-header { display: flex; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .prop-product-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 
   /* ── RESPONSIVE ── */
@@ -691,7 +693,11 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
   });
 
   const html =
-    `<div class="prop-page">
+    `<div class="prop-running-header">
+      <img src="${logoSrc}" alt="PromoPlanet" style="height:55px;width:auto;display:block">
+      <div class="prop-contact">www.promoplanet.ar<br>hola@promoplanet.ar<br>+54 9 11 5855 7355</div>
+    </div>
+    <div class="prop-page">
       ${propHeader(logoSrc)}
       <div class="prop-intro">
         <div class="prop-date">${todayStr()}</div>
