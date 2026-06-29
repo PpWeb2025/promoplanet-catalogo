@@ -206,18 +206,24 @@
   .prop-cond-text  { font-size: 12px; line-height: 1.65; color: #444; }
   .prop-cond-firma { margin-top: 28px; text-align: center; font-size: 11px; color: #999; }
 
+  .prop-spacer-table { width: 100%; border-collapse: collapse; }
+  .prop-spacer-table > thead { display: table-header-group; }
+  .prop-spacer-table td { padding: 0; border: none; }
+  .prop-spacer-cell { height: 0; }
+
   /* ── PRINT STYLES ── */
   @media print {
-    @page { margin: 2.7cm 1.5cm 1.5cm 1.5cm; }
+    @page { margin: 0; }
     .topbar, .layout, .acciones-bar, .prop-toolbar, #vista-editor { display: none !important; }
     #vista-propuesta { display: block !important; }
     .prop-doc { margin: 0; }
     .prop-page { border: none; border-radius: 0; margin-bottom: 0; box-shadow: none; overflow: visible; }
     .prop-cond-page { page-break-before: always; }
-    body { background: white; margin: 0; }
+    body { background: white; margin: 0 1.5cm 1.5cm 1.5cm; }
     .prop-page > .prop-header { display: none; }
-    .prop-running-header { display: flex; position: fixed; top: -2.7cm; left: -1.5cm; right: -1.5cm; z-index: 1000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .prop-running-header { display: flex; position: fixed; top: 0; left: -1.5cm; right: -1.5cm; z-index: 1000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .prop-product-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .prop-spacer-cell { height: 2.7cm; }
   }
 
   /* ── RESPONSIVE ── */
@@ -699,20 +705,25 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
     </div>
     <div class="prop-page">
       ${propHeader(logoSrc)}
-      <div class="prop-intro">
-        <div class="prop-date">${todayStr()}</div>
-        <div class="prop-saludo">
-          Señores:<br>
-          <strong>${(cliente.razon_social || '').toUpperCase()}.</strong><br>
-          ${cliente.contacto ? `At. ${cliente.contacto}<br>` : ''}
-          Presente
-        </div>
-        <div class="prop-apertura">
-          Tenemos el agrado de dirigirnos a ustedes a efectos de hacerles llegar la siguiente cotización:
-        </div>
-      </div>
-      ${prodHtml}
-      ${propFooter()}
+      <table class="prop-spacer-table">
+        <thead><tr><td><div class="prop-spacer-cell"></div></td></tr></thead>
+        <tbody><tr><td>
+          <div class="prop-intro">
+            <div class="prop-date">${todayStr()}</div>
+            <div class="prop-saludo">
+              Señores:<br>
+              <strong>${(cliente.razon_social || '').toUpperCase()}.</strong><br>
+              ${cliente.contacto ? `At. ${cliente.contacto}<br>` : ''}
+              Presente
+            </div>
+            <div class="prop-apertura">
+              Tenemos el agrado de dirigirnos a ustedes a efectos de hacerles llegar la siguiente cotización:
+            </div>
+          </div>
+          ${prodHtml}
+          ${propFooter()}
+        </td></tr></tbody>
+      </table>
     </div>
 
     <div class="prop-page prop-cond-page">
