@@ -208,13 +208,13 @@
 
   /* ── PRINT STYLES ── */
   @media print {
-    @page { margin: 2.7cm 1.5cm 0 1.5cm; }
+    @page { margin: 0; }
     .topbar, .layout, .acciones-bar, .prop-toolbar, #vista-editor { display: none !important; }
     #vista-propuesta { display: block !important; }
     .prop-doc { margin: 0; }
-    .prop-page { border: none; border-radius: 0; margin-bottom: 0; box-shadow: none; overflow: visible; }
+    .prop-page { border: none; border-radius: 0; margin-bottom: 0; box-shadow: none; overflow: visible; padding-top: 2.7cm; }
     .prop-cond-page { page-break-before: always; }
-    body { background: white; margin: 0; }
+    body { background: white; margin: 0 1.5cm 1.5cm 1.5cm; }
     .prop-page > .prop-header { display: none; }
     .prop-running-header { display: flex; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .prop-product-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
