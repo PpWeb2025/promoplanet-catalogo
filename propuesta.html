@@ -221,9 +221,9 @@
     .prop-cond-page { page-break-before: always; }
     body { background: white; margin: 0 1.5cm 1.5cm 1.5cm; }
     .prop-page > .prop-header { display: none; }
-    .prop-running-header { display: flex; position: fixed; top: 0; left: -1.5cm; right: -1.5cm; z-index: 1000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .prop-running-header { display: flex; position: fixed; top: 0; left: 0; right: 0; padding: 10px 1.5cm; z-index: 1000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .prop-product-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .prop-spacer-cell { height: 2.7cm; }
+    .prop-spacer-cell { height: 2.1cm; }
   }
 
   /* ── RESPONSIVE ── */
@@ -728,22 +728,27 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
 
     <div class="prop-page prop-cond-page">
       ${propHeader(logoSrc)}
-      <div class="prop-cond-wrap">
-        <div class="prop-cond-title-main">Condiciones Generales</div>
-        ${condBloque('Precios y Moneda', 'Los precios están expresados en Pesos Argentinos (AR$), netos de IVA (21%).')}
-        ${condBloque('Validez del Presupuesto', cliente.validez_presupuesto)}
-        ${condBloque('Condiciones de Precios', 'Los valores indicados aplican únicamente para las cantidades detalladas. Cualquier modificación en el pedido requerirá una nueva cotización.')}
-        ${condBloque('Producción Personalizada', cliente.produccion)}
-        ${condBloque('Condiciones de Pago', cliente.condicion_pago)}
-        ${condBloque('Archivos para Identidad Visual', 'El cliente deberá proporcionar logotipos y diseños en formato vectorial editable (ai, cdr, psd, eps o pdf) con tipografías convertidas a curvas. Cualquier trabajo adicional de diseño será presupuestado de manera independiente.')}
-        ${condBloque('Plazo de Entrega', cliente.plazo_entrega)}
-        ${condBloque('Envío', cliente.envio)}
-        ${condBloque('Aceptación', 'La aprobación de este presupuesto implica la aceptación expresa de todas las condiciones generales aquí detalladas.')}
-        <div class="prop-cond-firma">
-          PromoPlanet | de Gilda R. Corones Corujo | CUIT 27-25230473-3
-        </div>
-      </div>
-      ${propFooter()}
+      <table class="prop-spacer-table">
+        <thead><tr><td><div class="prop-spacer-cell"></div></td></tr></thead>
+        <tbody><tr><td>
+          <div class="prop-cond-wrap">
+            <div class="prop-cond-title-main">Condiciones Generales</div>
+            ${condBloque('Precios y Moneda', 'Los precios están expresados en Pesos Argentinos (AR$), netos de IVA (21%).')}
+            ${condBloque('Validez del Presupuesto', cliente.validez_presupuesto)}
+            ${condBloque('Condiciones de Precios', 'Los valores indicados aplican únicamente para las cantidades detalladas. Cualquier modificación en el pedido requerirá una nueva cotización.')}
+            ${condBloque('Producción Personalizada', cliente.produccion)}
+            ${condBloque('Condiciones de Pago', cliente.condicion_pago)}
+            ${condBloque('Archivos para Identidad Visual', 'El cliente deberá proporcionar logotipos y diseños en formato vectorial editable (ai, cdr, psd, eps o pdf) con tipografías convertidas a curvas. Cualquier trabajo adicional de diseño será presupuestado de manera independiente.')}
+            ${condBloque('Plazo de Entrega', cliente.plazo_entrega)}
+            ${condBloque('Envío', cliente.envio)}
+            ${condBloque('Aceptación', 'La aprobación de este presupuesto implica la aceptación expresa de todas las condiciones generales aquí detalladas.')}
+            <div class="prop-cond-firma">
+              PromoPlanet | de Gilda R. Corones Corujo | CUIT 27-25230473-3
+            </div>
+          </div>
+          ${propFooter()}
+        </td></tr></tbody>
+      </table>
     </div>`;
 
   return html;
