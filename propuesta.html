@@ -201,6 +201,7 @@
 
   .prop-spacer-table { width: 100%; border-collapse: collapse; }
   .prop-spacer-table > thead { display: table-header-group; }
+  .prop-spacer-table > tfoot { display: table-footer-group; }
   .prop-spacer-table td { padding: 0; border: none; }
 
   /* Tabla de precios: después del spacer para ganar la cascada */
@@ -211,6 +212,7 @@
   .prop-price-table .col-r { text-align: right; }
 
   .prop-spacer-cell { height: 0; }
+  .prop-footer-cell { height: 0; }
 
   /* ── PRINT STYLES ── */
   @media print {
@@ -225,6 +227,7 @@
     .prop-running-header { display: flex; position: fixed; top: 0; left: 0; right: 0; padding: 10px 1.5cm; z-index: 1000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .prop-product-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .prop-spacer-cell { height: 2.1cm; }
+    .prop-footer-cell { height: 1.2cm; }
   }
 
   /* ── RESPONSIVE ── */
@@ -723,6 +726,7 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
           </div>
           ${prodHtml}
         </td></tr></tbody>
+        <tfoot><tr><td><div class="prop-footer-cell"></div></td></tr></tfoot>
       </table>
     </div>
 
@@ -748,6 +752,7 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
           </div>
           ${propFooter()}
         </td></tr></tbody>
+        <tfoot><tr><td><div class="prop-footer-cell"></div></td></tr></tfoot>
       </table>
     </div>`;
 
