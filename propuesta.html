@@ -154,6 +154,9 @@
   .prop-header, .prop-running-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 28px; background: #003471; }
   .prop-contact { text-align: right; font-size: 10px; color: rgba(255,255,255,0.85); line-height: 1.85; }
   .prop-running-header { display: none; }
+  .prop-running-footer { display: none; position: fixed; bottom: 0; left: 0; right: 0; padding: 0 1.5cm 0.2cm; }
+  .prop-footer-line { height: 3px; width: 100%; background: linear-gradient(to right, #003471, #00A8B4); -webkit-print-color-adjust: exact; print-color-adjust: exact; margin-bottom: 0.15cm; }
+  .prop-footer-slogan { height: 0.7cm; width: auto; display: block; margin-left: auto; }
 
   .prop-intro { padding: 8px 28px 4px; font-size: 13px; }
   .prop-date { text-align: right; font-size: 13px; margin-bottom: 6px; color: #333; }
@@ -225,6 +228,7 @@
     body { background: white; margin: 0 1.5cm 1.5cm 1.5cm; }
     .prop-page > .prop-header { display: none; }
     .prop-running-header { display: flex; position: fixed; top: 0; left: 0; right: 0; padding: 10px 1.5cm; z-index: 1000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .prop-running-footer { display: block; }
     .prop-product-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .prop-spacer-cell { height: 2.1cm; }
     .prop-footer-cell { height: 1.2cm; }
@@ -638,11 +642,7 @@ function propHeader(logoSrc = 'logo-pp-color.svg') {
   </div>`;
 }
 
-function propFooter() {
-  return `<div class="prop-footer">Regalos que dejan marca</div>`;
-}
-
-function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {}) {
+function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {}, sloganSrc = 'PP_Slogan.png') {
   const cliente = leerClienteForm();
 
   function condBloque(titulo, texto) {
@@ -707,6 +707,10 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
       <img src="${logoSrc}" alt="PromoPlanet" style="height:55px;width:auto;display:block">
       <div class="prop-contact">www.promoplanet.ar<br>hola@promoplanet.ar<br>+54 9 11 5855 7355</div>
     </div>
+    <div class="prop-running-footer">
+      <div class="prop-footer-line"></div>
+      <img class="prop-footer-slogan" src="${sloganSrc}" alt="Regalos que dejan marca">
+    </div>
     <div class="prop-page">
       ${propHeader(logoSrc)}
       <table class="prop-spacer-table">
@@ -750,7 +754,6 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
               PromoPlanet | de Gilda R. Corones Corujo | CUIT 27-25230473-3
             </div>
           </div>
-          ${propFooter()}
         </td></tr></tbody>
         <tfoot><tr><td><div class="prop-footer-cell"></div></td></tr></tfoot>
       </table>
@@ -770,8 +773,9 @@ async function mostrarPropuesta() {
   btn.innerHTML = '⏳ Cargando imágenes...';
 
   const imageCache = {};
-  const [logoDataUrl, ...imgResults] = await Promise.all([
+  const [logoDataUrl, sloganDataUrl, ...imgResults] = await Promise.all([
     fetchDataUrl('logo-pp-color.svg'),
+    fetchDataUrl('PP_Slogan.png'),
     ...productos
       .filter(p => p.foto)
       .map(async p => {
@@ -780,6 +784,7 @@ async function mostrarPropuesta() {
       }),
   ]);
   const logoSrc = logoDataUrl || 'logo-pp-color.svg';
+  const sloganSrc = sloganDataUrl || 'PP_Slogan.png';
 
   btn.innerHTML = 'Ver propuesta';
   btn.disabled = productos.length === 0;
@@ -794,7 +799,7 @@ async function mostrarPropuesta() {
     )
   );
 
-  document.getElementById('prop-doc').innerHTML = buildDoc(imageCache, logoSrc, thumbCache);
+  document.getElementById('prop-doc').innerHTML = buildDoc(imageCache, logoSrc, thumbCache, sloganSrc);
   document.getElementById('vista-editor').style.display    = 'none';
   document.getElementById('vista-propuesta').style.display = 'block';
   window.scrollTo(0, 0);
