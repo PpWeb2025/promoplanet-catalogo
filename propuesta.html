@@ -184,12 +184,6 @@
   .prop-card-desc-codigo { font-size: 10.5px; color: #777; margin-bottom: 10px; }
   .prop-desc-text { font-size: 12px; line-height: 1.75; color: #333; }
 
-  /* Tabla de precios: separación del bloque superior */
-  .prop-price-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 16px; }
-  .prop-price-table th { background: #f2f2f2; padding: 7px 13px; font-weight: 600; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; text-align: left; }
-  .prop-price-table td { padding: 7px 13px; }
-  .prop-price-table .col-r { text-align: right; }
-
   /* Miniaturas: grilla 2×2, mismo tile */
   .prop-thumb-strip { display: flex; gap: 6px; flex-wrap: nowrap; }
   .prop-thumb { background: #fff; border: 1px solid #e2e6ea; border-radius: 6px; padding: 4px; flex: 1 1 0; aspect-ratio: 1 / 1; max-width: 64px; min-width: 0; display: flex; align-items: center; justify-content: center; }
@@ -208,6 +202,14 @@
   .prop-spacer-table { width: 100%; border-collapse: collapse; }
   .prop-spacer-table > thead { display: table-header-group; }
   .prop-spacer-table td { padding: 0; border: none; }
+
+  /* Tabla de precios: después del spacer para ganar la cascada */
+  .prop-price-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 16px; }
+  .prop-price-table th,
+  .prop-price-table td { padding: 7px 13px; }
+  .prop-price-table th { background: #f2f2f2; font-weight: 600; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; text-align: left; }
+  .prop-price-table .col-r { text-align: right; }
+
   .prop-spacer-cell { height: 0; }
 
   /* ── PRINT STYLES ── */
