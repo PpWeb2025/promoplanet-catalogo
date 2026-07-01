@@ -1,8 +1,18 @@
 node_modules/
 .env
+.env.local
+.env.*.local
 *.db
 service-account.json
 api_key.txt
 migrate-to-turso.js
 turso token.txt
 Brevo Api.txt
+
+# scripts sueltos con credenciales hardcodeadas
+_api_check.js
+_turso_test.js
+db.js
+
+# archivos subidos localmente
+uploads/
