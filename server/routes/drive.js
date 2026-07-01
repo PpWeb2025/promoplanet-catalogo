@@ -214,25 +214,6 @@ router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, re
   }
 });
 
-// POST /api/drive/crear-carpeta-uploads — endpoint temporal de un solo uso
-// Crear la carpeta destino de imágenes subidas vía OAuth. Borrar después de obtener el folderId.
-router.post('/crear-carpeta-uploads', requireAdmin, async (req, res) => {
-  try {
-    const drive = getOAuthDriveClient();
-    const { data } = await drive.files.create({
-      requestBody: {
-        name: 'Catálogo - Imágenes subidas',
-        mimeType: 'application/vnd.google-apps.folder',
-      },
-      fields: 'id,name',
-    });
-    res.json({ id: data.id, nombre: data.name });
-  } catch (err) {
-    console.error('crear-carpeta-uploads error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 const ALLOWED_WIDTHS = new Set([200, 400, 800, 1200]);
 
 // GET /api/drive/imagen/:fileId — público, proxy con cache
