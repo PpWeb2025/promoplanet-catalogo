@@ -58,6 +58,20 @@
   }
   .btn-consulta-nav:hover { background: #009aaa; }
 
+  /* Admin icon — nav header */
+  .nav-links a.nav-admin-link {
+    color: rgba(90,96,112,0.38);
+    display: flex; align-items: center;
+    margin-left: 0.25rem; flex-shrink: 0;
+    transition: color 0.2s;
+  }
+  .nav-links a.nav-admin-link:hover { color: var(--celeste); }
+  .nav-mobile a.nav-admin-link {
+    color: rgba(90,96,112,0.45);
+    display: flex; align-items: center; gap: 7px;
+  }
+  .nav-mobile a.nav-admin-link:hover { color: var(--celeste); }
+
   /* HAMBURGER */
   .nav-hamburger {
     display: none;
@@ -884,6 +898,14 @@
     <a href="#" onclick="abrirTecnicas(); return false;">Personalización</a>
     <a href="mailto:hola@promoplanet.ar">Contacto</a>
     <a href="#" class="btn-consulta-nav" onclick="abrirConsulta(); return false;">Solicitar cotización</a>
+    <a href="#" class="nav-admin-link" onclick="window.iniciarAdmin(); return false;"
+       title="Administración" aria-label="Administración">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </a>
   </div>
   <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMenu()" aria-label="Menú">
     <span></span><span></span><span></span>
@@ -897,6 +919,14 @@
   <div class="nav-mobile-cats-label">Categorías</div>
   <div id="nav-mobile-cats"></div>
   <a href="#" class="btn-consulta-nav" onclick="abrirConsulta(); cerrarMenu(); return false;">Solicitar cotización</a>
+  <a href="#" class="nav-admin-link" onclick="window.iniciarAdmin(); cerrarMenu(); return false;" title="Administración">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    Administración
+  </a>
 </div>
 
 <!-- HERO -->
@@ -1188,7 +1218,7 @@
   </div>
   <div class="footer-bottom">
     <a href="http://qr.afip.gob.ar/?qr=qkprCTC-mWfI4VZAyt_ccg,," target="_F960AFIPInfo"><img src="http://www.afip.gob.ar/images/f960/DATAWEB.jpg" border="0" style="width:40px;height:auto;display:block"></a>
-    <span>© 2026 PromoPlanet · CUIT 27-25230473-3 · <a onclick="window.iniciarAdmin()" style="color:rgba(255,255,255,0.2);font-size:0.7rem;text-decoration:none;cursor:pointer">Administración</a></span>
+    <span>© 2026 PromoPlanet · CUIT 27-25230473-3</span>
     <span>Buenos Aires, Argentina</span>
   </div>
 </footer>
