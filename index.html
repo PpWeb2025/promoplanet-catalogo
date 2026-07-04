@@ -1348,6 +1348,12 @@ function imgSrc(fotoId, w) {
   return w ? `${base}?w=${w}` : base;
 }
 
+function logoSrc(url) {
+  if (!url) return '';
+  if (url.startsWith('/api/drive/imagen/') && !url.includes('?')) return `${url}?w=200`;
+  return url;
+}
+
 const BADGES = {
   sale:        { label: 'SALE',         bg: '#ef4444', emoji: '🏷️' },
   oportunidad: { label: 'Oportunidad',  bg: '#f97316', emoji: '💥' },
@@ -1735,7 +1741,7 @@ function renderProductos(lista) {
           </div>` : ''}
         ${badgesHtml(p.badges)}
         ${p.marca_id && MARCAS[p.marca_id] && MARCAS[p.marca_id].logo_url
-          ? `<div class="marca-logo-badge"><img src="${MARCAS[p.marca_id].logo_url}" alt="${MARCAS[p.marca_id].nombre}"></div>`
+          ? `<div class="marca-logo-badge"><img src="${logoSrc(MARCAS[p.marca_id].logo_url)}" alt="${MARCAS[p.marca_id].nombre}"></div>`
           : ''}
       </div>
       <div class="product-info">
@@ -1857,7 +1863,7 @@ function verProducto(id) {
   const mpMarca = document.getElementById('mp-marca');
   const marca = p.marca_id && MARCAS[p.marca_id];
   if (marca && marca.logo_url) {
-    document.getElementById('mp-marca-logo').src = marca.logo_url;
+    document.getElementById('mp-marca-logo').src = logoSrc(marca.logo_url);
     document.getElementById('mp-marca-logo').alt = marca.nombre;
     document.getElementById('mp-marca-nombre').textContent = marca.nombre;
     mpMarca.style.display = 'flex';
@@ -2029,7 +2035,7 @@ function renderMarcasFilter() {
     const m = MARCAS[id];
     html += `<button class="cat-item ${marcaActiva === id ? 'active' : ''}" onclick="setMarca(${id})" style="display:flex;align-items:center;gap:7px">
       ${m.logo_url
-        ? `<img src="${m.logo_url}" alt="${m.nombre}" style="width:18px;height:18px;object-fit:contain;border-radius:3px;background:#fff;flex-shrink:0">`
+        ? `<img src="${logoSrc(m.logo_url)}" alt="${m.nombre}" style="width:18px;height:18px;object-fit:contain;border-radius:3px;background:#fff;flex-shrink:0">`
         : `<span class="cat-dot" style="background:#94a3b8"></span>`}
       ${m.nombre}
     </button>`;

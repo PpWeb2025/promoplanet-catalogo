@@ -216,6 +216,22 @@ router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, re
 
 const ALLOWED_WIDTHS = new Set([200, 400, 800, 1200]);
 
+let _sharpActive = 0;
+const _sharpQueue = [];
+function withSharpLimit(fn) {
+  return new Promise((resolve, reject) => {
+    const run = () => {
+      _sharpActive++;
+      Promise.resolve().then(fn).then(resolve, reject).finally(() => {
+        _sharpActive--;
+        if (_sharpQueue.length > 0) _sharpQueue.shift()();
+      });
+    };
+    if (_sharpActive < 3) run();
+    else _sharpQueue.push(run);
+  });
+}
+
 // GET /api/drive/imagen/:fileId — público, proxy con cache
 router.get('/imagen/:fileId', async (req, res) => {
   const { fileId } = req.params;
@@ -242,7 +258,7 @@ router.get('/imagen/:fileId', async (req, res) => {
       return;
     }
 
-    // Con ?w válido: bajar a buffer y convertir a WebP
+    // Con ?w válido: bajar a buffer y convertir según Accept
     const driveStream = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
     const chunks = [];
     await new Promise((resolve, reject) => {
@@ -252,21 +268,26 @@ router.get('/imagen/:fileId', async (req, res) => {
     });
     const buffer = Buffer.concat(chunks);
 
+    const acceptsWebp = (req.headers.accept || '').includes('image/webp');
     try {
-      const webp = await sharp(buffer)
-        .resize({ width: w, withoutEnlargement: true })
-        .webp({ quality: 78 })
-        .toBuffer();
+      const [output, contentType] = await withSharpLimit(() => {
+        const pipe = sharp(buffer).resize({ width: w, withoutEnlargement: true });
+        return acceptsWebp
+          ? pipe.webp({ quality: 78 }).toBuffer().then(b => [b, 'image/webp'])
+          : pipe.flatten({ background: '#ffffff' }).jpeg({ quality: 80 }).toBuffer().then(b => [b, 'image/jpeg']);
+      });
 
-      res.setHeader('Content-Type', 'image/webp');
+      res.setHeader('Content-Type', contentType);
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      res.setHeader('Content-Length', webp.length);
-      res.send(webp);
+      res.setHeader('Vary', 'Accept');
+      res.setHeader('Content-Length', output.length);
+      res.send(output);
     } catch (sharpErr) {
       // Fallback: devolver original si sharp no puede procesarlo
       console.error('Drive imagen sharp error:', sharpErr.message, '— enviando original');
       res.setHeader('Content-Type', meta.mimeType || 'image/jpeg');
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Vary', 'Accept');
       res.send(buffer);
     }
   } catch (err) {

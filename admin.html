@@ -1381,6 +1381,12 @@ function fotoSrc(id) {
   return id && id.startsWith('http') ? id : `/api/drive/imagen/${id}`;
 }
 
+function logoSrc(url) {
+  if (!url) return '';
+  if (url.startsWith('/api/drive/imagen/') && !url.includes('?')) return `${url}?w=200`;
+  return url;
+}
+
 function mostrarFotosExistentes(fotos) {
   if (!fotos || !fotos.length) return;
   const grid = document.getElementById('fotos-preview');
@@ -1933,7 +1939,7 @@ async function renderMarcas() {
       <div style="background:var(--gris);border-radius:12px;padding:1.25rem 1rem 1rem;display:flex;flex-direction:column;align-items:center;gap:0.6rem">
         <div style="width:80px;height:80px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);flex-shrink:0">
           ${m.logo_url
-            ? `<img src="${m.logo_url}" alt="${m.nombre}" style="width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box">`
+            ? `<img src="${logoSrc(m.logo_url)}" alt="${m.nombre}" style="width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box">`
             : `<span style="font-size:2rem">🏷️</span>`}
         </div>
         <div style="font-weight:700;font-size:0.88rem;text-align:center;word-break:break-word;line-height:1.3">${m.nombre}</div>
@@ -1957,7 +1963,7 @@ function abrirModalMarca(id) {
   const img = document.getElementById('fm-logo-preview-img');
   const placeholder = document.getElementById('fm-logo-placeholder');
   if (m && m.logo_url) {
-    img.src = m.logo_url;
+    img.src = logoSrc(m.logo_url);
     img.style.display = '';
     placeholder.style.display = 'none';
   } else {
