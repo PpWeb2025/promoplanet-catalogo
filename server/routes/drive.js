@@ -258,7 +258,7 @@ router.get('/imagen/:fileId', async (req, res) => {
       return;
     }
 
-    // Con ?w válido: bajar a buffer y convertir según Accept
+    // Con ?w válido: bajar a buffer y convertir según fmt
     const driveStream = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
     const chunks = [];
     await new Promise((resolve, reject) => {
@@ -268,18 +268,18 @@ router.get('/imagen/:fileId', async (req, res) => {
     });
     const buffer = Buffer.concat(chunks);
 
-    const acceptsWebp = (req.headers.accept || '').includes('image/webp');
+    const fmt = req.query.fmt;
+    const useWebp = fmt !== 'jpg' && fmt !== 'jpeg';
     try {
       const [output, contentType] = await withSharpLimit(() => {
         const pipe = sharp(buffer).resize({ width: w, withoutEnlargement: true });
-        return acceptsWebp
+        return useWebp
           ? pipe.webp({ quality: 78 }).toBuffer().then(b => [b, 'image/webp'])
           : pipe.flatten({ background: '#ffffff' }).jpeg({ quality: 80 }).toBuffer().then(b => [b, 'image/jpeg']);
       });
 
       res.setHeader('Content-Type', contentType);
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      res.setHeader('Vary', 'Accept');
       res.setHeader('Content-Length', output.length);
       res.send(output);
     } catch (sharpErr) {
@@ -287,7 +287,6 @@ router.get('/imagen/:fileId', async (req, res) => {
       console.error('Drive imagen sharp error:', sharpErr.message, '— enviando original');
       res.setHeader('Content-Type', meta.mimeType || 'image/jpeg');
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      res.setHeader('Vary', 'Accept');
       res.send(buffer);
     }
   } catch (err) {

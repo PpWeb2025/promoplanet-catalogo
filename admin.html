@@ -1377,13 +1377,20 @@ function fotosExistentes() {
     .filter(Boolean);
 }
 
+let IMG_FMT = 'webp';
+(function () {
+  const img = new Image();
+  img.onload = img.onerror = function () { if (img.height !== 1) IMG_FMT = 'jpg'; };
+  img.src = 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAkA4JZQCdAEO/gHOAAA=';
+}());
+
 function fotoSrc(id) {
-  return id && id.startsWith('http') ? id : `/api/drive/imagen/${id}`;
+  return id && id.startsWith('http') ? id : `/api/drive/imagen/${id}?fmt=${IMG_FMT}`;
 }
 
 function logoSrc(url) {
   if (!url) return '';
-  if (url.startsWith('/api/drive/imagen/') && !url.includes('?')) return `${url}?w=200`;
+  if (url.startsWith('/api/drive/imagen/') && !url.includes('?')) return `${url}?w=200&fmt=${IMG_FMT}`;
   return url;
 }
 

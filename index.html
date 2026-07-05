@@ -1341,16 +1341,23 @@ document.addEventListener('click', e => {
   }
 });
 
+let IMG_FMT = 'webp';
+(function () {
+  const img = new Image();
+  img.onload = img.onerror = function () { if (img.height !== 1) IMG_FMT = 'jpg'; };
+  img.src = 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAkA4JZQCdAEO/gHOAAA=';
+}());
+
 function imgSrc(fotoId, w) {
   if (!fotoId) return '';
   if (fotoId.startsWith('http') || fotoId.startsWith('/')) return fotoId;
   const base = `/api/drive/imagen/${fotoId}`;
-  return w ? `${base}?w=${w}` : base;
+  return w ? `${base}?w=${w}&fmt=${IMG_FMT}` : `${base}?fmt=${IMG_FMT}`;
 }
 
 function logoSrc(url) {
   if (!url) return '';
-  if (url.startsWith('/api/drive/imagen/') && !url.includes('?')) return `${url}?w=200`;
+  if (url.startsWith('/api/drive/imagen/') && !url.includes('?')) return `${url}?w=200&fmt=${IMG_FMT}`;
   return url;
 }
 
