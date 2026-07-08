@@ -2617,7 +2617,7 @@ async function confirmarAgregarProducto(btn, estadoForzado) {
   btn.innerHTML = '⏳ Subiendo fotos…';
 
   try {
-    // Subir fotos a Cloudinary
+    // Subir fotos a Google Drive
     const fd = new FormData();
     orderedFiles.forEach(f => fd.append('fotos', f));
     fd.append('subcategoria', subcategoria);
