@@ -5,7 +5,13 @@ const { Readable } = require('stream');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const os = require('os');
+const fs = require('fs');
+const UPLOAD_TMP = require('path').join(os.tmpdir(), 'pp-uploads');
+fs.mkdirSync(UPLOAD_TMP, { recursive: true });
+// A disco en lugar de RAM: en la instancia de 512 MB de Render,
+// bufferizar fotos en memoria contribuia a los reinicios por OOM.
+const upload = multer({ dest: UPLOAD_TMP, limits: { fileSize: 10 * 1024 * 1024 } });
 
 // Público — solo publicados
 router.get('/', async (req, res) => {
@@ -95,7 +101,7 @@ router.post('/upload-foto', requireAdmin, upload.single('foto'), async (req, res
         name: req.file.originalname,
         ...(folderId && { parents: [folderId] }),
       },
-      media: { mimeType: req.file.mimetype, body: Readable.from(req.file.buffer) },
+      media: { mimeType: req.file.mimetype, body: fs.createReadStream(req.file.path) },
       fields: 'id',
     });
     await drive.permissions.create({
@@ -107,6 +113,8 @@ router.post('/upload-foto', requireAdmin, upload.single('foto'), async (req, res
   } catch (err) {
     console.error('Drive upload-foto error:', err.message);
     res.status(500).json({ error: 'Error al subir a Drive: ' + err.message });
+  } finally {
+    fs.promises.unlink(req.file.path).catch(() => {});
   }
 });
 

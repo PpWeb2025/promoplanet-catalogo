@@ -1,19 +1,59 @@
 const router = require('express').Router();
 const { google } = require('googleapis');
-const { Readable } = require('stream');
 const path = require('path');
+const os = require('os');
+const fs = require('fs');
 const multer = require('multer');
 const sharp = require('sharp');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
 
-const uploadMem = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+// --- Ajustes de memoria para instancias chicas (Render 512 MB) ---
+// libvips por defecto cachea operaciones y usa varios threads; en un
+// contenedor chico eso suma cientos de MB. Lo limitamos.
+sharp.cache(false);
+sharp.concurrency(1);
+
+// Subidas a disco temporal en lugar de RAM (antes: memoryStorage
+// con hasta 20 archivos x 20 MB = 400 MB en memoria en un solo request).
+const UPLOAD_TMP = path.join(os.tmpdir(), 'pp-uploads');
+fs.mkdirSync(UPLOAD_TMP, { recursive: true });
+const uploadDisk = multer({ dest: UPLOAD_TMP, limits: { fileSize: 20 * 1024 * 1024 } });
+
+async function limpiarTmp(files) {
+  await Promise.all((files || []).map(f => fs.promises.unlink(f.path).catch(() => {})));
+}
 
 // Detecta PP-1234 (nuevo formato) y G1603 / M220 (formato legacy)
 const CODIGO_REGEX = /(PP-\d{3,5}|[A-Z]{1,3}\d{3,4}[A-Z]?)/;
 
 // Cache en memoria para metadatos de Drive (TTL 1h)
 const imageCache = new Map();
+
+// Cache en disco de miniaturas ya procesadas: evita volver a bajar de
+// Drive y re-procesar con sharp en cada visita. El disco de Render es
+// efímero (se limpia en cada deploy/restart), lo cual es aceptable.
+const IMG_CACHE_DIR = path.join(os.tmpdir(), 'pp-img-cache');
+fs.mkdirSync(IMG_CACHE_DIR, { recursive: true });
+let imgCacheCount = fs.readdirSync(IMG_CACHE_DIR).length;
+const IMG_CACHE_MAX = 500;
+
+function cachePathFor(fileId, w, ext) {
+  const safe = String(fileId).replace(/[^A-Za-z0-9_-]/g, '');
+  return path.join(IMG_CACHE_DIR, `${safe}_w${w}.${ext}`);
+}
+
+function guardarEnCache(cachePath, buffer) {
+  try {
+    if (imgCacheCount >= IMG_CACHE_MAX) {
+      for (const f of fs.readdirSync(IMG_CACHE_DIR)) {
+        fs.unlinkSync(path.join(IMG_CACHE_DIR, f));
+      }
+      imgCacheCount = 0;
+    }
+    fs.writeFile(cachePath, buffer, err => { if (!err) imgCacheCount++; });
+  } catch { /* la cache es best-effort */ }
+}
 
 function getDriveClient(write = false) {
   const authOptions = {
@@ -179,7 +219,7 @@ router.post('/importar', requireAdmin, async (req, res) => {
 // POST /api/drive/subir — requiere admin
 // FormData: fotos[] (archivos), nombres (JSON array de strings)
 // Sube a Google Drive y devuelve { fileIds }
-router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, res) => {
+router.post('/subir', requireAdmin, uploadDisk.array('fotos', 20), async (req, res) => {
   if (!req.files?.length) {
     return res.status(400).json({ error: 'No se recibieron archivos' });
   }
@@ -189,14 +229,18 @@ router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, re
   try {
     const drive = getOAuthDriveClient();
     const folderId = process.env.DRIVE_UPLOAD_FOLDER_ID;
-    const fileIds = await Promise.all(req.files.map(async (file, i) => {
+    const fileIds = [];
+    // Secuencial a propósito: subir 20 fotos en paralelo desde una
+    // instancia de 512 MB era parte del problema de memoria.
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
       const nombre = nombres[i] || file.originalname;
       const { data } = await drive.files.create({
         requestBody: {
           name: nombre,
           ...(folderId && { parents: [folderId] }),
         },
-        media: { mimeType: file.mimetype, body: Readable.from(file.buffer) },
+        media: { mimeType: file.mimetype, body: fs.createReadStream(file.path) },
         fields: 'id',
       });
       await drive.permissions.create({
@@ -204,31 +248,39 @@ router.post('/subir', requireAdmin, uploadMem.array('fotos', 20), async (req, re
         requestBody: { role: 'reader', type: 'user', emailAddress: SA_EMAIL },
         sendNotificationEmail: false,
       });
-      return data.id;
-    }));
+      fileIds.push(data.id);
+    }
 
     res.json({ fileIds });
   } catch (err) {
     console.error('Drive subir error:', err.message);
     res.status(500).json({ error: 'Error al subir a Drive: ' + err.message });
+  } finally {
+    limpiarTmp(req.files);
   }
 });
 
 const ALLOWED_WIDTHS = new Set([200, 400, 800, 1200]);
 
-let _sharpActive = 0;
-const _sharpQueue = [];
-function withSharpLimit(fn) {
+// Limitador global de trabajos de imagen. Antes solo limitaba la etapa
+// de sharp: con 40 miniaturas pedidas a la vez, las 40 descargas desde
+// Drive se bufferizaban en RAM al mismo tiempo (fotos de varios MB cada
+// una) mientras esperaban su turno de sharp → pico de memoria → OOM.
+// Ahora descarga + resize cuentan como UN trabajo y corren de a 2.
+let _jobsActive = 0;
+const _jobQueue = [];
+const MAX_IMAGE_JOBS = 2;
+function withImageJobLimit(fn) {
   return new Promise((resolve, reject) => {
     const run = () => {
-      _sharpActive++;
+      _jobsActive++;
       Promise.resolve().then(fn).then(resolve, reject).finally(() => {
-        _sharpActive--;
-        if (_sharpQueue.length > 0) _sharpQueue.shift()();
+        _jobsActive--;
+        if (_jobQueue.length > 0) _jobQueue.shift()();
       });
     };
-    if (_sharpActive < 3) run();
-    else _sharpQueue.push(run);
+    if (_jobsActive < MAX_IMAGE_JOBS) run();
+    else _jobQueue.push(run);
   });
 }
 
@@ -237,6 +289,22 @@ router.get('/imagen/:fileId', async (req, res) => {
   const { fileId } = req.params;
   const w = parseInt(req.query.w, 10);
   const resize = ALLOWED_WIDTHS.has(w);
+
+  const fmt = req.query.fmt;
+  const useWebp = fmt !== 'jpg' && fmt !== 'jpeg';
+  const ext = useWebp ? 'webp' : 'jpg';
+  const contentTypeOut = useWebp ? 'image/webp' : 'image/jpeg';
+
+  // 1) Si la miniatura ya está en la cache de disco, servirla directo:
+  //    cero llamadas a Drive, cero sharp, memoria mínima.
+  if (resize) {
+    const cached = cachePathFor(fileId, w, ext);
+    if (fs.existsSync(cached)) {
+      res.setHeader('Content-Type', contentTypeOut);
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return res.sendFile(cached);
+    }
+  }
 
   try {
     const drive = getDriveClient();
@@ -250,7 +318,7 @@ router.get('/imagen/:fileId', async (req, res) => {
     }
 
     if (!resize) {
-      // Sin ?w válido: devolver original (retrocompatibilidad)
+      // Sin ?w válido: devolver original en streaming (no se bufferiza)
       res.setHeader('Content-Type', meta.mimeType || 'image/jpeg');
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       const stream = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
@@ -258,37 +326,37 @@ router.get('/imagen/:fileId', async (req, res) => {
       return;
     }
 
-    // Con ?w válido: bajar a buffer y convertir según fmt
-    const driveStream = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
-    const chunks = [];
-    await new Promise((resolve, reject) => {
-      driveStream.data.on('data', c => chunks.push(c));
-      driveStream.data.on('end', resolve);
-      driveStream.data.on('error', reject);
-    });
-    const buffer = Buffer.concat(chunks);
-
-    const fmt = req.query.fmt;
-    const useWebp = fmt !== 'jpg' && fmt !== 'jpeg';
-    try {
-      const [output, contentType] = await withSharpLimit(() => {
-        const pipe = sharp(buffer).resize({ width: w, withoutEnlargement: true });
-        return useWebp
-          ? pipe.webp({ quality: 78 }).toBuffer().then(b => [b, 'image/webp'])
-          : pipe.flatten({ background: '#ffffff' }).jpeg({ quality: 80 }).toBuffer().then(b => [b, 'image/jpeg']);
+    // 2) Con ?w válido: descarga + resize dentro del limitador global
+    await withImageJobLimit(async () => {
+      const driveStream = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
+      const chunks = [];
+      await new Promise((resolve, reject) => {
+        driveStream.data.on('data', c => chunks.push(c));
+        driveStream.data.on('end', resolve);
+        driveStream.data.on('error', reject);
       });
+      const buffer = Buffer.concat(chunks);
 
-      res.setHeader('Content-Type', contentType);
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      res.setHeader('Content-Length', output.length);
-      res.send(output);
-    } catch (sharpErr) {
-      // Fallback: devolver original si sharp no puede procesarlo
-      console.error('Drive imagen sharp error:', sharpErr.message, '— enviando original');
-      res.setHeader('Content-Type', meta.mimeType || 'image/jpeg');
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      res.send(buffer);
-    }
+      try {
+        const pipe = sharp(buffer).resize({ width: w, withoutEnlargement: true });
+        const output = useWebp
+          ? await pipe.webp({ quality: 78 }).toBuffer()
+          : await pipe.flatten({ background: '#ffffff' }).jpeg({ quality: 80 }).toBuffer();
+
+        guardarEnCache(cachePathFor(fileId, w, ext), output);
+
+        res.setHeader('Content-Type', contentTypeOut);
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        res.setHeader('Content-Length', output.length);
+        res.send(output);
+      } catch (sharpErr) {
+        // Fallback: devolver original si sharp no puede procesarlo
+        console.error('Drive imagen sharp error:', sharpErr.message, '— enviando original');
+        res.setHeader('Content-Type', meta.mimeType || 'image/jpeg');
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        res.send(buffer);
+      }
+    });
   } catch (err) {
     console.error('Drive imagen error:', err.message);
     res.status(404).send('Imagen no disponible');
