@@ -57,7 +57,7 @@ app.get('/producto/:codigo', async (req, res) => {
   const baseHtml = fs.readFileSync(htmlPath, 'utf8');
   try {
     const p = await getProductoByCodigo(req.params.codigo);
-    if (!p) return res.send(baseHtml);
+    if (!p) return res.redirect(301, '/');
     const title = escapeAttr(`${p.nombre} — PromoPlanet`);
     const desc = escapeAttr((p.descripcion || '').replace(/\n/g, ' ').slice(0, 160));
     const fotoId = Array.isArray(p.fotos) && p.fotos[0];
@@ -96,6 +96,7 @@ app.get('/producto/:codigo', async (req, res) => {
     res.send(
       baseHtml
         .replace('<title>PromoPlanet — Productos promocionales y regalos corporativos en Buenos Aires</title>', meta)
+        .replace('<link rel="canonical" href="https://promoplanet.ar/">', `<link rel="canonical" href="${url}">`)
         .replace('</head>', `${jsonLdScript}\n</head>`)
     );
   } catch {
@@ -106,7 +107,7 @@ app.get('/producto/:codigo', async (req, res) => {
 app.use(express.static(path.join(__dirname, '..')));
 
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'index.html'));
+    res.redirect(301, '/');
 });
 
 initDb()
