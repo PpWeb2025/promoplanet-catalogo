@@ -147,7 +147,7 @@ async function renderLanding(res, landing, canonicalUrl) {
     const productos = todos.filter(p => {
       if (landing.tipo === 'categoria') return p.categoria === landing.filtro;
       if (landing.tipo === 'ocasion')   return parseArray(p.ocasiones).includes(landing.filtro);
-      if (landing.tipo === 'badge')     return p.badge === landing.filtro;
+      if (landing.tipo === 'badge')     return parseArray(p.badges).includes(landing.filtro);
       return false;
     });
     const jsonLd = {
