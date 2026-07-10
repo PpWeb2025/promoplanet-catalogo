@@ -5,6 +5,7 @@ const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
 const { initDb, getProductos, getProductoByCodigo } = require('./db');
+const { LANDINGS } = require('./categorias');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,11 +37,17 @@ app.get('/robots.txt', (req, res) => {
 
 app.get('/sitemap.xml', async (req, res) => {
   try {
+    const landingUrls = LANDINGS.map(l => {
+      const seg = l.tipo === 'badge' ? '/sustentable'
+        : l.tipo === 'categoria' ? `/categoria/${l.slug}`
+        : `/ocasion/${l.slug}`;
+      return `  <url><loc>https://promoplanet.ar${seg}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
+    }).join('\n');
     const productos = await getProductos({ soloPublicados: true });
-    const items = productos.map(p =>
+    const prodUrls = productos.map(p =>
       `  <url><loc>https://promoplanet.ar/producto/${encodeURIComponent(p.codigo)}</loc><changefreq>weekly</changefreq></url>`
     ).join('\n');
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://promoplanet.ar/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n${items}\n</urlset>`;
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://promoplanet.ar/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n${landingUrls}\n${prodUrls}\n</urlset>`;
     res.type('application/xml');
     res.send(xml);
   } catch (err) {
@@ -50,6 +57,23 @@ app.get('/sitemap.xml', async (req, res) => {
 
 function escapeAttr(str) {
   return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function parseArray(val) {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
 }
 
 app.get('/producto/:codigo', async (req, res) => {
@@ -102,6 +126,88 @@ app.get('/producto/:codigo', async (req, res) => {
   } catch {
     res.send(baseHtml);
   }
+});
+
+function buildLandingSection(landing, productos) {
+  const items = productos.map(p =>
+    `    <li><a href="/producto/${encodeURIComponent(p.codigo)}">${escapeHtml(p.nombre)}</a></li>`
+  ).join('\n');
+  return `<section id="landing-seo" data-tipo="${landing.tipo}" data-filtro="${landing.filtro}">
+  <div class="landing-intro"><h1>${escapeHtml(landing.h1)}</h1><p>${escapeHtml(landing.intro[0])}</p><p>${escapeHtml(landing.intro[1])}</p></div>
+  <ul class="landing-lista">
+${items}
+  </ul>
+</section>`;
+}
+
+async function renderLanding(res, landing, canonicalUrl) {
+  const baseHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  try {
+    const todos = await getProductos({ soloPublicados: true });
+    const productos = todos.filter(p => {
+      if (landing.tipo === 'categoria') return p.categoria === landing.filtro;
+      if (landing.tipo === 'ocasion')   return parseArray(p.ocasiones).includes(landing.filtro);
+      if (landing.tipo === 'badge')     return p.badge === landing.filtro;
+      return false;
+    });
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: landing.title,
+      description: landing.description,
+      url: canonicalUrl,
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: productos.slice(0, 50).map((p, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: `https://promoplanet.ar/producto/${encodeURIComponent(p.codigo)}`,
+          name: p.nombre || '',
+        })),
+      },
+    };
+    const jsonLdScript = `<script type="application/ld+json">\n${JSON.stringify(jsonLd, null, 2)}\n</script>`;
+    const headExtra = [
+      `<meta property="og:title" content="${escapeAttr(landing.title)}">`,
+      `<meta property="og:description" content="${escapeAttr(landing.description)}">`,
+      `<meta property="og:url" content="${escapeAttr(canonicalUrl)}">`,
+      `<meta property="og:type" content="website">`,
+      jsonLdScript,
+    ].join('\n');
+    res.send(
+      baseHtml
+        .replace('<title>PromoPlanet — Productos promocionales y regalos corporativos en Buenos Aires</title>',
+          `<title>${escapeAttr(landing.title)}</title>`)
+        .replace('<meta name="description" content="Catálogo de productos promocionales personalizados para empresas. Drinkware, indumentaria, tecnología, packaging y más. Entregas en CABA y GBA.">',
+          `<meta name="description" content="${escapeAttr(landing.description)}">`)
+        .replace('<link rel="canonical" href="https://promoplanet.ar/">', `<link rel="canonical" href="${canonicalUrl}">`)
+        .replace('<h1>Productos promocionales<br>para equipos que <em>importan</em></h1>',
+          '<p class="hero-h1-home">Productos promocionales<br>para equipos que <em>importan</em></p>')
+        .replace('<!-- MAIN CONTENT -->', `${buildLandingSection(landing, productos)}\n<!-- MAIN CONTENT -->`)
+        .replace('</head>', `${headExtra}\n</head>`)
+    );
+  } catch (err) {
+    console.error('Landing render error:', err);
+    res.send(baseHtml);
+  }
+}
+
+app.get('/categoria/:slug', async (req, res) => {
+  const landing = LANDINGS.find(l => l.tipo === 'categoria' && l.slug === req.params.slug);
+  if (!landing) return res.redirect(301, '/');
+  return renderLanding(res, landing, `https://promoplanet.ar/categoria/${landing.slug}`);
+});
+
+app.get('/ocasion/:slug', async (req, res) => {
+  const landing = LANDINGS.find(l => l.tipo === 'ocasion' && l.slug === req.params.slug);
+  if (!landing) return res.redirect(301, '/');
+  return renderLanding(res, landing, `https://promoplanet.ar/ocasion/${landing.slug}`);
+});
+
+app.get('/sustentable', async (req, res) => {
+  const landing = LANDINGS.find(l => l.slug === 'sustentable');
+  if (!landing) return res.redirect(301, '/');
+  return renderLanding(res, landing, 'https://promoplanet.ar/sustentable');
 });
 
 app.use(express.static(path.join(__dirname, '..')));
