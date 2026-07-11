@@ -116,13 +116,32 @@ ${muestra || 'No hay productos de referencia aún — usá un tono profesional, 
 ## Información del proveedor (${fuenteLabel})
 ${contenidoFuente}
 
+## Reglas de formato de campos
+
+### MEDIDAS
+- Separador de dimensiones: el símbolo × (no la letra x), con un espacio a cada lado.
+- Decimales con coma: 4,5 (nunca 4.5).
+- Una sola unidad al final de la expresión, abreviada y con punto: cm. / mm. / m. Si el proveedor mezcla unidades, convertir todo a la más adecuada.
+- No incluir la palabra "Medidas:" al inicio.
+- Producto circular o cilíndrico: diámetro primero con el símbolo Ø, luego la otra medida. Ejemplo: Ø 4,5 × 23,4 cm. Sin aclaración entre paréntesis.
+- Tres medidas: 14 × 2,5 × 2 cm. (largo × ancho × alto)
+- Dos medidas no circulares: 14 × 2,5 cm. (largo × ancho) — la aclaración entre paréntesis indica las dimensiones que correspondan al producto, en el mismo orden que los números.
+- Una sola medida: 23 cm. (largo) — o la dimensión que corresponda.
+- Si el proveedor da medidas por variante o estado (abierto/cerrado, plegado/extendido): Abierto: 23 × 22 cm., Cerrado: 7 × 22 cm.
+- Capacidad de drinkware: indicarla en ml con punto (473 ml.) además de las medidas físicas si están disponibles.
+
+### COLORES
+- Lista separada por coma y espacio, cada color con mayúscula inicial: Crudo, Azul marino, Verde.
+- Sin conjunción "y" antes del último color.
+- Usar nombres de color simples y consistentes; evitar nombres de fantasía del proveedor cuando exista un equivalente común.
+
 ## Tu respuesta debe ser un JSON válido con esta estructura exacta:
 {
   "nombre": "Nombre del producto limpio y comercial (sin código ni marca de proveedor)",
   "descripcion": "Descripción en el estilo PromoPlanet: 2-3 oraciones, tono profesional, orientada a empresas, resalta el valor del producto como regalo o artículo promocional. En español rioplatense.",
   "material": "Material principal del producto",
-  "medidas": "Medidas si las hay, sino vacío",
-  "colores": "Colores disponibles si los hay, sino vacío",
+  "medidas": "Medidas formateadas según las reglas de formato, o cadena vacía si no hay.",
+  "colores": "Colores formateados según las reglas de formato, o cadena vacía si no hay.",
   "categoria": "Una de estas exactas: ${CATEGORIA_IDS}",
   "tecnicas": ["array", "con", "técnicas de personalización sugeridas de esta lista: laser, dtf, tampografia, bordado, sublimacion, hotstamping, serigrafia, dtf-textil"],
   "badges": ["array con badges sugeridos de: sale, oportunidad, nuevo, ecofriendly, termico, premium, popular, exclusivo, corporativo, importado, kit, limitado"],
