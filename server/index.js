@@ -183,7 +183,7 @@ async function renderLanding(res, landing, canonicalUrl) {
         .replace('<link rel="canonical" href="https://promoplanet.ar/">', `<link rel="canonical" href="${canonicalUrl}">`)
         .replace('<h1>Productos promocionales<br>para equipos que <em>importan</em></h1>',
           '<p class="hero-h1-home">Productos promocionales<br>para equipos que <em>importan</em></p>')
-        .replace('<!-- MAIN CONTENT -->', `${buildLandingSection(landing, productos)}\n<!-- MAIN CONTENT -->`)
+        .replace('<!-- LANDING SEO SECTION -->', buildLandingSection(landing, productos))
         .replace('</head>', `${headExtra}\n</head>`)
     );
   } catch (err) {
