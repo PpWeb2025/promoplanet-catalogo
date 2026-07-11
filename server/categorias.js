@@ -103,6 +103,42 @@ const LANDINGS = [
     ]
   },
   {
+    slug: 'bienestar-y-autocuidado',
+    tipo: 'categoria',
+    filtro: 'bienestar',
+    h1: 'Productos de bienestar y autocuidado con logo',
+    title: 'Productos de bienestar y autocuidado personalizados para empresas | PromoPlanet',
+    description: 'Kits de bienestar, autocuidado y relax personalizados con logo. Ideales para programas de wellness corporativo, reconocimiento y regalos para colaboradores.',
+    intro: [
+      'Los productos de bienestar y autocuidado transmiten un mensaje concreto: la empresa valora la salud y el equilibrio de su equipo.',
+      'La categoría incluye artículos de relax, cuidado personal y descanso que se integran en programas de wellness corporativo, kits de onboarding y campañas internas de recursos humanos. Se personalizan con la técnica adecuada a cada material y funcionan como regalo individual o como parte de un kit temático.'
+    ]
+  },
+  {
+    slug: 'hogar-y-cocina',
+    tipo: 'categoria',
+    filtro: 'hogar',
+    h1: 'Productos de hogar y cocina personalizados con logo',
+    title: 'Productos de hogar y cocina personalizados con logo para empresas | PromoPlanet',
+    description: 'Artículos de hogar y cocina personalizados con logo para empresas. Regalos corporativos de uso cotidiano para fin de año, fechas especiales y reconocimiento.',
+    intro: [
+      'Los artículos de hogar y cocina llevan la marca a un espacio de alta permanencia: la casa de quien los recibe.',
+      'La categoría reúne accesorios de cocina, mesa y organización doméstica que funcionan como regalo de fin de año, obsequio para fechas especiales o complemento de un kit corporativo. Se personalizan con grabado, impresión UV u otras técnicas según el material.'
+    ]
+  },
+  {
+    slug: 'packaging-y-presentacion',
+    tipo: 'categoria',
+    filtro: 'packaging',
+    h1: 'Packaging y presentación personalizados con logo',
+    title: 'Packaging y presentación personalizados para regalos corporativos | PromoPlanet',
+    description: 'Cajas, bolsas y packaging personalizado con logo para kits corporativos. La presentación que completa regalos de onboarding, eventos y fin de año.',
+    intro: [
+      'El packaging define la primera impresión de un regalo corporativo: una caja o bolsa personalizada convierte un conjunto de productos en un kit con identidad.',
+      'La categoría incluye cajas, bolsas y soluciones de presentación que se imprimen con la marca de la empresa y se adaptan a kits de onboarding, regalos de fin de año y entregas en eventos. Los materiales de base papel y cartón admiten impresión full color y aportan una opción reciclable para la presentación.'
+    ]
+  },
+  {
     slug: 'onboarding',
     tipo: 'ocasion',
     filtro: 'onboarding',
