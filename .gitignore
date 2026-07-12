@@ -16,3 +16,12 @@ db.js
 
 # archivos subidos localmente
 uploads/
+
+# archivos temporales
+.tmp*
+
+# planillas con datos de negocio
+*.ods
+
+# snippets de desarrollo
+snippet_*.html

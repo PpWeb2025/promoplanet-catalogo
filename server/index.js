@@ -117,6 +117,7 @@ app.get('/producto/:codigo', async (req, res) => {
       },
     };
     const jsonLdScript = `<script type="application/ld+json">\n${JSON.stringify(jsonLd, null, 2)}\n</script>`;
+    res.set('Cache-Control', 'no-cache');
     res.send(
       baseHtml
         .replace('<title>PromoPlanet — Productos promocionales y regalos corporativos en Buenos Aires</title>', meta)
@@ -124,6 +125,7 @@ app.get('/producto/:codigo', async (req, res) => {
         .replace('</head>', `${jsonLdScript}\n</head>`)
     );
   } catch {
+    res.set('Cache-Control', 'no-cache');
     res.send(baseHtml);
   }
 });
@@ -174,6 +176,7 @@ async function renderLanding(res, landing, canonicalUrl) {
       `<meta property="og:type" content="website">`,
       jsonLdScript,
     ].join('\n');
+    res.set('Cache-Control', 'no-cache');
     res.send(
       baseHtml
         .replace('<title>PromoPlanet — Productos promocionales y regalos corporativos en Buenos Aires</title>',
@@ -188,6 +191,7 @@ async function renderLanding(res, landing, canonicalUrl) {
     );
   } catch (err) {
     console.error('Landing render error:', err);
+    res.set('Cache-Control', 'no-cache');
     res.send(baseHtml);
   }
 }
@@ -210,7 +214,64 @@ app.get('/sustentable', async (req, res) => {
   return renderLanding(res, landing, 'https://promoplanet.ar/sustentable');
 });
 
-app.use(express.static(path.join(__dirname, '..')));
+const STATIC_CACHE = {
+  html:  'no-cache',
+  js:    'public, max-age=3600',
+  css:   'public, max-age=3600',
+  svg:   'public, max-age=604800',
+  png:   'public, max-age=604800',
+  jpg:   'public, max-age=604800',
+  jpeg:  'public, max-age=604800',
+  webp:  'public, max-age=604800',
+  ico:   'public, max-age=604800',
+  woff:  'public, max-age=604800',
+  woff2: 'public, max-age=604800',
+};
+
+const STATIC_ALLOWED_FILES = new Set([
+  '/',
+  '/index.html',
+  '/admin.html',
+  '/propuesta.html',
+  '/favicon.ico',
+  '/favicon-16x16.png',
+  '/favicon-32x32.png',
+  '/apple-touch-icon.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/PP_Slogan.png',
+  '/og-image.jpg',
+  '/logo-pp-color.svg',
+  '/logo-pp-completo-blanco.svg',
+  '/logo-pp-texto-blanco.svg',
+  '/mariposa-blanca.svg',
+  '/Logo Mariposa PP Blanca.svg',
+  '/Logo PP completo blanco.svg',
+  '/Logo PP texto blanco.svg',
+]);
+const STATIC_ALLOWED_DIRS = ['/firma/'];
+
+const _static = express.static(path.join(__dirname, '..'), {
+  setHeaders(res, filePath) {
+    const ext = path.extname(filePath).slice(1).toLowerCase();
+    res.setHeader('Cache-Control', STATIC_CACHE[ext] ?? 'public, max-age=0');
+  },
+});
+
+function guardedStatic(req, res, next) {
+  let p;
+  try {
+    p = decodeURIComponent(req.path);
+  } catch {
+    return next();
+  }
+  if (STATIC_ALLOWED_FILES.has(p) || STATIC_ALLOWED_DIRS.some(d => p.startsWith(d))) {
+    return _static(req, res, next);
+  }
+  next();
+}
+
+app.use(guardedStatic);
 
 app.get('*', (req, res) => {
     res.redirect(301, '/');
