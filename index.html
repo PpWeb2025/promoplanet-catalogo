@@ -292,6 +292,15 @@
   .cat-item.active { background: var(--azul-light); color: var(--azul); font-weight: 500; }
   .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
+  #clear-filters-bar { margin-bottom: 0.75rem; }
+  .clear-filters-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 0.8rem; color: var(--celeste); font-family: 'DM Sans', sans-serif;
+    padding: 0.2rem 0.5rem; border-radius: 4px;
+    transition: color 0.15s, background 0.15s; font-weight: 500;
+  }
+  .clear-filters-btn:hover { color: var(--azul); background: var(--azul-light); }
+
   .range-group { margin-bottom: 0.75rem; }
   .range-label { font-size: 0.82rem; color: var(--texto-suave); margin-bottom: 0.4rem; display: flex; justify-content: space-between; }
   .range-label span { color: var(--azul); font-weight: 500; }
@@ -1001,6 +1010,9 @@
 <div class="main" id="catalogo">
   <!-- SIDEBAR -->
   <aside class="sidebar">
+    <div id="clear-filters-bar" style="display:none">
+      <button class="clear-filters-btn" onclick="limpiarFiltros()">✕ Limpiar filtros</button>
+    </div>
     <div class="sidebar-section">
       <div class="sidebar-title">Categoría</div>
       <div id="cat-list"></div>
@@ -1562,35 +1574,31 @@ function renderCatGrid() {
 }
 
 function setCatFromGrid(id) {
-  catActiva = id;
+  catActiva = (catActiva === id) ? 'todos' : id;
   subcatActiva = 'todos';
   ecoActivo = false;
-  document.querySelectorAll('.cat-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.cat === id);
-  });
-  document.querySelectorAll('.cat-card').forEach(el => {
-    el.classList.toggle('cat-active', el.onclick?.toString().includes(`'${id}'`));
-  });
   renderCatGrid();
   renderSubcatSidebar();
   filtrar();
   document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
-  syncUrl(CAT_LANDING_SLUGS[id] ? '/categoria/' + CAT_LANDING_SLUGS[id] : '/');
+  syncUrl(catActiva !== 'todos' && CAT_LANDING_SLUGS[catActiva] ? '/categoria/' + CAT_LANDING_SLUGS[catActiva] : '/');
 }
 
 // ============================================================
 // FILTROS
 // ============================================================
 function setCat(id, el) {
-  catActiva = id;
+  if (id !== 'todos' && catActiva === id) {
+    catActiva = 'todos';
+  } else {
+    catActiva = id;
+  }
   subcatActiva = 'todos';
   ecoActivo = false;
-  document.querySelectorAll('.cat-item').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
   renderSubcatSidebar();
   filtrar();
   document.querySelector('main').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  syncUrl(CAT_LANDING_SLUGS[id] ? '/categoria/' + CAT_LANDING_SLUGS[id] : '/');
+  syncUrl(catActiva !== 'todos' && CAT_LANDING_SLUGS[catActiva] ? '/categoria/' + CAT_LANDING_SLUGS[catActiva] : '/');
 }
 
 function renderSubcatSidebar() {
@@ -1598,32 +1606,36 @@ function renderSubcatSidebar() {
 }
 
 function setSubcat(id, el) {
-  subcatActiva = id;
-  document.querySelectorAll('.subcat-item').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
+  subcatActiva = (subcatActiva === id) ? 'todos' : id;
   renderSubcatSidebar();
   filtrar();
   document.querySelector('main').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function toggleDest(el) {
-  destActivo = el.dataset.dest;
-  document.querySelectorAll('[data-dest]').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
+  const val = el.dataset.dest;
+  destActivo = (val !== 'todos' && destActivo === val) ? 'todos' : val;
+  document.querySelectorAll('[data-dest]').forEach(e => {
+    e.classList.toggle('active', e.dataset.dest === destActivo);
+  });
   filtrar();
 }
 
 function toggleOcc(el) {
-  occActiva = el.dataset.occ;
-  document.querySelectorAll('[data-occ]').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
+  const val = el.dataset.occ;
+  occActiva = (val !== 'todos' && occActiva === val) ? 'todos' : val;
+  document.querySelectorAll('[data-occ]').forEach(e => {
+    e.classList.toggle('active', e.dataset.occ === occActiva);
+  });
   filtrar();
 }
 
 function toggleTag(el) {
-  tagActivo = el.dataset.tag;
-  document.querySelectorAll('[data-tag]').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
+  const val = el.dataset.tag;
+  tagActivo = (val !== 'todos' && tagActivo === val) ? 'todos' : val;
+  document.querySelectorAll('[data-tag]').forEach(e => {
+    e.classList.toggle('active', e.dataset.tag === tagActivo);
+  });
   filtrar();
 }
 
@@ -1777,6 +1789,7 @@ function filtrar() {
   }
 
   renderProductos(visible);
+  actualizarClearFilters();
 }
 
 // ============================================================
@@ -2132,9 +2145,44 @@ function renderMarcasFilter() {
 }
 
 function setMarca(id) {
-  marcaActiva = id;
+  marcaActiva = (id !== 'todos' && marcaActiva === id) ? 'todos' : id;
   renderMarcasFilter();
   filtrar();
+}
+
+function hayFiltrosActivos() {
+  return catActiva !== 'todos' || subcatActiva !== 'todos' ||
+         destActivo !== 'todos' || occActiva !== 'todos' ||
+         tagActivo !== 'todos' || ecoActivo || marcaActiva !== 'todos';
+}
+
+function actualizarClearFilters() {
+  const el = document.getElementById('clear-filters-bar');
+  if (el) el.style.display = hayFiltrosActivos() ? '' : 'none';
+}
+
+function limpiarFiltros() {
+  catActiva = 'todos';
+  subcatActiva = 'todos';
+  destActivo = 'todos';
+  occActiva = 'todos';
+  tagActivo = 'todos';
+  ecoActivo = false;
+  marcaActiva = 'todos';
+  document.querySelectorAll('[data-dest]').forEach(e => {
+    e.classList.toggle('active', e.dataset.dest === 'todos');
+  });
+  document.querySelectorAll('[data-occ]').forEach(e => {
+    e.classList.toggle('active', e.dataset.occ === 'todos');
+  });
+  document.querySelectorAll('[data-tag]').forEach(e => {
+    e.classList.toggle('active', e.dataset.tag === 'todos');
+  });
+  renderCatSidebar();
+  renderCatGrid();
+  renderMarcasFilter();
+  filtrar();
+  syncUrl('/');
 }
 
 window.addEventListener('popstate', () => {
