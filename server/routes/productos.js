@@ -4,6 +4,7 @@ const { google } = require('googleapis');
 const { Readable } = require('stream');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
+const { purgeCatalogCache } = require('../lib/cloudflare');
 
 const os = require('os');
 const fs = require('fs');
@@ -16,6 +17,9 @@ const upload = multer({ dest: UPLOAD_TMP, limits: { fileSize: 10 * 1024 * 1024 }
 // Público — solo publicados
 router.get('/', async (req, res) => {
   const { cat, q } = req.query;
+  if (!cat && !q) {
+    res.set('Cache-Control', 'public, max-age=0, s-maxage=300');
+  }
   res.json(await db.getProductos({ soloPublicados: true, cat, q }));
 });
 
@@ -51,6 +55,7 @@ router.post('/admin', requireAdmin, async (req, res) => {
   try {
     const nuevo = await db.insertProducto(data);
     res.status(201).json(nuevo);
+    purgeCatalogCache();
   } catch (err) {
     console.error('Error insertProducto:', err.message);
     if (err.message.includes('UNIQUE')) {
@@ -65,6 +70,7 @@ router.put('/admin/:id', requireAdmin, async (req, res) => {
   if (!p) return res.status(404).json({ error: 'No encontrado' });
   const actualizado = await db.updateProducto(req.params.id, req.body);
   res.json(actualizado);
+  purgeCatalogCache();
 });
 
 router.patch('/admin/:id', requireAdmin, async (req, res) => {
@@ -73,6 +79,7 @@ router.patch('/admin/:id', requireAdmin, async (req, res) => {
   if (!Object.keys(req.body).length) return res.status(400).json({ error: 'Sin datos' });
   const actualizado = await db.updateProducto(req.params.id, req.body);
   res.json(actualizado);
+  purgeCatalogCache();
 });
 
 router.delete('/admin/:id', requireAdmin, async (req, res) => {
@@ -80,6 +87,7 @@ router.delete('/admin/:id', requireAdmin, async (req, res) => {
   if (!p) return res.status(404).json({ error: 'No encontrado' });
   await db.deleteProducto(req.params.id);
   res.json({ ok: true });
+  purgeCatalogCache();
 });
 
 // POST /api/productos/upload-foto — sube una imagen a Google Drive y devuelve el fileId
