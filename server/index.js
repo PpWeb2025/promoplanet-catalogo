@@ -7,6 +7,13 @@ const fs = require('fs');
 const { initDb, getProductos, getProductoByCodigo } = require('./db');
 const { LANDINGS } = require('./categorias');
 
+// Mapa de redirecciones 301 para slugs del sitio anterior.
+// Agregar entradas según aparezcan en Search Console.
+const REDIRECTS_301 = {
+  // '/mochila-porta-notebook-17-g1382': '/categoria/bolsos-y-mochilas',
+  // '/es-ar/mochila-g1597':             '/categoria/bolsos-y-mochilas',
+};
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -76,12 +83,55 @@ function parseArray(val) {
   return [];
 }
 
+const CANONICAL_PLACEHOLDER = '<link rel="canonical" href="https://promoplanet.ar/">';
+
+function renderSPA(res, canonicalPath) {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const replaced = html.replace(
+    CANONICAL_PLACEHOLDER,
+    `<link rel="canonical" href="https://promoplanet.ar${canonicalPath}">`
+  );
+  if (replaced === html) {
+    console.warn(`[renderSPA] WARNING: canonical placeholder not found in index.html — path: ${canonicalPath}`);
+  }
+  res.set('Cache-Control', 'no-cache');
+  res.send(replaced);
+}
+
+function render404(res) {
+  res.status(404).set('Cache-Control', 'no-cache').send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Página no encontrada — PromoPlanet</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;color:#1a1f2e;background:#f4f5f7;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem}
+  .num{font-size:7rem;font-weight:600;color:#003471;line-height:1}
+  h1{font-size:1.5rem;font-weight:500;color:#003471;margin:.75rem 0 .5rem}
+  p{color:#5a6070;margin-bottom:2rem;max-width:420px}
+  .btn{display:inline-block;background:#00A8B4;color:#fff;text-decoration:none;border-radius:8px;padding:.75rem 2rem;font-weight:600;font-size:.95rem;transition:opacity .2s}
+  .btn:hover{opacity:.85}
+</style>
+</head>
+<body>
+  <div class="num">404</div>
+  <h1>Página no encontrada</h1>
+  <p>El link que seguiste no existe o fue removido. Buscá lo que necesitás en el catálogo.</p>
+  <a href="/" class="btn">Ir al catálogo</a>
+</body>
+</html>`);
+}
+
 app.get('/producto/:codigo', async (req, res) => {
   const htmlPath = path.join(__dirname, '..', 'index.html');
   const baseHtml = fs.readFileSync(htmlPath, 'utf8');
   try {
     const p = await getProductoByCodigo(req.params.codigo);
-    if (!p) return res.redirect(301, '/');
+    if (!p) return render404(res);
     const title = escapeAttr(`${p.nombre} — PromoPlanet`);
     const desc = escapeAttr((p.descripcion || '').replace(/\n/g, ' ').slice(0, 160));
     const fotoId = Array.isArray(p.fotos) && p.fotos[0];
@@ -198,20 +248,24 @@ async function renderLanding(res, landing, canonicalUrl) {
 
 app.get('/categoria/:slug', async (req, res) => {
   const landing = LANDINGS.find(l => l.tipo === 'categoria' && l.slug === req.params.slug);
-  if (!landing) return res.redirect(301, '/');
+  if (!landing) return render404(res);
   return renderLanding(res, landing, `https://promoplanet.ar/categoria/${landing.slug}`);
 });
 
 app.get('/ocasion/:slug', async (req, res) => {
   const landing = LANDINGS.find(l => l.tipo === 'ocasion' && l.slug === req.params.slug);
-  if (!landing) return res.redirect(301, '/');
+  if (!landing) return render404(res);
   return renderLanding(res, landing, `https://promoplanet.ar/ocasion/${landing.slug}`);
 });
 
 app.get('/sustentable', async (req, res) => {
   const landing = LANDINGS.find(l => l.slug === 'sustentable');
-  if (!landing) return res.redirect(301, '/');
+  if (!landing) return render404(res);
   return renderLanding(res, landing, 'https://promoplanet.ar/sustentable');
+});
+
+app.get('/catalogo', (req, res) => {
+  renderSPA(res, '/catalogo');
 });
 
 const STATIC_CACHE = {
@@ -274,7 +328,9 @@ function guardedStatic(req, res, next) {
 app.use(guardedStatic);
 
 app.get('*', (req, res) => {
-    res.redirect(301, '/');
+  const cleanPath = req.path.replace(/\/$/, '') || '/';
+  if (REDIRECTS_301[cleanPath]) return res.redirect(301, REDIRECTS_301[cleanPath]);
+  render404(res);
 });
 
 initDb()
