@@ -17,6 +17,8 @@ const REDIRECTS_301 = {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(require('./middleware/redirectOnrender'));
+
 // MemoryStore es suficiente para uso local de un solo usuario
 app.use(session({
     secret: process.env.SESSION_SECRET || 'fallback-secret',
