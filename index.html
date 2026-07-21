@@ -2746,19 +2746,28 @@ document.addEventListener('keydown', e => {
 
   /* ── Pasar productos y abrir propuesta.html ───────────── */
   function generarPropuesta() {
-    const productos = (seleccion || []).map(p => ({
-      id:             p.id,
-      nombre:         p.nombre,
-      codigo:         p.codigo,
-      descripcion:    p.descripcion || '',
-      emoji:          p.emoji || '📦',
-      foto:           (() => { if (!p.fotos || !p.fotos.length) return null; const f = p.fotos[0]; return typeof f === 'string' ? f : (f.driveId || null); })(),
-      fotos:          (p.fotos || []).map(f => typeof f === 'string' ? f : (f.driveId || null)).filter(Boolean),
-      cantidad:       p.cantidadConsulta || p.minimo || '',
-      impresion:      '',
-      precioUnitario: '',
-      total:          '',
-    }));
+    const prevMap = {};
+    try {
+      const prev = JSON.parse(localStorage.getItem('pp_propuesta_temp') || '[]');
+      prev.forEach(p => { prevMap[p.id] = p; });
+    } catch(e) {}
+
+    const productos = (seleccion || []).map(p => {
+      const saved = prevMap[p.id];
+      return {
+        id:             p.id,
+        nombre:         p.nombre,
+        codigo:         p.codigo,
+        descripcion:    saved ? saved.descripcion    : (p.descripcion || ''),
+        emoji:          p.emoji || '📦',
+        foto:           (() => { if (!p.fotos || !p.fotos.length) return null; const f = p.fotos[0]; return typeof f === 'string' ? f : (f.driveId || null); })(),
+        fotos:          (p.fotos || []).map(f => typeof f === 'string' ? f : (f.driveId || null)).filter(Boolean),
+        cantidad:       saved ? saved.cantidad       : (p.cantidadConsulta || p.minimo || ''),
+        impresion:      saved ? saved.impresion      : '',
+        precioUnitario: saved ? saved.precioUnitario : '',
+        total:          saved ? saved.total          : '',
+      };
+    });
     localStorage.setItem('pp_propuesta_temp', JSON.stringify(productos));
     window.open('/propuesta.html', '_blank');
   }

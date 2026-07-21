@@ -352,6 +352,7 @@
   <div class="prop-toolbar">
     <button class="btn" onclick="volverEditor()" style="background:rgba(255,255,255,0.1)">← Volver</button>
     <h2>Propuesta comercial</h2>
+    <button class="btn btn-sm btn-celeste" onclick="guardarYVolver()">💾 Guardar y volver al catálogo</button>
     <button class="btn-imprimir" onclick="imprimirPropuesta()">
       🖨️ Imprimir / Guardar PDF
     </button>
@@ -395,6 +396,10 @@ let productos = [];
   } catch(e) {}
 
   resetClienteForm();
+  try {
+    const saved = localStorage.getItem('pp_propuesta_cliente');
+    if (saved) setClienteForm(JSON.parse(saved));
+  } catch(e) {}
   renderProductos();
   actualizarAcciones();
 })();
@@ -620,6 +625,12 @@ function actualizarAcciones() {
 
 function escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function guardarYVolver() {
+  localStorage.setItem(TEMP_KEY, JSON.stringify(productos));
+  localStorage.setItem('pp_propuesta_cliente', JSON.stringify(leerClienteForm()));
+  location.href = '/';
 }
 
 /* ════════════════════════════════════════════════
