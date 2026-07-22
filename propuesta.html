@@ -244,7 +244,24 @@
     .layout { grid-template-columns: 1fr; }
     .fld-row-3 { grid-template-columns: 1fr 1fr; }
   }
+
+  /* ── Marca y badges en propuesta ── */
+  .prod-marca-line {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 0.72rem; color: #64748b; margin-bottom: 2px;
+  }
+  .prod-marca-line img {
+    width: 16px; height: 16px; object-fit: contain;
+    border-radius: 3px; background: #fff; flex-shrink: 0;
+  }
+  .prop-badges { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 6px; }
+  .prop-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 0.7rem; font-weight: 600; color: #fff; line-height: 1.5;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
 </style>
+<script src="/badges.js"></script>
 </head>
 <body>
 
@@ -383,6 +400,7 @@ const DEFAULT_COND = {
 
 let clienteId = null;
 let productos = [];
+let MARCAS_MAP = {};
 
 /* ════════════════════════════════════════════════
    INIT
@@ -391,8 +409,12 @@ let productos = [];
   try { productos = JSON.parse(localStorage.getItem(TEMP_KEY) || '[]'); } catch(e) {}
 
   try {
-    const res = await fetch('/api/clientes');
-    if (res.ok) renderClientSelect(await res.json());
+    const [clientesRes, marcasRes] = await Promise.all([fetch('/api/clientes'), fetch('/api/marcas')]);
+    if (clientesRes.ok) renderClientSelect(await clientesRes.json());
+    if (marcasRes.ok) {
+      const list = await marcasRes.json();
+      MARCAS_MAP = Object.fromEntries(list.map(m => [m.id, m]));
+    }
   } catch(e) {}
 
   resetClienteForm();
@@ -531,6 +553,26 @@ async function fetchDataUrl(src) {
   }
 }
 
+function marcaHtml(marca_id) {
+  const m = marca_id && MARCAS_MAP[marca_id];
+  if (!m) return '';
+  const logoUrl = m.logo_url
+    ? (m.logo_url.startsWith('http') || m.logo_url.startsWith('/') ? m.logo_url : `/api/drive/imagen/${m.logo_url}`)
+    : null;
+  const imgTag = logoUrl ? `<img src="${logoUrl}" alt="${escHtml(m.nombre)}">` : '';
+  return `<div class="prod-marca-line">${imgTag}Marca: ${escHtml(m.nombre)}</div>`;
+}
+
+function propBadgesHtml(badges) {
+  if (!badges || !badges.length) return '';
+  const pills = badges.map(id => {
+    const b = BADGES[id];
+    if (!b) return '';
+    return `<span class="prop-badge" style="background:${b.bg}">${b.label}</span>`;
+  }).filter(Boolean).join('');
+  return pills ? `<div class="prop-badges">${pills}</div>` : '';
+}
+
 function renderProductos() {
   const lista = document.getElementById('productos-lista');
   const countEl = document.getElementById('prod-count');
@@ -558,6 +600,8 @@ function renderProductos() {
         <div class="producto-info" style="flex:1">
           <div class="producto-nombre">${p.nombre}</div>
           <div class="producto-codigo">Cód. ${p.codigo}</div>
+          ${marcaHtml(p.marca_id)}
+          ${propBadgesHtml(p.badges)}
           <div class="producto-desc-edit">
             <div class="desc-label">Descripción (editable)</div>
             <textarea id="p-desc-${i}" rows="3" oninput="syncProd(${i},'descripcion',this.value)">${escHtml(p.descripcion)}</textarea>
@@ -698,6 +742,8 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
         <div class="prop-card-desc">
           <div class="prop-card-desc-nombre">${p.nombre}</div>
           ${p.codigo ? `<div class="prop-card-desc-codigo">Código ${p.codigo}</div>` : ''}
+          ${marcaHtml(p.marca_id)}
+          ${propBadgesHtml(p.badges)}
           <div class="prop-desc-text">${descLines || '<span style="color:#bbb">—</span>'}</div>
         </div>
       </div>

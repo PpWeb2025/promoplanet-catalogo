@@ -1298,6 +1298,7 @@
   </div>
 </template>
 
+<script src="/badges.js"></script>
 <script>
 function renderNavMobileCats() {
   const el = document.getElementById('nav-mobile-cats');
@@ -1394,21 +1395,6 @@ function logoSrc(url) {
   if (url.startsWith('/api/drive/imagen/') && !url.includes('?')) return `${url}?w=200&fmt=${IMG_FMT}`;
   return url;
 }
-
-const BADGES = {
-  sale:        { label: 'SALE',         bg: '#ef4444', emoji: '🏷️' },
-  oportunidad: { label: 'Oportunidad',  bg: '#f97316', emoji: '💥' },
-  nuevo:       { label: 'Nuevo',        bg: '#22c55e', emoji: '✨' },
-  ecofriendly: { label: 'Eco Friendly', bg: '#16a34a', emoji: '🌱' },
-  termico:     { label: 'Térmico',      bg: '#0ea5e9', emoji: '🌡️' },
-  premium:     { label: 'Premium',      bg: '#7c3aed', emoji: '⭐' },
-  popular:     { label: 'Popular',      bg: '#f59e0b', emoji: '🔥' },
-  exclusivo:   { label: 'Exclusivo',    bg: '#6366f1', emoji: '💎' },
-  corporativo: { label: 'Corporativo',  bg: '#003471', emoji: '🏢' },
-  importado:   { label: 'Importado',    bg: '#64748b', emoji: '✈️' },
-  kit:         { label: 'Kit',          bg: '#00A8B4', emoji: '🎁' },
-  limitado:    { label: 'Edición ltd.', bg: '#be185d', emoji: '🔖' },
-};
 
 function badgesHtml(badges) {
   if (!badges || !badges.length) return '';
@@ -2766,6 +2752,8 @@ document.addEventListener('keydown', e => {
         impresion:      saved ? saved.impresion      : '',
         precioUnitario: saved ? saved.precioUnitario : '',
         total:          saved ? saved.total          : '',
+        marca_id:       p.marca_id || null,
+        badges:         Array.isArray(p.badges) ? [...p.badges] : [],
       };
     });
     localStorage.setItem('pp_propuesta_temp', JSON.stringify(productos));

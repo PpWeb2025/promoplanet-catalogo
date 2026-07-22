@@ -304,6 +304,7 @@ const STATIC_ALLOWED_FILES = new Set([
   '/Logo Mariposa PP Blanca.svg',
   '/Logo PP completo blanco.svg',
   '/Logo PP texto blanco.svg',
+  '/badges.js',
 ]);
 const STATIC_ALLOWED_DIRS = ['/firma/'];
 
