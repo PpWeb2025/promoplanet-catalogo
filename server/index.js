@@ -17,10 +17,11 @@ const REDIRECTS_301 = {
   '/oficina':              '/categoria/escritorio-y-oficina',
   '/categoria':            '/',
   '/bolsa-g552':           '/categoria/bolsos-y-mochilas',
-  '/producto/PP-435':      '/catalogo',
-  '/producto/PP-419':      '/catalogo',
-  '/producto/PP-437':      '/catalogo',
-  '/producto/PP-463':      '/catalogo',
+  '/producto/PP-435':      '/',
+  '/producto/PP-419':      '/',
+  '/producto/PP-437':      '/',
+  '/producto/PP-463':      '/',
+  '/catalogo':             '/',
 };
 
 const app = express();
@@ -280,10 +281,6 @@ app.get('/sustentable', async (req, res) => {
   const landing = LANDINGS.find(l => l.slug === 'sustentable');
   if (!landing) return render404(res);
   return renderLanding(res, landing, 'https://promoplanet.ar/sustentable');
-});
-
-app.get('/catalogo', (req, res) => {
-  renderSPA(res, '/catalogo');
 });
 
 const STATIC_CACHE = {
