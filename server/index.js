@@ -12,6 +12,15 @@ const { LANDINGS } = require('./categorias');
 const REDIRECTS_301 = {
   // '/mochila-porta-notebook-17-g1382': '/categoria/bolsos-y-mochilas',
   // '/es-ar/mochila-g1597':             '/categoria/bolsos-y-mochilas',
+  '/home':                 '/',
+  '/outdoor':              '/categoria/outdoors-y-fitness',
+  '/oficina':              '/categoria/escritorio-y-oficina',
+  '/categoria':            '/',
+  '/bolsa-g552':           '/categoria/bolsos-y-mochilas',
+  '/producto/PP-435':      '/catalogo',
+  '/producto/PP-419':      '/catalogo',
+  '/producto/PP-437':      '/catalogo',
+  '/producto/PP-463':      '/catalogo',
 };
 
 const app = express();
@@ -29,6 +38,13 @@ app.use(session({
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: false, limit: '20mb' }));
+
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
+  const cleanPath = req.path.replace(/\/$/, '') || '/';
+  if (REDIRECTS_301[cleanPath]) return res.redirect(301, REDIRECTS_301[cleanPath]);
+  next();
+});
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/marcas', require('./routes/marcas'));
@@ -331,8 +347,6 @@ function guardedStatic(req, res, next) {
 app.use(guardedStatic);
 
 app.get('*', (req, res) => {
-  const cleanPath = req.path.replace(/\/$/, '') || '/';
-  if (REDIRECTS_301[cleanPath]) return res.redirect(301, REDIRECTS_301[cleanPath]);
   render404(res);
 });
 
