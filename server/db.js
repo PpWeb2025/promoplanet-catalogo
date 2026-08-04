@@ -6,7 +6,7 @@ const KNOWN_COLUMNS = new Set([
   'id', 'codigo', 'nombre', 'categoria', 'rango', 'minimo', 'material',
   'medidas', 'colores', 'descripcion', 'tecnicas', 'destinatarios', 'ocasiones',
   'proveedor', 'notas', 'drive_code', 'subcategoria', 'estado', 'fecha_carga',
-  'emoji', 'badge', 'badges', 'fotos', 'precio_proveedor', 'marca_id',
+  'emoji', 'badge', 'badges', 'fotos', 'precio_proveedor', 'marca_id', 'created_at',
 ]);
 
 let client;
@@ -90,6 +90,7 @@ async function initDb() {
     "ALTER TABLE productos ADD COLUMN badges TEXT DEFAULT '[]'",
     "ALTER TABLE productos ADD COLUMN precio_proveedor REAL DEFAULT NULL",
     "ALTER TABLE productos ADD COLUMN marca_id INTEGER DEFAULT NULL",
+    "ALTER TABLE productos ADD COLUMN created_at TEXT DEFAULT '2020-01-01'",
   ]) {
     try { await client.execute(col); } catch {}
   }
@@ -150,6 +151,7 @@ async function insertProducto(data) {
   const row = serializeRow({
     ...data,
     fecha_carga: data.fecha_carga || new Date().toISOString(),
+    created_at: new Date().toISOString(),
   });
   delete row.id;
   const cols = Object.keys(row);
@@ -163,6 +165,7 @@ async function insertProducto(data) {
 async function updateProducto(id, data) {
   const row = serializeRow(data);
   delete row.id;
+  delete row.created_at;
   const cols = Object.keys(row);
   await client.execute({
     sql: `UPDATE productos SET ${cols.map(c => `${c} = ?`).join(', ')} WHERE id = ?`,

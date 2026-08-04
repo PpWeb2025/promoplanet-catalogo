@@ -14,19 +14,32 @@ fs.mkdirSync(UPLOAD_TMP, { recursive: true });
 // bufferizar fotos en memoria contribuia a los reinicios por OOM.
 const upload = multer({ dest: UPLOAD_TMP, limits: { fileSize: 10 * 1024 * 1024 } });
 
+const DIAS_NUEVO = 60;
+function _esNuevo(createdAt) {
+  if (!createdAt || createdAt === '2020-01-01') return false;
+  const ms = Date.now() - new Date(createdAt).getTime();
+  return ms >= 0 && ms < DIAS_NUEVO * 24 * 60 * 60 * 1000;
+}
+function _conBadgeNuevo(p) {
+  if (!_esNuevo(p.created_at)) return p;
+  const badges = Array.isArray(p.badges) ? p.badges : [];
+  if (badges.includes('nuevo')) return p;
+  return { ...p, badges: ['nuevo', ...badges] };
+}
+
 // Público — solo publicados
 router.get('/', async (req, res) => {
   const { cat, q } = req.query;
   if (!cat && !q) {
     res.set('Cache-Control', 'public, max-age=0, s-maxage=300');
   }
-  res.json(await db.getProductos({ soloPublicados: true, cat, q }));
+  res.json((await db.getProductos({ soloPublicados: true, cat, q })).map(_conBadgeNuevo));
 });
 
 router.get('/:id', async (req, res) => {
   const p = await db.getProductoById(req.params.id);
   if (!p || p.estado !== 'publicado') return res.status(404).json({ error: 'No encontrado' });
-  res.json(p);
+  res.json(_conBadgeNuevo(p));
 });
 
 // Admin — todos los productos
