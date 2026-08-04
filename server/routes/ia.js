@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const { GoogleGenAI } = require('@google/genai');
 const { requireAdmin } = require('../middleware/auth');
-const db = require('../db');
 
 async function fetchTextoDesdeURL(url) {
   const { default: fetch } = await import('node-fetch');
@@ -100,21 +99,139 @@ router.post('/adaptar', requireAdmin, async (req, res) => {
     texto?.trim() && !textoScraped && !textoManual ? 'texto' : null,
   ].filter(Boolean).join(' + ') || 'texto';
 
-  const muestra = (await db.getProductos({ soloPublicados: true }))
-    .filter(p => p.descripcion && p.descripcion.length > 40)
-    .slice(0, 8)
-    .map(p => `Producto: ${p.nombre}\nDescripción: ${p.descripcion}\nCategoría: ${CATEGORIAS[p.categoria] || p.categoria}${p.material ? `\nMaterial: ${p.material}` : ''}${p.tecnicas?.length ? `\nTécnicas: ${p.tecnicas.join(', ')}` : ''}`)
-    .join('\n\n---\n\n');
-
   const prompt = `Sos el asistente de contenido de PromoPlanet, una empresa argentina de productos promocionales corporativos.
 
 Tu tarea es analizar información de un producto de proveedor y adaptarla al estilo editorial de PromoPlanet.
 
 ## Ejemplos de estilo PromoPlanet
-${muestra || 'No hay productos de referencia aún — usá un tono profesional, directo y orientado a empresas argentinas.'}
+
+Estos cinco ejemplos definen el estilo. Imitá su registro, su longitud y su estructura. No imites su contenido.
+
+Cargador inalámbrico de bambú y RPET:
+El cargador tiene base de bambú, un material renovable, y detalles en RPET.
+Es compatible con carga inalámbrica QI y se conecta por USB.
+
+Es ideal para kits de onboarding y programas de reconocimiento.
+
+Libreta A6 de tapa dura:
+La libreta tiene tapa dura, formato A6 y hojas rayadas.
+Incluye banda elástica de cierre y señalador de tela al tono.
+
+Apropiada para capacitaciones y kits de bienvenida.
+
+Botella térmica deportiva:
+La botella es de acero inoxidable de doble pared, con capacidad de 550 ml.
+Mantiene frío hasta 24 horas y calor hasta 12.
+La tapa cuenta con pico reforzado y sistema antiderrame, y la base es antideslizante.
+Es libre de BPA y cuenta con aval del I.N.A.L.
+
+Recomendada para kits de bienvenida y acciones de bienestar.
+
+Mochila porta notebook:
+La mochila está confeccionada en poliéster engomado impermeable.
+Cuenta con compartimento para notebook de hasta 17 pulgadas, bolsillos de acceso rápido y banda de sujeción para valija.
+
+Suele elegirse para reconocimientos y entregas a equipos de liderazgo.
+
+Llavero metálico redondo:
+El llavero es de metal, de formato redondo.
+
+Es ideal para ferias, eventos y acciones de alcance amplio.
 
 ## Información del proveedor (${fuenteLabel})
 ${contenidoFuente}
+
+## DESCRIPCIÓN
+
+La descripción describe el producto como objeto: qué es, de qué está hecho, qué
+incluye, cómo funciona. No describe la operación comercial ni le vende nada al
+lector.
+
+### BLOQUE 1 — el producto
+
+De dos a cuatro oraciones.
+Contenido: material, componentes, capacidad, funcionamiento, certificaciones.
+Empezá con artículo y verbo: "La botella es de...", "El cuaderno tiene...",
+"La mochila está confeccionada en...".
+Nunca empieces con "Este" ni "Esta".
+Cada oración va en su propia línea, sin líneas en blanco entre ellas.
+
+### BLOQUE 2 — contexto de uso
+
+Una sola oración corta, precedida de una línea en blanco.
+Recomendá en qué tipo de entrega corporativa conviene el producto.
+
+Alterná la construcción de una descripción a otra:
+"Es ideal para...", "Apropiado para...", "Recomendado para...",
+"Suele elegirse para...". No uses siempre la misma.
+
+Lo que sigue tiene que ser un contexto concreto de entrega: kits de onboarding,
+kits de bienvenida, capacitaciones, reconocimientos, ferias, eventos, fechas
+especiales, acciones de bienestar. Nunca un valor abstracto de marca
+(profesionalismo, innovación, sustentabilidad, estilo de vida).
+
+Si vienen los campos Ocasiones y Destinatarios, usalos como base. Si están
+vacíos, deducí el contexto de la categoría del producto.
+
+Omití este bloque solamente si tendrías que inventar algo que los datos no
+respaldan. Una descripción de dos oraciones es correcta.
+
+### PROHIBIDO
+
+1. Adjetivos valorativos: elegante, sofisticado, moderno, práctico, distintivo,
+   versátil, exclusivo, premium, perfecto, innovador, funcional, consciente,
+   responsable. Si el adjetivo no se puede verificar mirando el producto, no va.
+   "Ideal" se admite únicamente en el bloque 2, seguido de un contexto concreto
+   de entrega. Nunca en el bloque 1.
+
+2. Fórmulas de cierre: "asociar tu marca con...", "el regalo corporativo ideal
+   para...", "una excelente opción para...", "un estilo de vida...", "un toque
+   de...", "en cada momento".
+
+3. Información de la operación comercial: cantidad mínima, precio, rango de
+   precio, plazos de entrega y técnicas de marcación o personalización. Tampoco
+   de forma indirecta: nada de "artículo de entrega masiva", "opción accesible",
+   "para grandes volúmenes". Esos datos tienen campos propios y cambian con el
+   tiempo.
+
+4. Medidas y colores. Tienen campos propios y no se repiten en el texto.
+
+5. Datos inventados: certificaciones, materiales, capacidades o funciones que no
+   aparezcan en la información del proveedor.
+
+6. Negrita, cursiva, viñetas, emojis, signo "¿" de apertura.
+
+7. Español neutro o peninsular. Usá "talle" (no "talla"), "cuaderno anillado"
+   (no "espiralado"), "entregas" (no "despachos"), "vos" (no "tú" ni "contigo").
+
+### MATERIALES ECO
+
+Si el material incluye bambú, corcho, algodón orgánico, PET reciclado, RPET,
+papel reciclado, trigo o PLA, identificalo con una aclaración de tres o cuatro
+palabras dentro de la misma oración donde nombrás el material. Por ejemplo:
+"base de bambú, un material renovable" o "cuerpo de PET reciclado".
+No expliques por qué el material es renovable ni le dediques una oración aparte.
+No uses etiquetas vacías: "consciente", "responsable", "amigable con el planeta".
+
+Calibrá el alcance de la afirmación:
+- Si el material eco es el cuerpo principal del producto, podés decir que el
+  producto es de ese material.
+- Si es un componente o un detalle (tapa, aplique, tapón, manija), atribuí la
+  característica solo a esa parte. Nunca digas que el producto entero es
+  ecológico o sustentable cuando el resto es plástico, símil cuero, poliéster
+  o aluminio.
+
+El mismo criterio vale para el badge "ecofriendly": no lo sugieras si lo eco es
+apenas un detalle del producto.
+
+Nunca menciones certificaciones (FSC, GRS, OEKO-TEX, GOTS) salvo que estén
+explícitas en los datos del proveedor.
+
+### FORMATO DE LA DESCRIPCIÓN
+
+Cada oración del bloque 1 va en su propia línea.
+Entre el bloque 1 y el bloque 2 va una línea en blanco.
+Respetá esos saltos de línea en el valor del campo "descripcion".
 
 ## Reglas de formato de campos
 
@@ -138,7 +255,7 @@ ${contenidoFuente}
 ## Tu respuesta debe ser un JSON válido con esta estructura exacta:
 {
   "nombre": "Nombre del producto limpio y comercial (sin código ni marca de proveedor)",
-  "descripcion": "Descripción en el estilo PromoPlanet: 2-3 oraciones, tono profesional, orientada a empresas, resalta el valor del producto como regalo o artículo promocional. En español rioplatense.",
+  "descripcion": "Ver la sección DESCRIPCIÓN de este prompt.",
   "material": "Material principal del producto",
   "medidas": "Medidas formateadas según las reglas de formato, o cadena vacía si no hay.",
   "colores": "Colores formateados según las reglas de formato, o cadena vacía si no hay.",
