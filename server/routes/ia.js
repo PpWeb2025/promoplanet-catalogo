@@ -108,19 +108,19 @@ Tu tarea es analizar información de un producto de proveedor y adaptarla al est
 Estos cinco ejemplos definen el estilo. Imitá su registro, su longitud y su estructura. No imites su contenido.
 
 Cargador inalámbrico de bambú y RPET:
-El cargador tiene base de bambú, un material renovable, y detalles en RPET.
+Cargador con base de bambú, un material renovable, y detalles en RPET.
 Es compatible con carga inalámbrica QI y se conecta por USB.
 
 Es ideal para kits de onboarding y programas de reconocimiento.
 
 Libreta A6 de tapa dura:
-La libreta tiene tapa dura, formato A6 y hojas rayadas.
+Libreta con tapa dura, formato A6 y hojas rayadas.
 Incluye banda elástica de cierre y señalador de tela al tono.
 
 Apropiada para capacitaciones y kits de bienvenida.
 
 Botella térmica deportiva:
-La botella es de acero inoxidable de doble pared, con capacidad de 550 ml.
+Botella de acero inoxidable de doble pared, con capacidad de 550 ml.
 Mantiene frío hasta 24 horas y calor hasta 12.
 La tapa cuenta con pico reforzado y sistema antiderrame, y la base es antideslizante.
 Es libre de BPA y cuenta con aval del I.N.A.L.
@@ -128,13 +128,13 @@ Es libre de BPA y cuenta con aval del I.N.A.L.
 Recomendada para kits de bienvenida y acciones de bienestar.
 
 Mochila porta notebook:
-La mochila está confeccionada en poliéster engomado impermeable.
+Mochila confeccionada en poliéster engomado impermeable.
 Cuenta con compartimento para notebook de hasta 17 pulgadas, bolsillos de acceso rápido y banda de sujeción para valija.
 
 Suele elegirse para reconocimientos y entregas a equipos de liderazgo.
 
 Llavero metálico redondo:
-El llavero es de metal, de formato redondo.
+Llavero de metal, de formato redondo.
 
 Es ideal para ferias, eventos y acciones de alcance amplio.
 
@@ -151,9 +151,8 @@ lector.
 
 De dos a cuatro oraciones.
 Contenido: material, componentes, capacidad, funcionamiento, certificaciones.
-Empezá con artículo y verbo: "La botella es de...", "El cuaderno tiene...",
-"La mochila está confeccionada en...".
-Nunca empieces con "Este" ni "Esta".
+Empezá directo con el sustantivo del producto, sin artículo inicial: "Botella de acero...", "Libreta con tapa...", "Mochila confeccionada en...".
+Nunca empieces con artículo ("La", "El", "Los", "Las"), ni con "Este" ni "Esta".
 Cada oración va en su propia línea, sin líneas en blanco entre ellas.
 
 ### BLOQUE 2 — contexto de uso
@@ -194,7 +193,8 @@ respaldan. Una descripción de dos oraciones es correcta.
    "para grandes volúmenes". Esos datos tienen campos propios y cambian con el
    tiempo.
 
-4. Medidas y colores. Tienen campos propios y no se repiten en el texto.
+4. Colores. Tienen campo propio y no se repiten en el texto.
+   Gramajes y medidas físicas: se pueden incluir en la descripción SOLO si el texto o link del proveedor los menciona explícitamente. Si la fuente no los da, omitirlos por completo — nunca inventarlos ni estimarlos. Un dato técnico omitido no daña; uno inventado sí.
 
 5. Datos inventados: certificaciones, materiales, capacidades o funciones que no
    aparezcan en la información del proveedor.
