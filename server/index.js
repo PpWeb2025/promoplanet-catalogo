@@ -12,16 +12,29 @@ const { LANDINGS } = require('./categorias');
 const REDIRECTS_301 = {
   // '/mochila-porta-notebook-17-g1382': '/categoria/bolsos-y-mochilas',
   // '/es-ar/mochila-g1597':             '/categoria/bolsos-y-mochilas',
-  '/home':                 '/',
-  '/outdoor':              '/categoria/outdoors-y-fitness',
-  '/oficina':              '/categoria/escritorio-y-oficina',
-  '/categoria':            '/',
-  '/bolsa-g552':           '/categoria/bolsos-y-mochilas',
-  '/producto/PP-435':      '/',
-  '/producto/PP-419':      '/',
-  '/producto/PP-437':      '/',
-  '/producto/PP-463':      '/',
-  '/catalogo':             '/',
+  '/home':                    '/',
+  // Slugs viejos de Wix (formato -gNNN / prefijo /es-ar/)
+  '/jarro-termico-g141':      '/categoria/drinkware',
+  '/botella-g420':            '/categoria/drinkware',
+  '/es-ar/posavasos-g210r':   '/categoria/drinkware',
+  '/mochila-g724':            '/categoria/bolsos-y-mochilas',
+  '/bolsa-g552':              '/categoria/bolsos-y-mochilas',
+  '/cooler-g376':             '/categoria/outdoors-y-fitness',
+  '/cooler-g103':             '/categoria/outdoors-y-fitness',
+  // Slugs de categoría viejos
+  '/outdoor':                 '/categoria/outdoors-y-fitness',
+  '/oficina':                 '/categoria/escritorio-y-oficina',
+  // Producto dado de baja
+  '/producto/PP-464':         '/',
+  // Rutas de colección sin slug
+  '/categoria':               '/',
+  '/ocasion':                 '/',
+  // Misc
+  '/producto/PP-435':         '/',
+  '/producto/PP-419':         '/',
+  '/producto/PP-437':         '/',
+  '/producto/PP-463':         '/',
+  '/catalogo':                '/',
 };
 
 const app = express();
@@ -58,7 +71,7 @@ app.use('/api/clientes', require('./routes/clientes'));
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send('User-agent: *\nAllow: /\nSitemap: https://promoplanet.ar/sitemap.xml');
+  res.send('User-agent: *\nDisallow: /api/\nAllow: /\nSitemap: https://promoplanet.ar/sitemap.xml');
 });
 
 app.get('/sitemap.xml', async (req, res) => {
