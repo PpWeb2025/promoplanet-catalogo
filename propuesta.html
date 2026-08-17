@@ -260,6 +260,17 @@
     font-size: 0.7rem; font-weight: 600; color: #fff; line-height: 1.5;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
+.modal-login-overlay{position:fixed;inset:0;background:rgba(0,52,113,.55);display:flex;align-items:center;justify-content:center;z-index:9999}
+.modal-login-overlay[hidden]{display:none}
+.modal-login-caja{background:#fff;border-radius:10px;padding:24px;width:min(360px,90vw);box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.modal-login-caja h3{margin:0 0 8px;color:#003471;font-size:1.1rem}
+.modal-login-caja p{margin:0 0 16px;font-size:.9rem;color:#555}
+.modal-login-caja label{display:block;font-size:.85rem;color:#003471;margin-bottom:4px;font-weight:600}
+.modal-login-caja input{width:100%;padding:8px 10px;margin-bottom:12px;border:1px solid #ccd;border-radius:6px;font-size:.95rem}
+.modal-login-error{color:#c0392b;font-size:.85rem;margin:0 0 12px!important}
+.modal-login-error[hidden]{display:none}
+.modal-login-acciones{display:flex;gap:8px;justify-content:flex-end}
+@media print{.modal-login-overlay{display:none!important}}
 </style>
 <script src="/badges.js"></script>
 </head>
@@ -716,19 +727,60 @@ function escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-async function intentarLogin() {
-  const username = prompt('Tu sesión venció. Usuario:');
-  if (username === null) return false;
-  const pwd = prompt('Contraseña:');
-  if (pwd === null) return false;
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password: pwd }),
-    });
-    return res.ok;
-  } catch(e) { return false; }
+function intentarLogin() {
+  return new Promise((resolve) => {
+    const modal    = document.getElementById('modal-login');
+    const form     = document.getElementById('form-login');
+    const usuario  = document.getElementById('login-usuario');
+    const clave    = document.getElementById('login-clave');
+    const error    = document.getElementById('login-error');
+    const cancelar = document.getElementById('login-cancelar');
+    const btnEnviar = document.getElementById('login-enviar');
+
+    error.hidden = true;
+    clave.value  = '';
+    modal.hidden = false;
+    usuario.focus();
+
+    function cerrar(resultado) {
+      modal.hidden = true;
+      clave.value  = '';
+      form.removeEventListener('submit', onSubmit);
+      cancelar.removeEventListener('click', onCancel);
+      document.removeEventListener('keydown', onKey);
+      resolve(resultado);
+    }
+
+    async function onSubmit(ev) {
+      ev.preventDefault();
+      btnEnviar.disabled = true;
+      error.hidden = true;
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: usuario.value, password: clave.value }),
+        });
+        if (res.ok) { cerrar(true); return; }
+        error.textContent = 'Usuario o contraseña incorrectos.';
+        error.hidden = false;
+        clave.value = '';
+        clave.focus();
+      } catch (e) {
+        error.textContent = 'No se pudo conectar con el servidor.';
+        error.hidden = false;
+      } finally {
+        btnEnviar.disabled = false;
+      }
+    }
+
+    function onCancel() { cerrar(false); }
+    function onKey(ev) { if (ev.key === 'Escape') cerrar(false); }
+
+    form.addEventListener('submit', onSubmit);
+    cancelar.addEventListener('click', onCancel);
+    document.addEventListener('keydown', onKey);
+  });
 }
 
 async function guardarYVolver() {
@@ -738,15 +790,28 @@ async function guardarYVolver() {
     productos:    productos,
     estado:       'borrador',
   };
-  try {
+
+  function enviarPropuesta() {
     const url    = propuestaId ? `/api/propuestas/${propuestaId}` : '/api/propuestas';
     const method = propuestaId ? 'PUT' : 'POST';
-    const res = await fetch(url, {
+    return fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+  }
+
+  try {
+    let res = await enviarPropuesta();
+
+    if (res.status === 401) {
+      const loginOk = await intentarLogin();
+      if (!loginOk) return;
+      res = await enviarPropuesta();
+    }
+
     if (!res.ok) throw new Error(res.status);
+
     if (!propuestaId) {
       const created = await res.json();
       propuestaId = created.id;
@@ -987,5 +1052,22 @@ function imprimirPropuesta() {
   window.print();
 }
 </script>
+
+<!-- Modal de re-login (sesión vencida) -->
+<div id="modal-login" class="modal-login-overlay" hidden>
+  <form id="form-login" class="modal-login-caja">
+    <h3>Tu sesión venció</h3>
+    <p>Ingresá de nuevo para continuar. No vas a perder lo que cargaste.</p>
+    <label for="login-usuario">Usuario</label>
+    <input id="login-usuario" name="username" type="text" autocomplete="username" required>
+    <label for="login-clave">Contraseña</label>
+    <input id="login-clave" name="password" type="password" autocomplete="current-password" required>
+    <p id="login-error" class="modal-login-error" hidden>Usuario o contraseña incorrectos.</p>
+    <div class="modal-login-acciones">
+      <button type="button" id="login-cancelar" class="btn btn-sm">Cancelar</button>
+      <button type="submit" id="login-enviar" class="btn btn-sm btn-celeste">Ingresar</button>
+    </div>
+  </form>
+</div>
 </body>
 </html>
