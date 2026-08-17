@@ -25,3 +25,9 @@ uploads/
 
 # snippets de desarrollo
 snippet_*.html
+
+# Config local de Claude Code
+.claude/
+
+# Temporales con nombre mangled (rutas Windows desde bash)
+C:Users*
