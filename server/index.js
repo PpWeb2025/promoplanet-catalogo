@@ -69,6 +69,7 @@ app.use('/api/consultas', require('./routes/consultas'));
 app.use('/api/ia', require('./routes/ia'));
 app.use('/api/suscripciones', require('./routes/suscripciones'));
 app.use('/api/clientes', require('./routes/clientes'));
+app.use('/api/propuestas', require('./routes/propuestas'));
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
@@ -316,6 +317,7 @@ const STATIC_ALLOWED_FILES = new Set([
   '/index.html',
   '/admin.html',
   '/propuesta.html',
+  '/propuestas.html',
   '/favicon.ico',
   '/favicon-16x16.png',
   '/favicon-32x32.png',

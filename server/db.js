@@ -125,6 +125,19 @@ async function initDb() {
 
   await client.execute(`ALTER TABLE clientes ADD COLUMN produccion TEXT`)
     .catch(e => { if (!String(e.message || e).includes('duplicate column')) console.error('ALTER clientes produccion:', e); });
+
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS propuestas (
+      id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+      cliente_id           INTEGER,
+      cliente_nombre       TEXT DEFAULT '',
+      estado               TEXT NOT NULL DEFAULT 'borrador',
+      productos            TEXT DEFAULT '[]',
+      cliente_form         TEXT DEFAULT '{}',
+      fecha_creacion       TEXT NOT NULL,
+      fecha_actualizacion  TEXT NOT NULL
+    )
+  `);
 }
 
 async function getProductos({ soloPublicados = false, cat = null, q = null } = {}) {
@@ -250,9 +263,69 @@ async function deleteCliente(id) {
   await client.execute({ sql: 'DELETE FROM clientes WHERE id = ?', args: [id] });
 }
 
+async function getPropuestas() {
+  return query(
+    `SELECT id, cliente_id, cliente_nombre, estado, fecha_creacion, fecha_actualizacion,
+            COALESCE(json_array_length(productos), 0) AS cantidad_productos
+     FROM propuestas
+     ORDER BY fecha_actualizacion DESC`
+  );
+}
+
+async function getPropuestaById(id) {
+  const row = await queryOne('SELECT * FROM propuestas WHERE id = ?', [id]);
+  if (!row) return null;
+  try { row.productos    = JSON.parse(row.productos    || '[]'); } catch { row.productos    = []; }
+  try { row.cliente_form = JSON.parse(row.cliente_form || '{}'); } catch { row.cliente_form = {}; }
+  return row;
+}
+
+async function insertPropuesta(data) {
+  const now = new Date().toISOString();
+  const clienteNombre = (data.cliente_form && data.cliente_form.razon_social) || data.cliente_nombre || '';
+  const result = await client.execute({
+    sql: `INSERT INTO propuestas (cliente_id, cliente_nombre, estado, productos, cliente_form, fecha_creacion, fecha_actualizacion)
+          VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    args: [
+      data.cliente_id || null,
+      clienteNombre,
+      data.estado || 'borrador',
+      JSON.stringify(data.productos    || []),
+      JSON.stringify(data.cliente_form || {}),
+      now,
+      now,
+    ],
+  });
+  return getPropuestaById(Number(result.lastInsertRowid));
+}
+
+async function updatePropuesta(id, data) {
+  const now = new Date().toISOString();
+  const clienteNombre = (data.cliente_form && data.cliente_form.razon_social) || data.cliente_nombre || '';
+  await client.execute({
+    sql: `UPDATE propuestas SET cliente_id = ?, cliente_nombre = ?, estado = ?, productos = ?, cliente_form = ?, fecha_actualizacion = ?
+          WHERE id = ?`,
+    args: [
+      data.cliente_id !== undefined ? data.cliente_id : null,
+      clienteNombre,
+      data.estado || 'borrador',
+      JSON.stringify(data.productos    || []),
+      JSON.stringify(data.cliente_form || {}),
+      now,
+      id,
+    ],
+  });
+  return getPropuestaById(id);
+}
+
+async function deletePropuesta(id) {
+  await client.execute({ sql: 'DELETE FROM propuestas WHERE id = ?', args: [id] });
+}
+
 module.exports = {
   initDb,
   getProductos, getProductoById, insertProducto, updateProducto, deleteProducto, getProductoByCodigo,
   getMarcas, getMarcaById, insertMarca, updateMarca, deleteMarca,
   getClientes, getClienteById, insertCliente, updateCliente, deleteCliente,
+  getPropuestas, getPropuestaById, insertPropuesta, updatePropuesta, deletePropuesta,
 };

@@ -2658,7 +2658,8 @@ document.addEventListener('keydown', e => {
 </style>
 
 <div class="admin-banner" id="admin-banner">
-  ⚙️ Modo propuesta activo — seleccioná productos del catálogo y hacé clic en "Generar propuesta"
+  <span id="admin-banner-msg">⚙️ Modo propuesta activo — seleccioná productos del catálogo y hacé clic en "Generar propuesta"</span>
+  <a onclick="window.open('/propuestas.html', '_blank')">📋 Propuestas guardadas</a>
   <a onclick="salirModoAdmin()">Salir</a>
 </div>
 
@@ -2706,6 +2707,10 @@ document.addEventListener('keydown', e => {
       document.body.style.paddingTop = '26px';
       const nav = document.querySelector('nav');
       if (nav) nav.style.top = '26px';
+      const msgEl = document.getElementById('admin-banner-msg');
+      if (msgEl && localStorage.getItem('pp_propuesta_actual_id')) {
+        msgEl.textContent = '⚙️ Modo propuesta activo — tenés una propuesta pendiente sin terminar (revisala en Propuestas guardadas)';
+      }
     }
 
     const bar = document.querySelector('.presup-bar');
@@ -2757,12 +2762,14 @@ document.addEventListener('keydown', e => {
       };
     });
     localStorage.setItem('pp_propuesta_temp', JSON.stringify(productos));
-    window.open('/propuesta.html', '_blank');
+    const idActual = localStorage.getItem('pp_propuesta_actual_id');
+    window.open(idActual ? `/propuesta.html?id=${idActual}` : '/propuesta.html', '_blank');
   }
 
   /* ── Salir ────────────────────────────────────────────── */
   window.salirModoAdmin = function () {
     sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem('pp_propuesta_actual_id');
     location.reload();
   };
 })();

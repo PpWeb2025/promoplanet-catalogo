@@ -401,27 +401,72 @@ const DEFAULT_COND = {
 let clienteId = null;
 let productos = [];
 let MARCAS_MAP = {};
+let propuestaId = null;
 
 /* ════════════════════════════════════════════════
    INIT
 ════════════════════════════════════════════════ */
 (async function init() {
-  try { productos = JSON.parse(localStorage.getItem(TEMP_KEY) || '[]'); } catch(e) {}
+  const urlId = new URLSearchParams(location.search).get('id');
 
-  try {
-    const [clientesRes, marcasRes] = await Promise.all([fetch('/api/clientes'), fetch('/api/marcas')]);
-    if (clientesRes.ok) renderClientSelect(await clientesRes.json());
-    if (marcasRes.ok) {
-      const list = await marcasRes.json();
-      MARCAS_MAP = Object.fromEntries(list.map(m => [m.id, m]));
+  let tempProductos = [];
+  try { tempProductos = JSON.parse(localStorage.getItem(TEMP_KEY) || '[]'); } catch(e) {}
+
+  const [clientesRes, marcasRes, propuestaRes] = await Promise.all([
+    fetch('/api/clientes').catch(() => null),
+    fetch('/api/marcas').catch(() => null),
+    urlId ? fetch(`/api/propuestas/${urlId}`).catch(() => null) : Promise.resolve(null),
+  ]);
+
+  if (marcasRes && marcasRes.ok) {
+    const list = await marcasRes.json();
+    MARCAS_MAP = Object.fromEntries(list.map(m => [m.id, m]));
+  }
+
+  let savedPropuesta = null;
+  if (propuestaRes && propuestaRes.status === 401) {
+    const loginOk = await intentarLogin();
+    if (loginOk) {
+      const retry = await fetch(`/api/propuestas/${urlId}`).catch(() => null);
+      if (retry && retry.ok) {
+        try { savedPropuesta = await retry.json(); } catch(e) {}
+      } else if (retry && retry.status === 404) {
+        localStorage.removeItem('pp_propuesta_actual_id');
+      } else {
+        alert('No se pudo verificar tu sesión. Se muestra la última versión guardada en este navegador, que puede no estar actualizada.');
+      }
+    } else {
+      alert('No se pudo verificar tu sesión. Se muestra la última versión guardada en este navegador, que puede no estar actualizada.');
     }
-  } catch(e) {}
+  } else if (propuestaRes && propuestaRes.ok) {
+    try { savedPropuesta = await propuestaRes.json(); } catch(e) {}
+  } else if (propuestaRes && propuestaRes.status === 404) {
+    localStorage.removeItem('pp_propuesta_actual_id');
+  }
+
+  if (savedPropuesta) {
+    propuestaId = savedPropuesta.id;
+    localStorage.setItem('pp_propuesta_actual_id', propuestaId);
+    clienteId = savedPropuesta.cliente_id || null;
+    const savedIds = new Set((savedPropuesta.productos || []).map(p => p.id));
+    const extras = tempProductos.filter(p => !savedIds.has(p.id));
+    productos = [...(savedPropuesta.productos || []), ...extras];
+    localStorage.removeItem(TEMP_KEY);
+  } else {
+    productos = tempProductos;
+  }
+
+  if (clientesRes && clientesRes.ok) renderClientSelect(await clientesRes.json());
 
   resetClienteForm();
-  try {
-    const saved = localStorage.getItem('pp_propuesta_cliente');
-    if (saved) setClienteForm(JSON.parse(saved));
-  } catch(e) {}
+  if (savedPropuesta && savedPropuesta.cliente_form) {
+    setClienteForm(savedPropuesta.cliente_form);
+  } else {
+    try {
+      const saved = localStorage.getItem('pp_propuesta_cliente');
+      if (saved) setClienteForm(JSON.parse(saved));
+    } catch(e) {}
+  }
   renderProductos();
   actualizarAcciones();
 })();
@@ -671,9 +716,47 @@ function escHtml(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function guardarYVolver() {
-  localStorage.setItem(TEMP_KEY, JSON.stringify(productos));
-  localStorage.setItem('pp_propuesta_cliente', JSON.stringify(leerClienteForm()));
+async function intentarLogin() {
+  const username = prompt('Tu sesión venció. Usuario:');
+  if (username === null) return false;
+  const pwd = prompt('Contraseña:');
+  if (pwd === null) return false;
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password: pwd }),
+    });
+    return res.ok;
+  } catch(e) { return false; }
+}
+
+async function guardarYVolver() {
+  const payload = {
+    cliente_id:   clienteId || null,
+    cliente_form: leerClienteForm(),
+    productos:    productos,
+    estado:       'borrador',
+  };
+  try {
+    const url    = propuestaId ? `/api/propuestas/${propuestaId}` : '/api/propuestas';
+    const method = propuestaId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(res.status);
+    if (!propuestaId) {
+      const created = await res.json();
+      propuestaId = created.id;
+      localStorage.setItem('pp_propuesta_actual_id', propuestaId);
+    }
+  } catch(e) {
+    alert('No se pudo guardar la propuesta. Revisá tu conexión e intentá de nuevo.');
+    return;
+  }
+  localStorage.removeItem(TEMP_KEY);
   location.href = '/';
 }
 
