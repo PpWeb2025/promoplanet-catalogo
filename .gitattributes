@@ -1,0 +1,19 @@
+# Normalización de finales de línea.
+# El repositorio guarda siempre LF; el working tree también usa LF,
+# de modo que no hay conversión en ningún momento y Windows deja de
+# generar diffs fantasma contra Render/Linux.
+
+* text=auto eol=lf
+
+# Texto explícito (no depender de la heurística de git)
+*.js     text eol=lf
+*.py     text eol=lf
+*.html   text eol=lf
+*.svg    text eol=lf
+*.json   text eol=lf
+*.md     text eol=lf
+*.ipynb  text eol=lf
+
+# Binarios: git no los toca nunca
+*.png    binary
+*.ico    binary
