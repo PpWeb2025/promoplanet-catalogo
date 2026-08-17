@@ -24,6 +24,7 @@ const REDIRECTS_301 = {
   // Slugs de categoría viejos
   '/outdoor':                 '/categoria/outdoors-y-fitness',
   '/oficina':                 '/categoria/escritorio-y-oficina',
+  '/llaveros':                '/categoria/llaveros-y-accesorios',
   // Producto dado de baja
   '/producto/PP-464':         '/',
   // Rutas de colección sin slug
