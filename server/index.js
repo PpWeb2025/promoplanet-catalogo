@@ -43,12 +43,19 @@ const PORT = process.env.PORT || 3000;
 
 app.use(require('./middleware/redirectOnrender'));
 
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET) {
+  throw new Error('Falta SESSION_SECRET. Definila en el .env o en Render.');
+}
+
+app.set('trust proxy', 1);
+
 // MemoryStore es suficiente para uso local de un solo usuario
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'fallback-secret',
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { httpOnly: true, maxAge: 8 * 60 * 60 * 1000 }, // 8h
+    cookie: { httpOnly: true, maxAge: 8 * 60 * 60 * 1000, secure: 'auto', sameSite: 'lax' }, // 8h
 }));
 
 app.use(express.json({ limit: '20mb' }));
