@@ -987,12 +987,21 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
       ? p.tramos
       : [{ impresion: p.impresion, cantidad: p.cantidad, precioUnitario: p.precioUnitario, total: p.total }];
 
-    const filasPrecio = tramos.map(t => `<tr>
-          <td>${escHtml(t.impresion) || '—'}</td>
+    let impresionPrevia = null;
+    const filasPrecio = tramos.map(t => {
+      const imp = escHtml(t.impresion);
+      let celdaImp;
+      if (!imp) celdaImp = '—';
+      else if (imp === impresionPrevia) celdaImp = '';
+      else celdaImp = imp;
+      impresionPrevia = imp;
+      return `<tr>
+          <td>${celdaImp}</td>
           <td class="col-r">${escHtml(t.cantidad) || '—'}</td>
           <td class="col-r">${formatARS(t.precioUnitario)}</td>
           <td class="col-r" style="font-weight:600">${formatARS(t.total)}</td>
-        </tr>`).join('');
+        </tr>`;
+    }).join('');
 
     const notaTramos = tramos.length > 1
       ? '<div class="prop-price-note">Las cantidades indicadas son alternativas de cotización.</div>'
