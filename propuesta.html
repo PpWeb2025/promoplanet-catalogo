@@ -111,6 +111,23 @@
   .btn-quitar { background: none; border: none; color: var(--texto-suave); cursor: pointer; font-size: 1rem; padding: 4px; border-radius: 4px; transition: color 0.15s; }
   .btn-quitar:hover { color: #c0392b; }
 
+  /* ── TRAMOS DE CANTIDAD ── */
+  .tramo-row {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 26px;
+    gap: 0.65rem; align-items: end; margin-bottom: 0.5rem;
+  }
+  .tramo-row:last-child { margin-bottom: 0; }
+  .tramo-row .fld { margin-bottom: 0; }
+  .tramo-row:not(:first-child) .tramo-label { display: none; }
+  .tramo-quitar { display: flex; align-items: center; justify-content: center; height: 38px; }
+  .btn-add-tramo {
+    margin-top: 0.7rem; padding: 0.35rem 0.8rem; border-radius: 6px;
+    border: 1.5px dashed var(--gris-borde); background: var(--blanco);
+    color: var(--texto-suave); font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  }
+  .btn-add-tramo:hover { border-color: var(--celeste); color: var(--celeste); border-style: solid; }
+
   /* ── ACCIONES ── */
   .acciones-bar {
     position: sticky; bottom: 0; z-index: 50;
@@ -217,6 +234,8 @@
   .prop-price-table td { padding: 7px 13px; }
   .prop-price-table th { background: #f2f2f2; font-weight: 600; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; text-align: left; }
   .prop-price-table .col-r { text-align: right; }
+  .prop-price-table tbody tr + tr td { border-top: 1px solid #eee; }
+  .prop-price-note { font-size: 10.5px; color: #777; font-style: italic; margin-top: 5px; }
 
   .prop-spacer-cell { height: 0; }
   .prop-footer-cell { height: 0; }
@@ -243,6 +262,11 @@
   @media (max-width: 800px) {
     .layout { grid-template-columns: 1fr; }
     .fld-row-3 { grid-template-columns: 1fr 1fr; }
+    .tramo-row { grid-template-columns: 1fr 1fr; }
+    .tramo-row > .fld:first-child { grid-column: 1 / -1; }
+    .tramo-row:not(:first-child) { border-top: 1px dashed var(--gris-borde); padding-top: 0.75rem; }
+    .tramo-row:not(:first-child) .tramo-label { display: block; }
+    .tramo-quitar { grid-column: 1 / -1; justify-content: flex-end; height: auto; }
   }
 
   /* ── Marca y badges en propuesta ── */
@@ -467,6 +491,8 @@ let propuestaId = null;
     productos = tempProductos;
   }
 
+  productos.forEach(normalizarProducto);
+
   if (clientesRes && clientesRes.ok) renderClientSelect(await clientesRes.json());
 
   resetClienteForm();
@@ -666,27 +692,66 @@ function renderProductos() {
         <button class="btn-quitar" onclick="quitarProducto(${i})" title="Quitar">✕</button>
       </div>
       <div class="producto-row-fields">
-        <div class="fld-row-3">
-          <div class="fld">
-            <label>Tipo de impresión</label>
-            <input type="text" value="${escHtml(p.impresion)}" placeholder="Ej: DTF Full Color" oninput="syncProd(${i},'impresion',this.value)" />
-          </div>
-          <div class="fld">
-            <label>Cantidad</label>
-            <input type="number" value="${p.cantidad}" placeholder="0" min="0" oninput="syncProd(${i},'cantidad',this.value); recalcTotal(${i})" />
-          </div>
-          <div class="fld">
-            <label>Precio/U. (AR$)</label>
-            <input type="number" value="${p.precioUnitario}" placeholder="0,00" step="0.01" oninput="syncProd(${i},'precioUnitario',this.value); recalcTotal(${i})" />
-          </div>
-          <div class="fld">
-            <label>Total (AR$)</label>
-            <input type="number" id="p-total-${i}" value="${p.total}" placeholder="0,00" step="0.01" oninput="syncProd(${i},'total',this.value)" />
-          </div>
-        </div>
+        <div class="tramos" id="tramos-${i}">${tramosHtml(i)}</div>
+        <button type="button" class="btn-add-tramo" onclick="agregarTramo(${i})">+ Agregar cantidad</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function tramosHtml(i) {
+  const tramos = productos[i].tramos || [];
+  const varios = tramos.length > 1;
+  return tramos.map((t, j) => `
+    <div class="tramo-row">
+      <div class="fld">
+        <label class="tramo-label">Tipo de impresión</label>
+        <input type="text" value="${escHtml(t.impresion)}" placeholder="Ej: DTF Full Color"
+               oninput="syncTramo(${i},${j},'impresion',this.value)" />
+      </div>
+      <div class="fld">
+        <label class="tramo-label">Cantidad</label>
+        <input type="number" value="${escHtml(t.cantidad)}" placeholder="0" min="0"
+               oninput="syncTramo(${i},${j},'cantidad',this.value); recalcTramo(${i},${j})" />
+      </div>
+      <div class="fld">
+        <label class="tramo-label">Precio/U. (AR$)</label>
+        <input type="number" value="${escHtml(t.precioUnitario)}" placeholder="0,00" step="0.01"
+               oninput="syncTramo(${i},${j},'precioUnitario',this.value); recalcTramo(${i},${j})" />
+      </div>
+      <div class="fld">
+        <label class="tramo-label">Total (AR$)</label>
+        <input type="number" id="t-total-${i}-${j}" value="${escHtml(t.total)}" placeholder="0,00" step="0.01"
+               oninput="syncTramo(${i},${j},'total',this.value)" />
+      </div>
+      <div class="tramo-quitar">
+        ${varios ? `<button type="button" class="btn-quitar" onclick="quitarTramo(${i},${j})" title="Quitar esta cantidad">✕</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function nuevoTramo(base = {}) {
+  return {
+    impresion:      base.impresion      ?? '',
+    cantidad:       base.cantidad       ?? '',
+    precioUnitario: base.precioUnitario ?? '',
+    total:          base.total          ?? '',
+  };
+}
+
+function normalizarProducto(p) {
+  p.tramos = Array.isArray(p.tramos) && p.tramos.length
+    ? p.tramos.map(t => nuevoTramo(t))
+    : [nuevoTramo(p)];
+  return p;
+}
+
+function sincronizarCamposPlanos(p) {
+  const t = (p.tramos && p.tramos[0]) || {};
+  p.impresion      = t.impresion      ?? '';
+  p.cantidad       = t.cantidad       ?? '';
+  p.precioUnitario = t.precioUnitario ?? '';
+  p.total          = t.total          ?? '';
 }
 
 function syncProd(i, campo, val) {
@@ -694,16 +759,51 @@ function syncProd(i, campo, val) {
   actualizarAcciones();
 }
 
-function recalcTotal(i) {
-  const cant = parseFloat(productos[i].cantidad);
-  const pu   = parseFloat(productos[i].precioUnitario);
+function syncTramo(i, j, campo, val) {
+  productos[i].tramos[j][campo] = val;
+  actualizarAcciones();
+}
+
+function recalcTramo(i, j) {
+  const t = productos[i].tramos[j];
+  const cant = parseFloat(t.cantidad);
+  const pu   = parseFloat(t.precioUnitario);
   if (cant > 0 && pu > 0) {
     const tot = (cant * pu).toFixed(2);
-    productos[i].total = tot;
-    const el = document.getElementById(`p-total-${i}`);
+    t.total = tot;
+    const el = document.getElementById(`t-total-${i}-${j}`);
     if (el) el.value = tot;
   }
   actualizarAcciones();
+}
+
+function refrescarTramos(i) {
+  const cont = document.getElementById(`tramos-${i}`);
+  if (cont) cont.innerHTML = tramosHtml(i);
+  actualizarAcciones();
+}
+
+function agregarTramo(i) {
+  const tramos = productos[i].tramos;
+  const ultimo = tramos[tramos.length - 1] || {};
+  tramos.push(nuevoTramo({ impresion: ultimo.impresion }));
+  refrescarTramos(i);
+  const cont = document.getElementById(`tramos-${i}`);
+  if (cont) {
+    const filas = cont.querySelectorAll('.tramo-row');
+    const ultima = filas[filas.length - 1];
+    if (ultima) {
+      const campoCantidad = ultima.querySelector('input[type="number"]');
+      if (campoCantidad) campoCantidad.focus();
+    }
+  }
+}
+
+function quitarTramo(i, j) {
+  const tramos = productos[i].tramos;
+  if (tramos.length <= 1) return;
+  tramos.splice(j, 1);
+  refrescarTramos(i);
 }
 
 function quitarProducto(i) {
@@ -724,7 +824,7 @@ function actualizarAcciones() {
 }
 
 function escHtml(s) {
-  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function intentarLogin() {
@@ -784,6 +884,8 @@ function intentarLogin() {
 }
 
 async function guardarYVolver() {
+  productos.forEach(sincronizarCamposPlanos);
+
   const payload = {
     cliente_id:   clienteId || null,
     cliente_form: leerClienteForm(),
@@ -881,6 +983,21 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
         }</div>`
       : '';
 
+    const tramos = (Array.isArray(p.tramos) && p.tramos.length)
+      ? p.tramos
+      : [{ impresion: p.impresion, cantidad: p.cantidad, precioUnitario: p.precioUnitario, total: p.total }];
+
+    const filasPrecio = tramos.map(t => `<tr>
+          <td>${escHtml(t.impresion) || '—'}</td>
+          <td class="col-r">${escHtml(t.cantidad) || '—'}</td>
+          <td class="col-r">${formatARS(t.precioUnitario)}</td>
+          <td class="col-r" style="font-weight:600">${formatARS(t.total)}</td>
+        </tr>`).join('');
+
+    const notaTramos = tramos.length > 1
+      ? '<div class="prop-price-note">Las cantidades indicadas son alternativas de cotización.</div>'
+      : '';
+
     prodHtml += `<div class="prop-product-card">
       <div class="prop-card-inner">
         <div class="prop-card-gallery">
@@ -902,13 +1019,9 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
           <th class="col-r">Precio/U.</th>
           <th class="col-r" style="color:${TEAL}">Total</th>
         </tr></thead>
-        <tbody><tr>
-          <td>${p.impresion || '—'}</td>
-          <td class="col-r">${p.cantidad || '—'}</td>
-          <td class="col-r">${formatARS(p.precioUnitario)}</td>
-          <td class="col-r" style="font-weight:600">${formatARS(p.total)}</td>
-        </tr></tbody>
+        <tbody>${filasPrecio}</tbody>
       </table>
+      ${notaTramos}
     </div>`;
   });
 
