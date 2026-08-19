@@ -1003,9 +1003,6 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
         </tr>`;
     }).join('');
 
-    const notaTramos = tramos.length > 1
-      ? '<div class="prop-price-note">Las cantidades indicadas son alternativas de cotización.</div>'
-      : '';
 
     prodHtml += `<div class="prop-product-card">
       <div class="prop-card-inner">
@@ -1030,7 +1027,6 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
         </tr></thead>
         <tbody>${filasPrecio}</tbody>
       </table>
-      ${notaTramos}
     </div>`;
   });
 
