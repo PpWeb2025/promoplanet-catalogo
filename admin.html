@@ -246,6 +246,7 @@
   .toast.show { opacity: 1; transform: translateY(0); }
   .toast.success { background: var(--verde); }
   .toast.error { background: var(--rojo); }
+  .toast.warning { background: var(--amarillo); }
 
   /* PROGRESS */
   .progress-bar { height: 6px; background: var(--gris-borde); border-radius: 3px; overflow: hidden; margin-top: 0.5rem; }
@@ -2272,23 +2273,42 @@ async function analizarConIA(btn) {
     : '⏳ Analizando…';
 
   try {
-    const [dataFotos, dataURL] = await Promise.all([
+    const [_rawFotos, _rawURL] = await Promise.all([
       tieneFortos
         ? Promise.all(_agregarFiles.slice(0, 4).map(_resizarParaIA))
             .then(fotos => fetch('/api/ia/analizar-fotos', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ fotos, urlProveedor, textoManual }),
-            }).then(r => r.ok ? r.json() : null).catch(() => null))
+            }).then(r => r.json()).catch(() => null))
         : Promise.resolve(null),
       tieneTextoOURL
         ? fetch('/api/ia/adaptar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: urlProveedor || undefined, textoManual }),
-          }).then(r => r.ok ? r.json() : null).catch(() => null)
+          }).then(r => r.json()).catch(() => null)
         : Promise.resolve(null),
     ]);
+
+    const fotosOk = tieneFortos    && _rawFotos !== null && !_rawFotos?.error;
+    const urlOk   = tieneTextoOURL && _rawURL   !== null && !_rawURL?.error;
+
+    if (!fotosOk && !urlOk) {
+      const errMsg = (tieneFortos    ? _rawFotos?.error : null)
+                  || (tieneTextoOURL ? _rawURL?.error   : null)
+                  || 'Error al analizar con IA. Intentá de nuevo.';
+      showToast(errMsg, 'error');
+      return;
+    }
+    if (tieneFortos && !fotosOk) {
+      showToast('Imágenes: ' + (_rawFotos?.error || 'Error al analizar'), 'warning');
+    } else if (tieneTextoOURL && !urlOk) {
+      showToast('Texto/URL: ' + (_rawURL?.error || 'Error al adaptar'), 'warning');
+    }
+
+    const dataFotos = fotosOk ? _rawFotos : null;
+    const dataURL   = urlOk   ? _rawURL   : null;
 
     // URL tiene prioridad para el nombre (más preciso que la imagen sola)
     const nombre = dataURL?.nombre || dataFotos?.nombre || '';
@@ -2768,28 +2788,43 @@ async function analizarConIAEdicion(btn) {
           .map(r => r.value)
       : [];
 
-    const [dataFotos, dataURL] = await Promise.all([
+    const [_rawFotos, _rawURL] = await Promise.all([
       fotosResolved.length
         ? fetch('/api/ia/analizar-fotos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fotos: fotosResolved, urlProveedor, textoManual }),
-          }).then(r => r.ok ? r.json() : null).catch(() => null)
+          }).then(r => r.json()).catch(() => null)
         : Promise.resolve(null),
       tieneTextoOURL
         ? fetch('/api/ia/adaptar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: urlProveedor || undefined, textoManual }),
-          }).then(r => r.ok ? r.json() : null).catch(() => null)
+          }).then(r => r.json()).catch(() => null)
         : Promise.resolve(null),
     ]);
 
-    if (!dataFotos && !dataURL) {
-      showToast('La IA no pudo analizar el producto. Intentá de nuevo.', 'error');
+    const fotosHecha = fotosResolved.length > 0;
+    const fotosOk = fotosHecha     && _rawFotos !== null && !_rawFotos?.error;
+    const urlOk   = tieneTextoOURL && _rawURL   !== null && !_rawURL?.error;
+
+    if (!fotosOk && !urlOk) {
+      const errMsg = (fotosHecha     ? _rawFotos?.error : null)
+                  || (tieneTextoOURL ? _rawURL?.error   : null)
+                  || 'La IA no pudo analizar el producto. Intentá de nuevo.';
+      showToast(errMsg, 'error');
       hint.textContent = 'Error al analizar — intentá de nuevo';
       return;
     }
+    if (fotosHecha && !fotosOk) {
+      showToast('Imágenes: ' + (_rawFotos?.error || 'Error al analizar'), 'warning');
+    } else if (tieneTextoOURL && !urlOk) {
+      showToast('Texto/URL: ' + (_rawURL?.error || 'Error al adaptar'), 'warning');
+    }
+
+    const dataFotos = fotosOk ? _rawFotos : null;
+    const dataURL   = urlOk   ? _rawURL   : null;
 
     // Prioridad: URL tiene más contexto de texto; fotos para categoría/subcategoría visual
     const nombre    = dataURL?.nombre    || dataFotos?.nombre    || '';
