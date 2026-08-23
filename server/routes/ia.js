@@ -23,6 +23,8 @@ async function fetchTextoDesdeURL(url) {
     .slice(0, 6000);
 }
 
+const MODELO_IA = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
+
 const CATEGORIAS = {
   bolsos_mochilas: 'Bolsos y Mochilas',
   drinkware:       'Drinkware',
@@ -270,7 +272,7 @@ Respondé SOLO con el JSON, sin texto adicional antes ni después.`;
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await generarConReintento(ai, {
-      model: 'gemini-2.5-flash',
+      model: MODELO_IA,
       contents: prompt,
       config: { responseMimeType: 'application/json' },
     });
@@ -278,7 +280,13 @@ Respondé SOLO con el JSON, sin texto adicional antes ni después.`;
     res.json(json);
   } catch (err) {
     console.error('Error IA:', err.message);
-    res.status(500).json({ error: 'No se pudo procesar con IA. Intentá de nuevo.' });
+    if (err.message?.includes('RESOURCE_EXHAUSTED') || err.message?.includes('"code":429')) {
+      return res.status(429).json({ error: 'Se agotó la cuota diaria de la API de Gemini. Volvé a intentar mañana o habilitá facturación en Google Cloud.' });
+    }
+    if (err.message?.includes('NOT_FOUND') || err.message?.includes('"code":404')) {
+      return res.status(502).json({ error: 'El modelo de IA configurado no existe o fue dado de baja. Revisá la variable GEMINI_MODEL.' });
+    }
+    res.status(500).json({ error: err.message || 'No se pudo procesar con IA. Intentá de nuevo.' });
   }
 });
 
@@ -326,7 +334,7 @@ Respondé SOLO con el JSON, sin texto adicional.`;
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await generarConReintento(ai, {
-      model: 'gemini-2.5-flash',
+      model: MODELO_IA,
       contents: [
         ...fotos.slice(0, 4).map(f => ({ inlineData: { mimeType: f.mimeType, data: f.base64 } })),
         { text: prompt },
@@ -337,7 +345,13 @@ Respondé SOLO con el JSON, sin texto adicional.`;
     res.json(json);
   } catch (err) {
     console.error('Error IA analizar-fotos:', err.message);
-    res.status(500).json({ error: 'No se pudo analizar con IA. Intentá de nuevo.' });
+    if (err.message?.includes('RESOURCE_EXHAUSTED') || err.message?.includes('"code":429')) {
+      return res.status(429).json({ error: 'Se agotó la cuota diaria de la API de Gemini. Volvé a intentar mañana o habilitá facturación en Google Cloud.' });
+    }
+    if (err.message?.includes('NOT_FOUND') || err.message?.includes('"code":404')) {
+      return res.status(502).json({ error: 'El modelo de IA configurado no existe o fue dado de baja. Revisá la variable GEMINI_MODEL.' });
+    }
+    res.status(500).json({ error: err.message || 'No se pudo analizar con IA. Intentá de nuevo.' });
   }
 });
 
