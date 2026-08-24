@@ -950,6 +950,7 @@ async function guardarSinSalir(btn) {
 async function guardarYAgregarProductos() {
   const ok = await guardarPropuesta();
   if (!ok) return;
+  sessionStorage.setItem('pp_modo_propuesta', '1');
   location.href = '/';
 }
 
