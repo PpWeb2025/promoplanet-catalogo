@@ -439,6 +439,7 @@ let clienteId = null;
 let productos = [];
 let MARCAS_MAP = {};
 let propuestaId = null;
+let cargaFallida = false;
 
 /* ════════════════════════════════════════════════
    INIT
@@ -469,16 +470,23 @@ let propuestaId = null;
         try { savedPropuesta = await retry.json(); } catch(e) {}
       } else if (retry && retry.status === 404) {
         localStorage.removeItem('pp_propuesta_actual_id');
+        alert('La propuesta que intentaste abrir ya no existe en la base. Lo que cargues ahora se va a guardar como una propuesta nueva.');
       } else {
-        alert('No se pudo verificar tu sesión. Se muestra la última versión guardada en este navegador, que puede no estar actualizada.');
+        cargaFallida = true;
+        alert('No se pudo cargar la propuesta guardada. Para no pisarla con datos incompletos, el guardado queda bloqueado hasta que recargues la página.');
       }
     } else {
-      alert('No se pudo verificar tu sesión. Se muestra la última versión guardada en este navegador, que puede no estar actualizada.');
+      cargaFallida = true;
+      alert('No se pudo cargar la propuesta guardada. Para no pisarla con datos incompletos, el guardado queda bloqueado hasta que recargues la página.');
     }
   } else if (propuestaRes && propuestaRes.ok) {
     try { savedPropuesta = await propuestaRes.json(); } catch(e) {}
   } else if (propuestaRes && propuestaRes.status === 404) {
     localStorage.removeItem('pp_propuesta_actual_id');
+    alert('La propuesta que intentaste abrir ya no existe en la base. Lo que cargues ahora se va a guardar como una propuesta nueva.');
+  } else if (urlId) {
+    cargaFallida = true;
+    alert('No se pudo cargar la propuesta guardada. Para no pisarla con datos incompletos, el guardado queda bloqueado hasta que recargues la página.');
   }
 
   if (savedPropuesta) {
@@ -886,6 +894,16 @@ function intentarLogin() {
 }
 
 async function guardarPropuesta() {
+  if (cargaFallida) {
+    alert('No se puede guardar: la propuesta no se cargó completa. Recargá la página e ingresá de nuevo antes de guardar.');
+    return false;
+  }
+
+  if (propuestaId && productos.length === 0) {
+    alert('No se puede guardar una propuesta sin productos. Si querés vaciarla, eliminala desde Propuestas guardadas.');
+    return false;
+  }
+
   productos.forEach(sincronizarCamposPlanos);
 
   const payload = {
