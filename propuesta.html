@@ -616,7 +616,7 @@ async function guardarCliente() {
 function imgSrc(foto) {
   if (!foto) return null;
   if (foto.startsWith('http') || foto.startsWith('/')) return foto;
-  return `/api/drive/imagen/${foto}`;
+  return `/api/drive/imagen/${foto}?w=400&fmt=jpg`;
 }
 
 async function fetchDataUrl(src) {
