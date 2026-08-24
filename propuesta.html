@@ -613,10 +613,10 @@ async function guardarCliente() {
 /* ════════════════════════════════════════════════
    PRODUCTOS
 ════════════════════════════════════════════════ */
-function imgSrc(foto) {
+function imgSrc(foto, w = 400) {
   if (!foto) return null;
   if (foto.startsWith('http') || foto.startsWith('/')) return foto;
-  return `/api/drive/imagen/${foto}?w=400&fmt=jpg`;
+  return `/api/drive/imagen/${foto}?w=${w}&fmt=jpg`;
 }
 
 async function fetchDataUrl(src) {
@@ -966,7 +966,7 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
   // ── Sección de productos: header una sola vez, todos los productos fluyen ──
   let prodHtml = '';
   productos.forEach(p => {
-    const src = (p.foto && imageCache[p.foto]) || (p.foto ? imgSrc(p.foto) + '?w=800' : null);
+    const src = (p.foto && imageCache[p.foto]) || (p.foto ? imgSrc(p.foto) : null);
     const imgHtml = src
       ? `<img src="${src}" alt="${p.nombre}">`
       : `<div class="p-emoji">${p.emoji}</div>`;
@@ -977,7 +977,7 @@ function buildDoc(imageCache = {}, logoSrc = 'logo-pp-color.svg', thumbCache = {
     const thumbHtml = thumbs.length
       ? `<div class="prop-thumb-strip">${
           thumbs.map(id => {
-            const tsrc = thumbCache[id] || (imgSrc(id) + '?w=200');
+            const tsrc = thumbCache[id] || imgSrc(id, 200);
             return `<div class="prop-thumb"><img src="${tsrc}" alt="" loading="eager"></div>`;
           }).join('')
         }</div>`
@@ -1107,7 +1107,7 @@ async function mostrarPropuesta() {
     ...productos
       .filter(p => p.foto)
       .map(async p => {
-        const dataUrl = await fetchDataUrl(imgSrc(p.foto) + '?w=800');
+        const dataUrl = await fetchDataUrl(imgSrc(p.foto));
         if (dataUrl) imageCache[p.foto] = dataUrl;
       }),
   ]);
@@ -1121,7 +1121,7 @@ async function mostrarPropuesta() {
   await Promise.all(
     productos.flatMap(p =>
       (p.fotos || []).slice(1, 5).map(async id => {
-        const dataUrl = await fetchDataUrl(imgSrc(id) + '?w=200');
+        const dataUrl = await fetchDataUrl(imgSrc(id, 200));
         if (dataUrl) thumbCache[id] = dataUrl;
       })
     )
