@@ -95,7 +95,7 @@ app.get('/sitemap.xml', async (req, res) => {
     const prodUrls = productos.map(p =>
       `  <url><loc>https://promoplanet.ar/producto/${encodeURIComponent(p.codigo)}</loc><changefreq>weekly</changefreq></url>`
     ).join('\n');
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://promoplanet.ar/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n${landingUrls}\n${prodUrls}\n</urlset>`;
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://promoplanet.ar/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n  <url><loc>https://promoplanet.ar/clientes</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n${landingUrls}\n${prodUrls}\n</urlset>`;
     res.type('application/xml');
     res.send(xml);
   } catch (err) {
@@ -305,6 +305,11 @@ app.get('/sustentable', async (req, res) => {
   return renderLanding(res, landing, 'https://promoplanet.ar/sustentable');
 });
 
+app.get('/clientes', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, '..', 'clientes.html'));
+});
+
 const STATIC_CACHE = {
   html:  'no-cache',
   js:    'public, max-age=3600',
@@ -325,6 +330,7 @@ const STATIC_ALLOWED_FILES = new Set([
   '/admin.html',
   '/propuesta.html',
   '/propuestas.html',
+  '/clientes.html',
   '/favicon.ico',
   '/favicon-16x16.png',
   '/favicon-32x32.png',
@@ -339,7 +345,7 @@ const STATIC_ALLOWED_FILES = new Set([
   '/mariposa-blanca.svg',
   '/badges.js',
 ]);
-const STATIC_ALLOWED_DIRS = ['/firma/'];
+const STATIC_ALLOWED_DIRS = ['/firma/', '/logos-clientes/'];
 
 const _static = express.static(path.join(__dirname, '..'), {
   setHeaders(res, filePath) {

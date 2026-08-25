@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<title>Nuestros clientes — PromoPlanet</title>
+<meta name="description" content="Empresas que confían en PromoPlanet para sus regalos corporativos, kits de onboarding y productos promocionales personalizados.">
+<link rel="canonical" href="https://promoplanet.ar/clientes">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #003471;
+    --celeste: #00A8B4;
+    --azul-light: #e8eef6;
+    --celeste-light: #e0f7f9;
+    --azul-dark: #00234e;
+    --gris: #f4f5f7;
+    --gris-borde: #e2e4e8;
+    --texto: #1a1f2e;
+    --texto-suave: #5a6070;
+    --blanco: #ffffff;
+    --radio: 12px;
+    --sombra: 0 2px 16px rgba(0,52,113,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: var(--texto); background: var(--blanco); font-size: 15px; line-height: 1.6; }
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--gris-borde);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+    box-shadow: 0 1px 12px rgba(0,52,113,0.06);
+  }
+  .nav-logo { text-decoration: none; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1; }
+  .nav-logo span:first-child { color: var(--azul); }
+  .nav-logo span:last-child { color: var(--celeste); }
+  .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+  .nav-links a { color: var(--texto-suave); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--azul); }
+  .btn-cotizar {
+    background: var(--celeste); color: var(--blanco) !important;
+    border-radius: 8px; padding: 0.5rem 1.25rem;
+    font-size: 0.88rem; font-weight: 600;
+  }
+  .btn-cotizar:hover { background: #009aaa; color: var(--blanco); }
+  .page-header {
+    background: linear-gradient(135deg, var(--azul-dark), var(--azul));
+    color: var(--blanco);
+    padding: 3.5rem 2rem 3rem;
+    text-align: center;
+  }
+  .page-header h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.2; margin-bottom: 0.75rem; }
+  .page-header h1 em { color: var(--celeste); font-style: normal; }
+  .page-header p { color: rgba(255,255,255,0.8); max-width: 560px; margin: 0 auto; font-weight: 300; }
+  .clientes-main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+  .clientes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 1rem; }
+  .cliente-card {
+    background: var(--blanco);
+    border: 1px solid var(--gris-borde);
+    border-radius: var(--radio);
+    padding: 1.5rem 1rem 1.1rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    box-shadow: var(--sombra);
+  }
+  .cliente-logo { height: 64px; width: 100%; display: flex; align-items: center; justify-content: center; }
+  .cliente-logo img { max-height: 100%; max-width: 140px; width: auto; object-fit: contain; }
+  .cliente-nombre { font-size: 0.8rem; color: var(--texto-suave); text-align: center; }
+  .clientes-vacio { text-align: center; color: var(--texto-suave); padding: 2rem 0; }
+  .clientes-cta {
+    margin-top: 3rem;
+    background: var(--gris);
+    border-radius: var(--radio);
+    padding: 2.25rem 2rem;
+    text-align: center;
+  }
+  .clientes-cta h2 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--azul); margin-bottom: 0.5rem; }
+  .clientes-cta p { color: var(--texto-suave); margin-bottom: 1.25rem; }
+  .clientes-cta-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--celeste); color: var(--blanco);
+    border-radius: 8px; padding: 0.65rem 1.5rem;
+    font-size: 0.9rem; font-weight: 600; text-decoration: none;
+  }
+  .btn-primary:hover { background: #009aaa; }
+  .btn-outline {
+    border: 1.5px solid var(--azul); color: var(--azul);
+    border-radius: 8px; padding: 0.65rem 1.5rem;
+    font-size: 0.9rem; font-weight: 600; text-decoration: none;
+  }
+  .btn-outline:hover { background: var(--azul-light); }
+  footer {
+    background: var(--azul-dark); color: rgba(255,255,255,0.7);
+    border-top: 4px solid var(--celeste);
+    padding: 1.25rem 2rem;
+    margin-top: 2.5rem;
+  }
+  .footer-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1.5rem; flex-wrap: wrap;
+    font-size: 0.78rem;
+  }
+  @media (max-width: 640px) {
+    nav { padding: 0 1.25rem; }
+    .nav-links { gap: 1rem; }
+    .clientes-main { padding: 2rem 1.25rem; }
+    .clientes-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo"><span>Promo</span><span>Planet</span></a>
+  <div class="nav-links">
+    <a href="/">Catálogo</a>
+    <a href="mailto:hola@promoplanet.ar" class="btn-cotizar">Solicitar cotización</a>
+  </div>
+</nav>
+
+<header class="page-header">
+  <h1>Empresas que <em>confían</em> en PromoPlanet</h1>
+  <p>Acompañamos a equipos de RRHH y marketing con regalos corporativos, kits de bienvenida y productos promocionales para cada ocasión.</p>
+</header>
+
+<main class="clientes-main">
+  <div class="clientes-grid" id="clientes-grid"></div>
+  <p class="clientes-vacio" id="clientes-vacio" style="display:none">Estamos actualizando esta sección.</p>
+
+  <div class="clientes-cta">
+    <h2>Tu empresa también puede estar en esta lista</h2>
+    <p>Contanos qué necesitás y te armamos una propuesta a medida.</p>
+    <div class="clientes-cta-actions">
+      <a href="/" class="btn-primary">Ver el catálogo</a>
+      <a href="mailto:hola@promoplanet.ar" class="btn-outline">Escribinos</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <span>© 2026 PromoPlanet · CUIT 27-25230473-3</span>
+    <span>Buenos Aires, Argentina</span>
+  </div>
+</footer>
+
+<script>
+(async function () {
+  const grid = document.getElementById('clientes-grid');
+  const vacio = document.getElementById('clientes-vacio');
+  try {
+    const resp = await fetch('/logos-clientes/clientes.json', { cache: 'no-cache' });
+    if (!resp.ok) throw new Error('http ' + resp.status);
+    const clientes = (await resp.json()).filter(c => c && c.archivo);
+    if (!clientes.length) { vacio.style.display = ''; return; }
+    clientes.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'cliente-card';
+      const logoBox = document.createElement('div');
+      logoBox.className = 'cliente-logo';
+      const img = document.createElement('img');
+      img.src = '/logos-clientes/' + c.archivo;
+      img.alt = c.nombre || '';
+      img.loading = 'lazy';
+      if (c.ancho) img.style.maxWidth = c.ancho + 'px';
+      img.onerror = () => { card.style.display = 'none'; };
+      logoBox.appendChild(img);
+      card.appendChild(logoBox);
+      if (c.nombre) {
+        const nombre = document.createElement('div');
+        nombre.className = 'cliente-nombre';
+        nombre.textContent = c.nombre;
+        card.appendChild(nombre);
+      }
+      grid.appendChild(card);
+    });
+  } catch (e) {
+    vacio.style.display = '';
+  }
+})();
+</script>
+
+</body>
+</html>
