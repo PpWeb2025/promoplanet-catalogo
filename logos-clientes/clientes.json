@@ -1,1 +1,141 @@
-[]
+[
+  {
+    "nombre": "The Walt Disney Company",
+    "archivo": "twdc.webp"
+  },
+  {
+    "nombre": "PepsiCo",
+    "archivo": "pepsico.webp",
+    "ancho": 170
+  },
+  {
+    "nombre": "Volkswagen",
+    "archivo": "volkswagen.webp"
+  },
+  {
+    "nombre": "Kellogg's",
+    "archivo": "kelloggs.webp"
+  },
+  {
+    "nombre": "Novo Nordisk",
+    "archivo": "novo-nordisk.svg"
+  },
+  {
+    "nombre": "UNICEF",
+    "archivo": "unicef.webp",
+    "ancho": 190
+  },
+  {
+    "nombre": "Gatorade",
+    "archivo": "gatorade.webp"
+  },
+  {
+    "nombre": "Arrow",
+    "archivo": "arrow.webp",
+    "ancho": 190
+  },
+  {
+    "nombre": "Pepsi",
+    "archivo": "pepsi.webp"
+  },
+  {
+    "nombre": "Lamb Weston",
+    "archivo": "lamb-weston.webp",
+    "ancho": 190
+  },
+  {
+    "nombre": "Janssen",
+    "archivo": "janssen.webp"
+  },
+  {
+    "nombre": "Noblex",
+    "archivo": "noblex.webp",
+    "ancho": 210
+  },
+  {
+    "nombre": "Quaker",
+    "archivo": "quaker.webp"
+  },
+  {
+    "nombre": "Worldpay",
+    "archivo": "worldpay.webp",
+    "ancho": 190
+  },
+  {
+    "nombre": "Lay's",
+    "archivo": "lays.webp"
+  },
+  {
+    "nombre": "Newsan",
+    "archivo": "newsan.webp",
+    "ancho": 210
+  },
+  {
+    "nombre": "Tropicana",
+    "archivo": "tropicana.webp"
+  },
+  {
+    "nombre": "SMC",
+    "archivo": "smc.webp",
+    "ancho": 170
+  },
+  {
+    "nombre": "Pampers",
+    "archivo": "pampers.webp"
+  },
+  {
+    "nombre": "RENATRE",
+    "archivo": "renatre.webp",
+    "ancho": 210
+  },
+  {
+    "nombre": "H2Oh!",
+    "archivo": "h2oh.webp"
+  },
+  {
+    "nombre": "TECHO",
+    "archivo": "techo.webp",
+    "ancho": 170
+  },
+  {
+    "nombre": "Arla Foods Ingredients",
+    "archivo": "arla.webp"
+  },
+  {
+    "nombre": "Trilenium",
+    "archivo": "trilenium.webp",
+    "ancho": 190
+  },
+  {
+    "nombre": "Celulosa Argentina",
+    "archivo": "celulosa-argentina.webp"
+  },
+  {
+    "nombre": "Retak",
+    "archivo": "retak.webp"
+  },
+  {
+    "nombre": "OIA",
+    "archivo": "oia.webp"
+  },
+  {
+    "nombre": "Enercon",
+    "archivo": "enercon.webp",
+    "ancho": 190
+  },
+  {
+    "nombre": "Bind",
+    "archivo": "bind.webp",
+    "ancho": 170
+  },
+  {
+    "nombre": "AKER",
+    "archivo": "aker.webp",
+    "ancho": 190
+  },
+  {
+    "nombre": "VU",
+    "archivo": "vu.svg",
+    "ancho": 170
+  }
+]

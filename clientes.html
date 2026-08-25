@@ -70,7 +70,7 @@
     box-shadow: var(--sombra);
   }
   .cliente-logo { height: 64px; width: 100%; display: flex; align-items: center; justify-content: center; }
-  .cliente-logo img { max-height: 100%; max-width: 140px; width: auto; object-fit: contain; }
+  .cliente-logo img { max-height: 100%; max-width: min(140px, 100%); width: auto; object-fit: contain; }
   .cliente-nombre { font-size: 0.8rem; color: var(--texto-suave); text-align: center; }
   .clientes-vacio { text-align: center; color: var(--texto-suave); padding: 2rem 0; }
   .clientes-cta {
@@ -169,7 +169,7 @@
       img.src = '/logos-clientes/' + c.archivo;
       img.alt = c.nombre || '';
       img.loading = 'lazy';
-      if (c.ancho) img.style.maxWidth = c.ancho + 'px';
+      if (c.ancho) img.style.maxWidth = 'min(' + c.ancho + 'px, 100%)';
       img.onerror = () => { card.style.display = 'none'; };
       logoBox.appendChild(img);
       card.appendChild(logoBox);
