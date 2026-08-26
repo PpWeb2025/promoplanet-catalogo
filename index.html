@@ -204,8 +204,8 @@
   .marquee-viewport:hover .marquee-track { animation-play-state: paused; }
   @keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   .marquee-set { display: flex; align-items: center; gap: 3.5rem; padding-right: 3.5rem; }
-  .marquee-item { height: 42px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .marquee-item img { max-height: 100%; max-width: 150px; width: auto; object-fit: contain; filter: grayscale(1); opacity: 0.55; transition: filter 0.25s, opacity 0.25s; }
+  .marquee-item { height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .marquee-item img { max-height: 100%; max-width: 120px; width: auto; object-fit: contain; filter: grayscale(1); opacity: 0.55; transition: filter 0.25s, opacity 0.25s; }
   .marquee-item img:hover { filter: none; opacity: 1; }
   @media (prefers-reduced-motion: reduce) {
     .marquee-track { animation: none; width: auto; }
@@ -213,7 +213,7 @@
     .marquee-set.dup { display: none; }
   }
   @media (max-width: 640px) {
-    .marquee-item { height: 34px; }
+    .marquee-item { height: 28px; }
     .marquee-set { gap: 2.25rem; padding-right: 2.25rem; }
   }
   .btn-primary {
