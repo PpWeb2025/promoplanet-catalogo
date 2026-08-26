@@ -60,17 +60,17 @@
   .page-header h1 em { color: var(--celeste); font-style: normal; }
   .page-header p { color: rgba(255,255,255,0.8); max-width: 560px; margin: 0 auto; font-weight: 300; }
   .clientes-main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
-  .clientes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+  .clientes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 1rem; }
   .cliente-card {
     background: var(--blanco);
     border: 1px solid var(--gris-borde);
     border-radius: var(--radio);
-    padding: 1.75rem 1rem;
+    padding: 2.25rem 1rem;
     display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
     box-shadow: var(--sombra);
   }
   .cliente-logo { height: 52px; width: 100%; display: flex; align-items: center; justify-content: center; }
-  .cliente-logo img { max-height: 100%; max-width: min(115px, 100%); width: auto; object-fit: contain; }
+  .cliente-logo img { max-height: 100%; max-width: min(130px, 100%); width: auto; object-fit: contain; }
   .clientes-vacio { text-align: center; color: var(--texto-suave); padding: 2rem 0; }
   .clientes-cta {
     margin-top: 3rem;
@@ -171,7 +171,7 @@
       const ajustarAlto = () => {
         const nw = img.naturalWidth, nh = img.naturalHeight;
         if (!nw || !nh) return;
-        const base = 52;
+        const base = 60;
         let alto = base / Math.pow(nw / nh, 0.38);
         if (c.escala) alto *= c.escala;
         alto = Math.max(base * 0.5, Math.min(base, alto));
