@@ -168,7 +168,16 @@
       img.src = '/logos-clientes/' + c.archivo;
       img.alt = c.nombre || '';
       img.loading = 'lazy';
-      if (c.ancho) img.style.maxWidth = 'min(' + c.ancho + 'px, 100%)';
+      const ajustarAlto = () => {
+        const nw = img.naturalWidth, nh = img.naturalHeight;
+        if (!nw || !nh) return;
+        const base = 52;
+        let alto = base / Math.pow(nw / nh, 0.38);
+        if (c.escala) alto *= c.escala;
+        alto = Math.max(base * 0.5, Math.min(base, alto));
+        img.style.maxHeight = alto.toFixed(1) + 'px';
+      };
+      if (img.complete) ajustarAlto(); else img.addEventListener('load', ajustarAlto);
       img.onerror = () => { card.style.display = 'none'; };
       logoBox.appendChild(img);
       card.appendChild(logoBox);
