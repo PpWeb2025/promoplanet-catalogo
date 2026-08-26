@@ -205,7 +205,7 @@
   @keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   .marquee-set { display: flex; align-items: center; gap: 3.5rem; padding-right: 3.5rem; }
   .marquee-item { height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .marquee-item img { max-height: 100%; max-width: 120px; width: auto; object-fit: contain; filter: grayscale(1); opacity: 0.55; transition: filter 0.25s, opacity 0.25s; }
+  .marquee-item img { max-height: 100%; max-width: 150px; width: auto; object-fit: contain; filter: grayscale(1); opacity: 0.55; transition: filter 0.25s, opacity 0.25s; }
   .marquee-item img:hover { filter: none; opacity: 1; }
   @media (prefers-reduced-motion: reduce) {
     .marquee-track { animation: none; width: auto; }
@@ -1040,7 +1040,16 @@
         img.src = '/logos-clientes/' + c.archivo;
         img.alt = c.nombre || '';
         img.loading = 'lazy';
-        if (c.ancho) img.style.maxWidth = c.ancho + 'px';
+        const ajustarAlto = () => {
+          const nw = img.naturalWidth, nh = img.naturalHeight;
+          if (!nw || !nh) return;
+          const base = window.matchMedia('(max-width: 640px)').matches ? 32 : 40;
+          let alto = base / Math.pow(nw / nh, 0.38);
+          if (c.escala) alto *= c.escala;
+          alto = Math.max(base * 0.5, Math.min(base, alto));
+          item.style.height = alto.toFixed(1) + 'px';
+        };
+        if (img.complete) ajustarAlto(); else img.addEventListener('load', ajustarAlto);
         img.onerror = () => { item.style.display = 'none'; };
         item.appendChild(img);
         set.appendChild(item);
