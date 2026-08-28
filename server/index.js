@@ -197,15 +197,6 @@ app.get('/producto/:codigo', async (req, res) => {
       sku: p.codigo || '',
       image,
       brand: { '@type': 'Brand', name: 'PromoPlanet' },
-      offers: {
-        '@type': 'Offer',
-        availability: 'https://schema.org/InStock',
-        price: '0',
-        priceValidUntil: '2027-12-31',
-        priceCurrency: 'ARS',
-        description: 'Precio a consultar según cantidad y personalización',
-        seller: { '@type': 'Organization', name: 'PromoPlanet' },
-      },
     };
     const jsonLdScript = `<script type="application/ld+json">\n${JSON.stringify(jsonLd, null, 2)}\n</script>`;
     res.set('Cache-Control', 'no-cache');
