@@ -11,6 +11,20 @@ const KNOWN_COLUMNS = new Set([
 
 let client;
 
+const PROVEEDOR_PROMOCION_UMBRAL = 3;
+
+function normalizeProveedor(s) {
+  // Descompone a NFD y descarta los diacríticos combinantes (U+0300 a U+036F)
+  const desc = (s || '').trim().toLowerCase().normalize('NFD');
+  let out = '';
+  for (const ch of desc) {
+    const cp = ch.codePointAt(0);
+    if (cp >= 0x0300 && cp <= 0x036f) continue;
+    out += ch;
+  }
+  return out;
+}
+
 function parseRow(obj) {
   if (!obj) return null;
   const out = { ...obj };
@@ -138,6 +152,22 @@ async function initDb() {
       fecha_actualizacion  TEXT NOT NULL
     )
   `);
+
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS proveedores (
+      id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre             TEXT NOT NULL,
+      nombre_normalizado TEXT NOT NULL UNIQUE,
+      creado_at          TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  for (const nombre of ['Zecat', 'Stocksur', 'Xtrade', 'Improm', 'Nuevas Formas', 'Maya']) {
+    await client.execute({
+      sql: 'INSERT OR IGNORE INTO proveedores (nombre, nombre_normalizado) VALUES (?, ?)',
+      args: [nombre, normalizeProveedor(nombre)],
+    });
+  }
 }
 
 async function getProductos({ soloPublicados = false, cat = null, q = null } = {}) {
@@ -322,10 +352,96 @@ async function deletePropuesta(id) {
   await client.execute({ sql: 'DELETE FROM propuestas WHERE id = ?', args: [id] });
 }
 
+async function getProveedores() {
+  return query('SELECT * FROM proveedores ORDER BY nombre ASC');
+}
+
+async function getCanonicoProveedor(nombre) {
+  const norm = normalizeProveedor(nombre);
+  if (!norm) return (nombre || '').trim();
+  const p = await queryOne('SELECT nombre FROM proveedores WHERE nombre_normalizado = ?', [norm]);
+  return p ? p.nombre : (nombre || '').trim();
+}
+
+async function checkYPromoverProveedor(nombre) {
+  const norm = normalizeProveedor(nombre);
+  if (!norm) return null;
+  const existente = await queryOne('SELECT id FROM proveedores WHERE nombre_normalizado = ?', [norm]);
+  if (existente) return null;
+  const todos = await query("SELECT id, proveedor FROM productos WHERE proveedor != ''");
+  const coinciden = todos.filter(r => normalizeProveedor(r.proveedor) === norm);
+  const idsDistintos = [...new Set(coinciden.map(r => r.id))];
+  if (idsDistintos.length < PROVEEDOR_PROMOCION_UMBRAL) return null;
+  const canonico = coinciden.sort((a, b) => a.id - b.id)[0].proveedor.trim();
+  await client.execute({
+    sql: 'INSERT OR IGNORE INTO proveedores (nombre, nombre_normalizado) VALUES (?, ?)',
+    args: [canonico, norm],
+  });
+  for (const r of coinciden) {
+    if (r.proveedor !== canonico) {
+      await client.execute({ sql: 'UPDATE productos SET proveedor = ? WHERE id = ?', args: [canonico, r.id] });
+    }
+  }
+  return { nombre: canonico, conteo: idsDistintos.length };
+}
+
+async function getProveedoresCandidatos() {
+  const promovidos = await query('SELECT nombre_normalizado FROM proveedores');
+  const normsPromovidos = new Set(promovidos.map(p => p.nombre_normalizado));
+  const todos = await query("SELECT id, proveedor FROM productos WHERE proveedor != ''");
+  const grupos = {};
+  for (const r of todos) {
+    const norm = normalizeProveedor(r.proveedor);
+    if (!norm || normsPromovidos.has(norm)) continue;
+    if (!grupos[norm]) grupos[norm] = { ids: new Set(), primerNombre: r.proveedor, primerId: r.id };
+    grupos[norm].ids.add(r.id);
+    if (r.id < grupos[norm].primerId) { grupos[norm].primerId = r.id; grupos[norm].primerNombre = r.proveedor; }
+  }
+  return Object.entries(grupos)
+    .filter(([, g]) => g.ids.size >= PROVEEDOR_PROMOCION_UMBRAL)
+    .map(([norm, g]) => ({ nombre: g.primerNombre, nombre_normalizado: norm, conteo: g.ids.size }))
+    .sort((a, b) => b.conteo - a.conteo);
+}
+
+async function getProductosANormalizar() {
+  const promovidos = await query('SELECT nombre, nombre_normalizado FROM proveedores');
+  const todos = await query("SELECT id, codigo, nombre, proveedor FROM productos WHERE proveedor != ''");
+  const ajustes = [];
+  for (const r of todos) {
+    const norm = normalizeProveedor(r.proveedor);
+    const prom = promovidos.find(p => p.nombre_normalizado === norm);
+    if (prom && r.proveedor !== prom.nombre) {
+      ajustes.push({ id: r.id, codigo: r.codigo, nombre: r.nombre, de: r.proveedor, a: prom.nombre });
+    }
+  }
+  return ajustes;
+}
+
+async function normalizarProductosExistentes() {
+  const ajustes = await getProductosANormalizar();
+  for (const a of ajustes) {
+    await client.execute({ sql: 'UPDATE productos SET proveedor = ? WHERE id = ?', args: [a.a, a.id] });
+  }
+  return ajustes;
+}
+
+async function promoverRetroactivo() {
+  const ajustes = await normalizarProductosExistentes();
+  const candidatos = await getProveedoresCandidatos();
+  const promovidos = [];
+  for (const c of candidatos) {
+    const promovido = await checkYPromoverProveedor(c.nombre);
+    if (promovido) promovidos.push(promovido);
+  }
+  return { ajustes, promovidos };
+}
+
 module.exports = {
   initDb,
   getProductos, getProductoById, insertProducto, updateProducto, deleteProducto, getProductoByCodigo,
   getMarcas, getMarcaById, insertMarca, updateMarca, deleteMarca,
   getClientes, getClienteById, insertCliente, updateCliente, deleteCliente,
   getPropuestas, getPropuestaById, insertPropuesta, updatePropuesta, deletePropuesta,
+  getProveedores, getCanonicoProveedor, checkYPromoverProveedor,
+  getProveedoresCandidatos, getProductosANormalizar, normalizarProductosExistentes, promoverRetroactivo,
 };

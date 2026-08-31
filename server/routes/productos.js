@@ -66,8 +66,10 @@ router.post('/admin', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Faltan campos requeridos: codigo, nombre, categoria' });
   }
   try {
+    if (data.proveedor) data.proveedor = await db.getCanonicoProveedor(data.proveedor);
     const nuevo = await db.insertProducto(data);
-    res.status(201).json(nuevo);
+    const proveedorPromovido = data.proveedor ? await db.checkYPromoverProveedor(data.proveedor) : null;
+    res.status(201).json({ ...nuevo, proveedorPromovido });
     purgeCatalogCache();
   } catch (err) {
     console.error('Error insertProducto:', err.message);
@@ -81,8 +83,11 @@ router.post('/admin', requireAdmin, async (req, res) => {
 router.put('/admin/:id', requireAdmin, async (req, res) => {
   const p = await db.getProductoById(req.params.id);
   if (!p) return res.status(404).json({ error: 'No encontrado' });
-  const actualizado = await db.updateProducto(req.params.id, req.body);
-  res.json(actualizado);
+  const body = req.body;
+  if (body.proveedor) body.proveedor = await db.getCanonicoProveedor(body.proveedor);
+  const actualizado = await db.updateProducto(req.params.id, body);
+  const proveedorPromovido = body.proveedor ? await db.checkYPromoverProveedor(body.proveedor) : null;
+  res.json({ ...actualizado, proveedorPromovido });
   purgeCatalogCache();
 });
 

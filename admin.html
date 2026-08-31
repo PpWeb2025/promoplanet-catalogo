@@ -629,12 +629,6 @@
                   <label>Proveedor</label>
                   <select id="agregar-f-proveedor" onchange="toggleAgregarProveedorOtro()">
                     <option value="">Seleccioná...</option>
-                    <option>Zecat</option>
-                    <option>Stocksur</option>
-                    <option>Xtrade</option>
-                    <option>Improm</option>
-                    <option>Nuevas Formas</option>
-                    <option>Maya</option>
                     <option value="__otro__">Otro...</option>
                   </select>
                   <input type="text" id="agregar-f-proveedor-otro" placeholder="Nombre del proveedor"
@@ -995,10 +989,6 @@
           <label>Proveedor</label>
           <select id="f-proveedor" onchange="toggleProveedorOtro()">
             <option value="">Seleccioná...</option>
-            <option>Zecat</option>
-            <option>Stocksur</option>
-            <option>Xtrade</option>
-            <option>Improm</option>
             <option value="__otro__">Otro...</option>
           </select>
           <input type="text" id="f-proveedor-otro" placeholder="Nombre del proveedor"
@@ -1140,7 +1130,7 @@ async function login() {
   if (res.ok) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').classList.add('visible');
-    await Promise.all([renderTabla(), renderDashboard(), cargarMarcas()]);
+    await Promise.all([renderTabla(), renderDashboard(), cargarMarcas(), cargarProveedores()]);
     renderCatAdmin();
   } else {
     document.getElementById('login-error').style.display = 'block';
@@ -1235,7 +1225,7 @@ function toggleSidebar() {
   if (res.ok) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').classList.add('visible');
-    await Promise.all([renderTabla(), renderDashboard(), cargarMarcas()]);
+    await Promise.all([renderTabla(), renderDashboard(), cargarMarcas(), cargarProveedores()]);
     renderCatAdmin();
   }
 })();
@@ -1471,6 +1461,12 @@ async function guardarProducto(estado) {
     return;
   }
 
+  const saved = await res.json().catch(() => ({}));
+  if (saved.proveedorPromovido) {
+    const { nombre: provNombre, conteo } = saved.proveedorPromovido;
+    setTimeout(() => showToast(`⭐ "${provNombre}" incorporado a la lista de proveedores (${conteo} productos)`, 'success'), 1500);
+    await cargarProveedores();
+  }
   closeModal('modal-producto');
   await Promise.all([renderTabla(), renderDashboard()]);
   showToast(prod.estado === 'publicado' ? '✅ Producto publicado en el catálogo' : '📝 Guardado como borrador', 'success');
@@ -1702,17 +1698,17 @@ async function editarProducto(id) {
   document.getElementById('f-colores').value = p.colores || '';
   document.getElementById('f-descripcion').value = p.descripcion || '';
   document.getElementById('f-notas').value = p.notas || '';
-  const _provKnown = ['', 'Zecat', 'Stocksur', 'Xtrade', 'Improm'];
   const _prov = p.proveedor || '';
   const _provOtroInp = document.getElementById('f-proveedor-otro');
-  if (_provKnown.includes(_prov)) {
-    document.getElementById('f-proveedor').value = _prov;
-    _provOtroInp.style.display = 'none';
-    _provOtroInp.value = '';
-  } else {
-    document.getElementById('f-proveedor').value = '__otro__';
+  const _selProv = document.getElementById('f-proveedor');
+  _selProv.value = _prov;
+  if (_prov && _selProv.value !== _prov) {
+    _selProv.value = '__otro__';
     _provOtroInp.value = _prov;
     _provOtroInp.style.display = '';
+  } else {
+    _provOtroInp.style.display = 'none';
+    _provOtroInp.value = '';
   }
   document.getElementById('f-estado').value = p.estado || 'publicado';
   document.getElementById('f-marca').value = p.marca_id || '';
@@ -1844,6 +1840,42 @@ async function renderCatAdmin() {
 // MARCAS
 // ============================================================
 let _marcasCache = [];
+let _proveedoresCache = [];
+
+async function cargarProveedores() {
+  try {
+    const res = await fetch('/api/proveedores');
+    if (res.ok) {
+      _proveedoresCache = await res.json();
+      poblarSelectsProveedor();
+    } else if (res.status === 401) {
+      showToast('Sesión expirada — volvé a iniciar sesión', 'error');
+    } else {
+      showToast('No se pudo cargar la lista de proveedores', 'error');
+    }
+  } catch {
+    showToast('No se pudo cargar la lista de proveedores', 'error');
+  }
+}
+
+function poblarSelectsProveedor() {
+  ['f-proveedor', 'agregar-f-proveedor'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Seleccioná...</option>';
+    _proveedoresCache.forEach(p => {
+      const opt = document.createElement('option');
+      opt.textContent = p.nombre;
+      sel.appendChild(opt);
+    });
+    const otro = document.createElement('option');
+    otro.value = '__otro__';
+    otro.textContent = 'Otro...';
+    sel.appendChild(otro);
+    sel.value = prev;
+  });
+}
 let _editandoMarcaId = null;
 
 async function cargarMarcas() {
@@ -2622,6 +2654,12 @@ async function confirmarAgregarProducto(btn, estadoForzado) {
       throw new Error(err.error || 'Error al crear producto');
     }
 
+    const saved = await prodRes.json().catch(() => ({}));
+    if (saved.proveedorPromovido) {
+      const { nombre: provNombre, conteo } = saved.proveedorPromovido;
+      setTimeout(() => showToast(`⭐ "${provNombre}" incorporado a la lista de proveedores (${conteo} productos)`, 'success'), 1500);
+      await cargarProveedores();
+    }
     await Promise.all([renderTabla(), renderDashboard()]);
     const msg = estado === 'publicado'
       ? `✅ ${nombre} (${_agregarCodigo}) publicado en el catálogo`

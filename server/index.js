@@ -77,6 +77,7 @@ app.use('/api/ia', require('./routes/ia'));
 app.use('/api/suscripciones', require('./routes/suscripciones'));
 app.use('/api/clientes', require('./routes/clientes'));
 app.use('/api/propuestas', require('./routes/propuestas'));
+app.use('/api/proveedores', require('./routes/proveedores'));
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
