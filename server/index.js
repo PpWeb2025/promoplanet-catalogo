@@ -10,9 +10,10 @@ const { LANDINGS } = require('./categorias');
 // Mapa de redirecciones 301 para slugs del sitio anterior.
 // Agregar entradas según aparezcan en Search Console.
 const REDIRECTS_301 = {
-  // '/mochila-porta-notebook-17-g1382': '/categoria/bolsos-y-mochilas',
-  // '/es-ar/mochila-g1597':             '/categoria/bolsos-y-mochilas',
   '/home':                    '/',
+  // Duplicados de rutas limpias
+  '/index.html':              '/',
+  '/clientes.html':           '/clientes',
   // Slugs viejos de Wix (formato -gNNN / prefijo /es-ar/)
   '/jarro-termico-g141':      '/categoria/drinkware',
   '/botella-g420':            '/categoria/drinkware',
@@ -21,6 +22,14 @@ const REDIRECTS_301 = {
   '/bolsa-g552':              '/categoria/bolsos-y-mochilas',
   '/cooler-g376':             '/categoria/outdoors-y-fitness',
   '/cooler-g103':             '/categoria/outdoors-y-fitness',
+  // Slugs viejos detectados en Search Console (septiembre 2026)
+  '/mochila-porta-notebook-17-g1382': '/categoria/bolsos-y-mochilas',
+  '/es-ar/mochila-g1597':             '/categoria/bolsos-y-mochilas',
+  '/mochila-urbana-g35':              '/categoria/bolsos-y-mochilas',
+  '/bolsa-tote-de-lona-g32':          '/categoria/bolsos-y-mochilas',
+  '/botella-800ml-g460':              '/categoria/drinkware',
+  '/cooler-g1568':                    '/categoria/outdoors-y-fitness',
+  '/catalogo/necessaire-g1605':       '/categoria/bolsos-y-mochilas',
   // Slugs de categoría viejos
   '/outdoor':                 '/categoria/outdoors-y-fitness',
   '/oficina':                 '/categoria/escritorio-y-oficina',
@@ -37,6 +46,10 @@ const REDIRECTS_301 = {
   '/producto/PP-463':         '/',
   '/catalogo':                '/',
 };
+
+// Slugs del sitio anterior sin equivalente en el mapa: /algo-g123, /es-ar/algo-g123r, /catalogo/algo-g123.
+// Responden 410 (eliminada) con noindex, para que Google los descarte más rápido que con un 404.
+const LEGACY_WIX_PATTERN = /^\/(?:es-ar\/|catalogo\/)?[^/.]+-g\d+[a-z]?$/i;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -65,6 +78,7 @@ app.use((req, res, next) => {
   if (req.method !== 'GET') return next();
   const cleanPath = req.path.replace(/\/$/, '') || '/';
   if (REDIRECTS_301[cleanPath]) return res.redirect(301, REDIRECTS_301[cleanPath]);
+  if (LEGACY_WIX_PATTERN.test(cleanPath)) return render404(res, 410);
   next();
 });
 
@@ -79,9 +93,17 @@ app.use('/api/clientes', require('./routes/clientes'));
 app.use('/api/propuestas', require('./routes/propuestas'));
 app.use('/api/proveedores', require('./routes/proveedores'));
 
+// Se bloquea /api/ salvo el proxy de imágenes, para que Google pueda rastrear las fotos de los productos.
+// La regla más específica (Allow) gana sobre Disallow. Se lista primero por compatibilidad con otros rastreadores.
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send('User-agent: *\nDisallow: /api/\nAllow: /\nSitemap: https://promoplanet.ar/sitemap.xml');
+  res.send([
+    'User-agent: *',
+    'Allow: /api/drive/imagen/',
+    'Disallow: /api/',
+    'Allow: /',
+    'Sitemap: https://promoplanet.ar/sitemap.xml',
+  ].join('\n'));
 });
 
 app.get('/sitemap.xml', async (req, res) => {
@@ -140,8 +162,9 @@ function renderSPA(res, canonicalPath) {
   res.send(replaced);
 }
 
-function render404(res) {
-  res.status(404).set('Cache-Control', 'no-cache').send(`<!DOCTYPE html>
+// status: 404 por defecto; 410 para URLs del sitio anterior que ya no existen.
+function render404(res, status = 404) {
+  res.status(status).set('Cache-Control', 'no-cache').send(`<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -164,6 +187,32 @@ function render404(res) {
   <h1>Página no encontrada</h1>
   <p>El link que seguiste no existe o fue removido. Buscá lo que necesitás en el catálogo.</p>
   <a href="/" class="btn">Ir al catálogo</a>
+</body>
+</html>`);
+}
+
+// Error temporal (por ejemplo, la base de datos no responde).
+// Google reintenta más tarde en lugar de indexar una página equivocada.
+function render503(res) {
+  res.status(503).set({ 'Cache-Control': 'no-store', 'Retry-After': '120' }).send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Servicio no disponible — PromoPlanet</title>
+<meta name="robots" content="noindex">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:sans-serif;color:#1a1f2e;background:#f4f5f7;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem}
+  h1{font-size:1.5rem;font-weight:500;color:#003471;margin-bottom:.75rem}
+  p{color:#5a6070;margin-bottom:2rem;max-width:420px}
+  .btn{display:inline-block;background:#00A8B4;color:#fff;text-decoration:none;border-radius:8px;padding:.75rem 2rem;font-weight:600;font-size:.95rem}
+</style>
+</head>
+<body>
+  <h1>Estamos con un inconveniente momentáneo</h1>
+  <p>No pudimos cargar esta página. Probá de nuevo en unos minutos.</p>
+  <a href="/" class="btn">Volver al inicio</a>
 </body>
 </html>`);
 }
@@ -207,9 +256,9 @@ app.get('/producto/:codigo', async (req, res) => {
         .replace('<link rel="canonical" href="https://promoplanet.ar/">', `<link rel="canonical" href="${url}">`)
         .replace('</head>', `${jsonLdScript}\n</head>`)
     );
-  } catch {
-    res.set('Cache-Control', 'no-cache');
-    res.send(baseHtml);
+  } catch (err) {
+    console.error('Producto render error:', err);
+    render503(res);
   }
 });
 
@@ -274,8 +323,7 @@ async function renderLanding(res, landing, canonicalUrl) {
     );
   } catch (err) {
     console.error('Landing render error:', err);
-    res.set('Cache-Control', 'no-cache');
-    res.send(baseHtml);
+    render503(res);
   }
 }
 
@@ -339,10 +387,17 @@ const STATIC_ALLOWED_FILES = new Set([
 ]);
 const STATIC_ALLOWED_DIRS = ['/firma/', '/logos-clientes/'];
 
+// Herramientas internas: se pueden abrir, pero no deben aparecer en Google.
+// No se bloquean en robots.txt a propósito: Google tiene que poder rastrearlas para ver el noindex.
+const STATIC_NOINDEX = new Set(['admin.html', 'propuesta.html', 'propuestas.html']);
+
 const _static = express.static(path.join(__dirname, '..'), {
   setHeaders(res, filePath) {
     const ext = path.extname(filePath).slice(1).toLowerCase();
     res.setHeader('Cache-Control', STATIC_CACHE[ext] ?? 'public, max-age=0');
+    if (STATIC_NOINDEX.has(path.basename(filePath))) {
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
   },
 });
 
