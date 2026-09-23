@@ -2192,7 +2192,8 @@ function renderMarcasFilter() {
   const list = document.getElementById('marcas-filter-list');
   if (!section || !list) return;
   const conMarca = PRODUCTOS.filter(p => p.marca_id && MARCAS[p.marca_id]);
-  const ids = [...new Set(conMarca.map(p => p.marca_id))];
+  const ids = [...new Set(conMarca.map(p => p.marca_id))]
+    .sort((a, b) => MARCAS[a].nombre.localeCompare(MARCAS[b].nombre, 'es', { sensitivity: 'base' }));
   if (!ids.length) { section.style.display = 'none'; return; }
   section.style.display = '';
   let html = `<button class="cat-item ${marcaActiva === 'todos' ? 'active' : ''}" onclick="setMarca('todos')">
