@@ -48,6 +48,8 @@
     display: flex; align-items: center; justify-content: center;
   }
   .nav-logo-mark svg { width: 36px; height: 36px; }
+  .nav-logo-img { height: 36px; width: auto; display: block; }
+  @media (max-width: 640px) { .nav-logo-img { height: 30px; } }
   .nav-brand { font-family: 'DM Serif Display', serif; font-size: 1.4rem; }
   .nav-brand span:first-child { color: var(--azul); }
   .nav-brand span:last-child { color: var(--celeste); }
@@ -942,9 +944,7 @@
 <!-- NAV -->
 <nav>
   <a href="#" class="nav-logo" style="display:flex;align-items:center;text-decoration:none">
-    <span style="font-family:'DM Sans',sans-serif;font-size:1.35rem;font-weight:700;letter-spacing:-0.01em;line-height:1">
-      <span style="color:#003471">Promo</span><span style="color:#00A8B4">Planet</span>
-    </span>
+    <img src="/logo-pp-horizontal.svg" alt="PromoPlanet" class="nav-logo-img" width="200" height="40">
   </a>
   <div class="nav-links">
     <a href="#catalogo" onclick="scrollToCat()">Catálogo</a>
