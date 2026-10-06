@@ -391,6 +391,7 @@ const STATIC_ALLOWED_FILES = new Set([
   '/PP_Slogan.png',
   '/og-image.jpg',
   '/logo-pp-color.svg',
+  '/logo-pp-horizontal.svg',
   '/logo-pp-completo-blanco.svg',
   '/logo-pp-texto-blanco.svg',
   '/mariposa-blanca.svg',
