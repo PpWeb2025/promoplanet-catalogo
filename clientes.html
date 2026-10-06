@@ -41,6 +41,8 @@
   .nav-logo { text-decoration: none; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1; }
   .nav-logo span:first-child { color: var(--azul); }
   .nav-logo span:last-child { color: var(--celeste); }
+  .nav-logo-img { height: 36px; width: auto; display: block; }
+  @media (max-width: 640px) { .nav-logo-img { height: 30px; } }
   .nav-links { display: flex; align-items: center; gap: 1.5rem; }
   .nav-links a { color: var(--texto-suave); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
   .nav-links a:hover { color: var(--azul); }
@@ -117,7 +119,7 @@
 <body>
 
 <nav>
-  <a href="/" class="nav-logo"><span>Promo</span><span>Planet</span></a>
+  <a href="/" class="nav-logo"><img src="/logo-pp-horizontal.svg" alt="PromoPlanet" class="nav-logo-img" width="200" height="40"></a>
   <div class="nav-links">
     <a href="/">Catálogo</a>
     <a href="mailto:hola@promoplanet.ar" class="btn-cotizar">Solicitar cotización</a>
