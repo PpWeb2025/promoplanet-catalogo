@@ -989,7 +989,7 @@
   <div class="hero-pattern"></div>
   <div class="hero-inner" style="position:relative;z-index:1">
     <h1>Productos promocionales<br>para equipos que <em>importan</em></h1>
-    <p>Encontrá el regalo corporativo ideal para cada ocasión. Personalizamos con tu marca, en las cantidades que necesitás.</p>
+    <p>Encontrá el regalo corporativo ideal para cada ocasión. Personalizamos con tu marca en pedidos mayoristas para empresas.</p>
     <div class="hero-actions">
       <a href="#catalogo" class="btn-primary" onclick="scrollToCat()">Ver catálogo completo</a>
       <a href="#" class="btn-outline-white" onclick="abrirConsulta(); return false;">Solicitar cotización</a>
@@ -1003,7 +1003,7 @@
   <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:1.25rem;flex-wrap:nowrap;overflow:hidden">
     <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;white-space:nowrap;color:var(--texto-suave)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--celeste)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span><strong style="color:var(--azul)">Logo personalizado</strong> en cada producto</span></div>
     <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;white-space:nowrap;color:var(--texto-suave)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--celeste)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg><span><strong style="color:var(--azul)">Entrega</strong> en CABA y GBA sin costo</span></div>
-    <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;white-space:nowrap;color:var(--texto-suave)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--celeste)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span><strong style="color:var(--azul)">Respuesta</strong> en menos de 24 hs</span></div>
+    <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;white-space:nowrap;color:var(--texto-suave)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--celeste)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span><strong style="color:var(--azul)">Respuesta</strong> en 24 a 48 hs</span></div>
     <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;white-space:nowrap;color:var(--texto-suave)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--celeste)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg><span><strong style="color:var(--azul)">+500 productos</strong> disponibles</span></div>
     <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;white-space:nowrap;color:var(--texto-suave)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--celeste)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><strong style="color:var(--azul)">Atención</strong> personalizada</span></div>
   </div>
@@ -1181,7 +1181,7 @@
     <div class="modal-header">
       <div>
         <h2>Solicitar cotización</h2>
-        <p>Completá los datos y te respondemos en menos de 24 hs.</p>
+        <p>Completá los datos y te respondemos en 24 a 48 hs.</p>
       </div>
       <button class="modal-close" onclick="cerrarConsulta()">✕</button>
     </div>
@@ -2147,7 +2147,7 @@ async function enviarConsulta() {
       return;
     }
     cerrarConsulta();
-    showToast('¡Consulta enviada! Te respondemos en menos de 24 hs.');
+    showToast('¡Consulta enviada! Te respondemos en 24 a 48 hs.');
   } catch {
     alert('Error de conexión. Escribinos directamente a hola@promoplanet.ar');
   } finally {
@@ -2379,27 +2379,6 @@ document.addEventListener('keydown', e => {
 });
 </script>
 
-<!-- WHATSAPP FLOTANTE -->
-<a href="https://wa.me/5491158557355?text=Hola%20PromoPlanet%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20sus%20productos%20promocionales"
-   target="_blank" rel="noopener"
-   title="WhatsApp"
-   style="position:fixed;bottom:5.5rem;right:1.25rem;z-index:190;
-          display:flex;align-items:center;gap:6px;
-          background:rgba(255,255,255,0.95);color:#555;
-          border:1px solid #ddd;border-radius:20px;
-          padding:6px 12px 6px 8px;
-          font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:500;
-          text-decoration:none;
-          box-shadow:0 2px 8px rgba(0,0,0,0.1);
-          transition:all 0.2s;backdrop-filter:blur(4px)"
-   onmouseover="this.style.borderColor='#25D366';this.style.color='#25D366'"
-   onmouseout="this.style.borderColor='#ddd';this.style.color='#555'">
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366" xmlns="http://www.w3.org/2000/svg">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.566 4.14 1.546 5.876L0 24l6.337-1.524A11.934 11.934 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.044-1.393l-.361-.214-3.762.905.944-3.672-.235-.375A9.818 9.818 0 0 1 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"/>
-  </svg>
-  WhatsApp
-</a>
 
 <!-- MODAL TÉCNICAS DE IMPRESIÓN -->
 <div id="modal-tecnicas">
@@ -2587,9 +2566,8 @@ document.addEventListener('keydown', e => {
 
     </div>
     <div class="tecnicas-nota">
-      La disponibilidad de cada técnica depende del artículo específico.
-      Cada ficha de producto indica las opciones de personalización compatibles.
-      Ante cualquier consulta sobre combinaciones o mínimos de producción, podés escribirnos por WhatsApp o usar el formulario de consulta.
+      La técnica de personalización se define en cada presupuesto según el logo, el material del producto, la cantidad y el plazo de entrega.
+      Ante cualquier consulta sobre técnicas o mínimos de producción, podés usar el formulario de cotización o escribir a ventas@promoplanet.ar.
     </div>
     <footer-interno></footer-interno>
   </div>
@@ -2631,7 +2609,7 @@ document.addEventListener('keydown', e => {
         </div>
         <div class="como-paso-texto">
           <p class="como-paso-titulo">Pedís cotización</p>
-          <p class="como-paso-desc">Completás el formulario con el producto, la cantidad y la técnica. Recibís el presupuesto en menos de 24 horas, con validez de 7 días hábiles.</p>
+          <p class="como-paso-desc">Completás el formulario con el producto, la cantidad y la técnica. Recibís el presupuesto en un plazo de 24 a 48 horas, con validez de 7 días hábiles.</p>
         </div>
       </div>
       <div class="como-paso">
@@ -2668,7 +2646,7 @@ document.addEventListener('keydown', e => {
         </div>
         <div class="como-paso-texto">
           <p class="como-paso-titulo">Producción y entrega</p>
-          <p class="como-paso-desc">El plazo depende del producto, la cantidad y la técnica, y se confirma en el presupuesto. Entrega sin costo en CABA y Provincia de Buenos Aires.</p>
+          <p class="como-paso-desc">El plazo depende del producto, la cantidad y la técnica, y se confirma en el presupuesto. Entrega sin costo en CABA y GBA.</p>
         </div>
       </div>
     </div>
