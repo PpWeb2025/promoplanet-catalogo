@@ -224,7 +224,18 @@ app.get('/producto/:codigo', async (req, res) => {
     const p = await getProductoByCodigo(req.params.codigo);
     if (!p) return render404(res);
     const title = escapeAttr(`${p.nombre} — PromoPlanet`);
-    const desc = escapeAttr((p.descripcion || '').replace(/\n/g, ' ').slice(0, 160));
+    const rawDesc = (p.descripcion || '').replace(/\n/g, ' ').trim();
+    const genericDesc = 'Catálogo de productos promocionales personalizados para empresas. Drinkware, indumentaria, tecnología, packaging y más. Entregas en CABA y GBA.';
+    let truncDesc;
+    if (rawDesc) {
+      if (rawDesc.length > 155) {
+        const cut = rawDesc.lastIndexOf(' ', 155);
+        truncDesc = rawDesc.slice(0, cut > 0 ? cut : 155) + '...';
+      } else {
+        truncDesc = rawDesc;
+      }
+    }
+    const metaDesc = escapeAttr(truncDesc || genericDesc);
     const fotoId = Array.isArray(p.fotos) && p.fotos[0];
     const image = fotoId
       ? (fotoId.startsWith('http') || fotoId.startsWith('/') ? fotoId : `https://promoplanet.ar/api/drive/imagen/${fotoId}`)
@@ -232,9 +243,8 @@ app.get('/producto/:codigo', async (req, res) => {
     const url = `https://promoplanet.ar/producto/${encodeURIComponent(p.codigo)}`;
     const meta = [
       `<title>${title}</title>`,
-      `<meta name="description" content="${desc}">`,
       `<meta property="og:title" content="${title}">`,
-      `<meta property="og:description" content="${desc}">`,
+      `<meta property="og:description" content="${metaDesc}">`,
       `<meta property="og:image" content="${image}">`,
       `<meta property="og:url" content="${url}">`,
       `<meta property="og:type" content="product">`,
@@ -253,6 +263,7 @@ app.get('/producto/:codigo', async (req, res) => {
     res.send(
       baseHtml
         .replace('<title>PromoPlanet — Productos promocionales y regalos corporativos en Buenos Aires</title>', meta)
+        .replace('<meta name="description" content="Catálogo de productos promocionales personalizados para empresas. Drinkware, indumentaria, tecnología, packaging y más. Entregas en CABA y GBA.">', `<meta name="description" content="${metaDesc}">`)
         .replace('<link rel="canonical" href="https://promoplanet.ar/">', `<link rel="canonical" href="${url}">`)
         .replace('</head>', `${jsonLdScript}\n</head>`)
     );
