@@ -5,6 +5,7 @@ const { Readable } = require('stream');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
 const { purgeCatalogCache } = require('../lib/cloudflare');
+const { corregirNombreArchivo, limpiarNombreArchivo } = require('../lib/nombreArchivo');
 
 const os = require('os');
 const fs = require('fs');
@@ -122,9 +123,12 @@ router.post('/upload-foto', requireAdmin, upload.single('foto'), async (req, res
     const saEmail = process.env.GOOGLE_SA_CREDENTIALS
       ? JSON.parse(process.env.GOOGLE_SA_CREDENTIALS).client_email
       : 'promoplanet-drive@promoplanet-495303.iam.gserviceaccount.com';
+    const nombreDrive = limpiarNombreArchivo(
+      (req.body && req.body.nombre) || corregirNombreArchivo(req.file.originalname)
+    );
     const { data } = await drive.files.create({
       requestBody: {
-        name: req.file.originalname,
+        name: nombreDrive,
         ...(folderId && { parents: [folderId] }),
       },
       media: { mimeType: req.file.mimetype, body: fs.createReadStream(req.file.path) },

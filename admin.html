@@ -1388,20 +1388,41 @@ function agregarFotoAlGrid(url) {
   grid.appendChild(div);
 }
 
+async function leerRespuestaIA(r) {
+  if (r.status === 401) return { error: 'La sesión del panel venció. Recargá la página, ingresá de nuevo y repetí el análisis.' };
+  try {
+    return await r.json();
+  } catch {
+    return { error: `El servidor respondió con error ${r.status}. Probá de nuevo en un minuto.` };
+  }
+}
+
 async function subirFotoDesdeArchivo(input) {
   const files = Array.from(input.files);
   if (!files.length) return;
+  const codigo = document.getElementById('f-codigo').value.trim();
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if (!codigo || !nombre) {
+    showToast('Completá código y nombre antes de subir fotos, así los archivos quedan con su código', 'error');
+    input.value = '';
+    return;
+  }
   const status = document.getElementById('foto-upload-status');
   status.textContent = files.length > 1 ? `Subiendo ${files.length} fotos…` : 'Subiendo...';
+  let existentes = document.querySelectorAll('#fotos-preview .foto-item').length;
   let errores = 0;
   for (const file of files) {
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+    const sufijo = existentes === 0 ? '' : ` ${String.fromCharCode(97 + existentes)}`;
     const fd = new FormData();
+    fd.append('nombre', `${nombre} ${codigo}${sufijo}.${ext}`);
     fd.append('foto', file);
     try {
       const r = await fetch('/api/productos/upload-foto', { method: 'POST', body: fd });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Error al subir');
       agregarFotoAlGrid(data.fileId);
+      existentes++;
     } catch {
       errores++;
     }
@@ -2205,8 +2226,16 @@ async function initAgregarSection() {
       _agregarCodigo = codigo;
       document.getElementById('agregar-codigo').textContent = codigo;
       document.getElementById('agregar-f-codigo').value = codigo;
+    } else {
+      document.getElementById('agregar-codigo').textContent = 'sin código';
+      showToast(res.status === 401
+        ? 'La sesión del panel venció. Recargá la página e ingresá de nuevo.'
+        : 'No se pudo obtener el código del producto. Recargá la página.', 'error');
     }
-  } catch {}
+  } catch {
+    document.getElementById('agregar-codigo').textContent = 'sin código';
+    showToast('No se pudo obtener el código del producto. Revisá la conexión.', 'error');
+  }
 }
 
 function onDropFiles(event) {
@@ -2312,14 +2341,14 @@ async function analizarConIA(btn) {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ fotos, urlProveedor, textoManual }),
-            }).then(r => r.json()).catch(() => null))
+            }).then(leerRespuestaIA).catch(() => ({ error: 'No hubo conexión con el servidor.' })))
         : Promise.resolve(null),
       tieneTextoOURL
         ? fetch('/api/ia/adaptar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: urlProveedor || undefined, textoManual }),
-          }).then(r => r.json()).catch(() => null)
+          }).then(leerRespuestaIA).catch(() => ({ error: 'No hubo conexión con el servidor.' }))
         : Promise.resolve(null),
     ]);
 
@@ -2580,6 +2609,7 @@ async function confirmarAgregarProducto(btn, estadoForzado) {
   const subcategoria = document.getElementById('agregar-f-subcategoria').value;
   if (!nombre || !categoria) { showToast('Completá nombre y categoría', 'error'); return; }
   if (!_agregarFiles.length) { showToast('No hay fotos cargadas', 'error'); return; }
+  if (!_agregarCodigo) { showToast('El producto no tiene código asignado. Recargá la página antes de subir las fotos.', 'error'); return; }
 
   const estado = estadoForzado || 'borrador';
   const getChecked = groupId => Array.from(
@@ -2832,14 +2862,14 @@ async function analizarConIAEdicion(btn) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fotos: fotosResolved, urlProveedor, textoManual }),
-          }).then(r => r.json()).catch(() => null)
+          }).then(leerRespuestaIA).catch(() => ({ error: 'No hubo conexión con el servidor.' }))
         : Promise.resolve(null),
       tieneTextoOURL
         ? fetch('/api/ia/adaptar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: urlProveedor || undefined, textoManual }),
-          }).then(r => r.json()).catch(() => null)
+          }).then(leerRespuestaIA).catch(() => ({ error: 'No hubo conexión con el servidor.' }))
         : Promise.resolve(null),
     ]);
 

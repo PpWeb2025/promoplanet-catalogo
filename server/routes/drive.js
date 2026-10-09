@@ -7,6 +7,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db');
+const { corregirNombreArchivo, limpiarNombreArchivo } = require('../lib/nombreArchivo');
 
 // --- Ajustes de memoria para instancias chicas (Render 512 MB) ---
 // libvips por defecto cachea operaciones y usa varios threads; en un
@@ -234,7 +235,7 @@ router.post('/subir', requireAdmin, uploadDisk.array('fotos', 20), async (req, r
     // instancia de 512 MB era parte del problema de memoria.
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
-      const nombre = nombres[i] || file.originalname;
+      const nombre = limpiarNombreArchivo(nombres[i] || corregirNombreArchivo(file.originalname));
       const { data } = await drive.files.create({
         requestBody: {
           name: nombre,

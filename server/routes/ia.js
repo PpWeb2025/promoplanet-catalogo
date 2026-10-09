@@ -79,10 +79,12 @@ router.post('/adaptar', requireAdmin, async (req, res) => {
   let { texto, url, textoManual } = req.body;
 
   let textoScraped = '';
+  let errorScraping = '';
   if (url) {
     try {
       textoScraped = await fetchTextoDesdeURL(url);
     } catch (err) {
+      errorScraping = err.message;
       console.error('Error al scrapear URL:', err.message);
     }
   }
@@ -93,7 +95,15 @@ router.post('/adaptar', requireAdmin, async (req, res) => {
   if (texto?.trim() && !textoScraped && !textoManual) partes.push(texto.trim());
 
   const contenidoFuente = partes.join('\n\n---\n\n');
-  if (!contenidoFuente) return res.status(400).json({ error: 'Enviá texto o URL del producto' });
+  if (!contenidoFuente) {
+    if (errorScraping) {
+      return res.status(422).json({ error: `No se pudo leer la página del proveedor (${errorScraping}). Pegá el texto de la descripción en el campo de texto y probá de nuevo.` });
+    }
+    if (url) {
+      return res.status(422).json({ error: 'La página del proveedor no devolvió texto legible (puede cargar el contenido con JavaScript). Pegá el texto de la descripción en el campo de texto y probá de nuevo.' });
+    }
+    return res.status(400).json({ error: 'Enviá texto o URL del producto' });
+  }
 
   const fuenteLabel = [
     textoManual?.trim() ? 'texto pegado manualmente' : null,
