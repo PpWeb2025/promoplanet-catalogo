@@ -64,6 +64,11 @@
     transition: background 0.2s;
   }
   .btn-consulta-nav:hover { background: #009aaa; }
+  /* El color del botón debe ganarle a `.nav-links a` y a `.nav-mobile a` */
+  .nav-links a.btn-consulta-nav,
+  .nav-mobile a.btn-consulta-nav { color: var(--blanco); }
+  .nav-links a.btn-consulta-nav:hover,
+  .nav-mobile a.btn-consulta-nav:hover { color: var(--blanco); background: #009aaa; }
 
   /* Admin icon — nav header */
   .nav-links a.nav-admin-link {
@@ -1077,6 +1082,9 @@
   </div>
 </section>
 
+<!-- El buscador es sticky: este contenedor limita hasta dónde se mantiene fijo,
+     así se despega al terminar el catálogo y no tapa el footer. -->
+<div class="catalogo-wrap">
 <div class="cats-search-bar">
   <div class="search-wrap">
     <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" style="cursor:pointer" onclick="buscarYScrollear()"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
@@ -1163,11 +1171,12 @@
     </div>
   </main>
 </div>
+</div><!-- /catalogo-wrap -->
 
 <!-- FLOATING PRESUPUESTO -->
 <div class="presup-bar">
   <div class="presup-count hidden" id="presup-btn" onclick="abrirConsulta()">
-    <span>Mi consulta</span>
+    <span>Mi cotización</span>
     <div class="presup-badge" id="presup-badge">0</div>
   </div>
 </div>
@@ -1248,7 +1257,7 @@
       <div class="modal-prod-meta" id="mp-meta"></div>
       <p class="modal-prod-desc" id="mp-desc"></p>
       <div class="modal-prod-specs" id="mp-specs"></div>
-      <button class="btn-primary" style="width:100%" onclick="addFromModal()">Agregar a mi consulta</button>
+      <button class="btn-primary" style="width:100%" onclick="addFromModal()">Agregar a mi cotización</button>
     </div>
   </div>
 </div>
@@ -1323,11 +1332,10 @@
       </div>
       <h4>Empresa</h4>
       <a href="#" onclick="abrirComoFunciona(); return false;">Cómo funciona</a>
-      <a href="#" onclick="abrirTecnicas(); return false;">Técnicas de personalización</a>
+      <a href="#" onclick="abrirTecnicas(); return false;">Personalización</a>
       <a href="/clientes">Nuestros clientes</a>
       <a href="#" onclick="abrirConsulta(); return false;">Solicitar cotización</a>
       <a href="mailto:hola@promoplanet.ar">Contacto</a>
-      <a href="https://www.promoplanet.ar">www.promoplanet.ar</a>
     </div>
   </div>
   <div class="footer-bottom">
@@ -1476,11 +1484,14 @@ function logoSrc(url) {
   return url;
 }
 
-function badgesHtml(badges) {
+// max (opcional): cantidad máxima de insignias a mostrar; sin max se muestran todas
+function badgesHtml(badges, max) {
   if (!badges || !badges.length) return '';
-  const pills = badges.map(id => {
+  const validas = badges.filter(id => BADGES[id]);
+  const visibles = max ? validas.slice(0, max) : validas;
+  if (!visibles.length) return '';
+  const pills = visibles.map(id => {
     const b = BADGES[id];
-    if (!b) return '';
     return `<span class="prod-badge" style="background:${b.bg}">${b.label}</span>`;
   }).join('');
   return `<div class="prod-badges">${pills}</div>`;
@@ -1862,7 +1873,7 @@ function filtrar() {
 // RENDER PRODUCTOS
 // ============================================================
 const RANGO_LABEL = { economico: 'Económico', intermedio: 'Intermedio', premium: 'Premium' };
-const OCC_LABEL = { onboarding: 'Onboarding', capacitacion: 'Capacitación', reconocimiento: 'Reconocimiento', eventos: 'Eventos', fechas: 'Fechas especiales' };
+const OCC_LABEL = { onboarding: 'Onboarding', capacitacion: 'Capacitación', reconocimiento: 'Reconocimiento', evento: 'Eventos', eventos: 'Eventos', fechas: 'Fechas especiales' };
 const TECNICA_LABEL = { tampografia: 'Tampografía', serigrafia: 'Serigrafía', 'grabado laser': 'Grabado láser', dtf: 'DTF / Full color', bordado: 'Bordado', sublimacion: 'Sublimación', 'hot stamping': 'Hot stamping', 'dtf textil': 'DTF Textil' };
 const BADGE_MAP = { eco: ['badge-eco', 'Eco'], premium: ['badge-premium', 'Premium'], popular: ['badge-popular', '⭐ Popular'] };
 
@@ -1906,7 +1917,7 @@ function renderProductos(lista) {
           <div class="card-carousel-dots">
             ${fotos.map((_,i) => `<span class="card-carousel-dot${i===0?' active':''}"></span>`).join('')}
           </div>` : ''}
-        ${badgesHtml(p.badges)}
+        ${badgesHtml(p.badges, 2)}
         ${p.marca_id && MARCAS[p.marca_id] && MARCAS[p.marca_id].logo_url
           ? `<div class="marca-logo-badge"><img src="${logoSrc(MARCAS[p.marca_id].logo_url)}" alt="${MARCAS[p.marca_id].nombre}"></div>`
           : ''}
@@ -1916,13 +1927,13 @@ function renderProductos(lista) {
         <div class="product-code">Cód. ${p.codigo}</div>
         <div class="product-cat">${CATEGORIAS.find(c=>c.id===p.categoria)?.nombre || ''}</div>
         <div class="product-tags">
-          ${(p.ocasiones || []).map(o => `<span class="product-tag">${OCC_LABEL[o] || o}</span>`).join('')}
+          ${(p.ocasiones || []).slice(0, 2).map(o => `<span class="product-tag">${OCC_LABEL[o] || o}</span>`).join('')}
           ${p.minimo ? `<span class="product-tag">Mín. ${p.minimo} u.</span>` : ""}
         </div>
         <div class="product-footer">
           <div class="rango-precio">${p.rango ? `<strong>${RANGO_LABEL[p.rango]}</strong>` : `<span style="color:var(--texto-suave);font-style:italic">Consultar precio</span>`}</div>
           <button class="btn-add ${enSeleccion ? 'added' : ''}" onclick="event.stopPropagation(); agregarProducto(${p.id})" id="btn-add-${p.id}">
-            ${enSeleccion ? '✓ Agregado' : '+ Consultar'}
+            ${enSeleccion ? '✓ Agregado' : '+ Cotizar'}
           </button>
         </div>
       </div>
@@ -1971,7 +1982,7 @@ function agregarProducto(id) {
     seleccion.push({ ...p, cantidadConsulta: p.minimo });
   }
   actualizarPresupBtn();
-  showToast(`"${p.nombre}" agregado a tu consulta`);
+  showToast(`"${p.nombre}" agregado a tu cotización`);
   const btn = document.getElementById(`btn-add-${id}`);
   if (btn) { btn.textContent = '✓ Agregado'; btn.classList.add('added'); }
 }
@@ -1992,13 +2003,13 @@ function quitarDeSeleccion(id) {
   actualizarPresupBtn();
   renderSeleccionModal();
   const btn = document.getElementById(`btn-add-${id}`);
-  if (btn) { btn.textContent = '+ Consultar'; btn.classList.remove('added'); }
+  if (btn) { btn.textContent = '+ Cotizar'; btn.classList.remove('added'); }
 }
 
 function renderSeleccionModal() {
   const el = document.getElementById('seleccion-list');
   if (!seleccion.length) {
-    el.innerHTML = `<p style="font-size:0.85rem;color:var(--texto-suave);margin-bottom:1rem;padding:0.75rem;background:var(--gris);border-radius:8px">No hay productos seleccionados. Podés igualmente enviarnos tu consulta describiendo lo que buscás.</p>`;
+    el.innerHTML = `<p style="font-size:0.85rem;color:var(--texto-suave);margin-bottom:1rem;padding:0.75rem;background:var(--gris);border-radius:8px">No hay productos seleccionados. Podés igualmente enviarnos tu solicitud describiendo lo que buscás.</p>`;
     return;
   }
   el.innerHTML = `<p style="font-size:0.78rem;color:var(--texto-suave);margin-bottom:0.75rem">Productos seleccionados — indicá la cantidad aproximada para cada uno:</p>` +
@@ -2147,7 +2158,7 @@ async function enviarConsulta() {
       return;
     }
     cerrarConsulta();
-    showToast('¡Consulta enviada! Te respondemos en 24 a 48 hs.');
+    showToast('¡Solicitud enviada! Te respondemos en 24 a 48 hs.');
   } catch {
     alert('Error de conexión. Escribinos directamente a hola@promoplanet.ar');
   } finally {
