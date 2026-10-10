@@ -1,115 +1,96 @@
 # PromoPlanet — Catálogo de Productos Promocionales
 
+Última actualización: 10/10/2026. Lo marcado como (verificado) se comprobó leyendo `index.html` y `clientes.html`. El resto viene de lo ya documentado del proyecto; ante una duda sobre `server/`, revisar el código antes de asumir.
+
 ## Contexto del proyecto
 
-Empresa de Buenos Aires especializada en productos promocionales corporativos. Este repositorio es el catálogo digital: una SPA (Single Page Application) sin backend que permite explorar productos, filtrarlos y gestionarlos desde un panel de administración.
+PromoPlanet (promoplanet.ar) es una empresa de Buenos Aires que vende productos promocionales y regalos corporativos a empresas. Los clientes son sobre todo áreas de RR. HH. y Marketing que compran para onboarding, reconocimientos, capacitaciones y fechas especiales.
+
+Este repositorio es el catálogo web y el generador de propuestas comerciales. No es una SPA sin backend: tiene servidor propio y base de datos remota.
+
+## Stack e infraestructura
+
+- Frontend: HTML, CSS y JavaScript vanilla, sin frameworks ni build (verificado). Las páginas son `index.html`, `clientes.html`, `admin.html`, `propuesta.html` y `propuestas.html`.
+- Backend: Node.js + Express en `server/` (punto de entrada `server/index.js`).
+- Base de datos: Turso (libSQL), base `promoplanet`. La base local `promoplanet.db` es de la etapa anterior, con SQLite, y no es la de producción.
+- Imágenes: Google Drive, servidas por un proxy en `/api/drive/imagen/:fileId` con Sharp (anchos permitidos 200, 400, 800 y 1200; salida WebP o JPEG con `?fmt=`). Cloudinary se abandonó.
+- Hosting: Render (servicio `srv-d7vjdi3rjlhs73dq8j2g`). Dominio `promoplanet.ar` detrás de Cloudflare.
+- Descripciones de producto: generadas con Gemini (modelo configurable con la variable `GEMINI_MODEL`).
+- Newsletter: Brevo (la clave está en las variables de entorno de Render).
+- Repositorio: GitHub `PpWeb2025/promoplanet-catalogo`, rama `main`.
 
 ## Archivos principales
 
 | Archivo | Rol |
 |---|---|
-| `index.html` | Catálogo público |
+| `index.html` | Catálogo público (HTML, CSS y JS en un solo archivo) |
+| `badges.js` | Definición de insignias (`BADGES`), cargada desde la raíz del sitio |
+| `clientes.html` | Página `/clientes` con la grilla de logos de clientes |
 | `admin.html` | Panel de administración |
-| `server/index.js` | Servidor Express (punto de entrada) |
-| `server/db.js` | Base de datos SQLite con sql.js |
-| `server/routes/auth.js` | Login / logout / sesión |
-| `server/routes/productos.js` | CRUD de productos |
-| `server/routes/drive.js` | Integración Google Drive |
-| `aplicar_cambios.py` | Script Python para actualizaciones masivas de nomenclatura |
+| `propuesta.html`, `propuestas.html` | Generador y listado de propuestas comerciales |
+| `server/` | Servidor Express, rutas y acceso a la base |
+| `logos-clientes/` | Logos de clientes y `clientes.json` |
+| `firma/` | Firmas HTML de los mails, con imágenes alojadas en `promoplanet.ar/firma/` |
 
-## Stack tecnológico
+## Archivos con claves: no abrir ni pegar su contenido
 
-- **HTML/CSS/JavaScript vanilla** — sin frameworks, sin build tools
-- **Backend Node.js + Express** — servidor en `server/`
-- **Base de datos SQLite** — `promoplanet.db` vía `sql.js`
-- **Autenticación por sesión** — `express-session`, contraseña en `.env`
-- **Google Fonts** — DM Sans (variable 300–600), DM Serif Display, DM Mono
-- **Correr localmente:** `node server/index.js` → http://localhost:3000
-
-## Diseño visual
-
-- Colores de marca: azul oscuro `#003471`, cian `#00A8B4`
-- Variables CSS para theming consistente
-- Grid CSS responsivo, mobile-first con `@media` queries
-- Nav con glassmorphism (`backdrop-filter: blur(8px)`)
-
-## Categorías y subcategorías
-
-| Categoría | ID | Subcategorías |
-|---|---|---|
-| Bolsos y Mochilas | `bolsos_mochilas` | Bolsos, Maletines y portfolios, Mochilas, Neceseres y accesorios, Viaje |
-| Capacitación y Eventos | `capacitacion` | — |
-| Drinkware | `drinkware` | Botellas standard, Botellas térmicas, Tazas mugs y jarros, Termos y mates |
-| Eco y Sustentable | `eco` | Bambu y madera, Reciclados, Tote bags y bolsas |
-| Escritorio y Oficina | `escritorio` | Cuadernos y agendas, Organizadores |
-| Escritura | `escritura` | Bolígrafos ecológicos, Bolígrafos metálicos, Bolígrafos plásticos, Escritura fina, Lápices, Marcadores y resaltadores |
-| Fechas Especiales | `fechas` | — |
-| Indumentaria Corporativa | `indumentaria` | Abrigos, Camisas, Delantales y pecheras, Gorras, Remeras y chombas |
-| Llaveros y Accesorios | `llaveros` | Llaveros de madera, Llaveros metálicos, Llaveros plásticos, Multipropósito |
-| Onboarding y Bienvenida | `onboarding` | — |
-| Outdoors y Bienestar | `outdoors` | Coolers y loncheras, Cuidado personal, Deporte y fitness, Gastronomía, Paraguas |
-| Packaging y Presentación | `packaging` | Bolsas y papel, Cajas |
-| Reconocimiento y Premios | `reconocimiento` | — |
-| Tecnología | `tecnologia` | Accesorios de escritorio, Accesorios para celular, Audio, Carga y conectividad |
+`.env`, `service-account.json`, `api_key.txt`, `Brevo Api.txt` y `turso token.txt` contienen credenciales. No se leen, no se copian a otras carpetas y no se muestran en ninguna respuesta. Si hace falta saber si un archivo contiene claves, usar `grep -c` y mostrar solo el número.
 
 ## Catálogo público (`index.html`)
 
-### Filtros disponibles
+Todo se verificó en el código.
 
-1. **Categoría** — sidebar con 14 categorías
-2. **Búsqueda de texto** — coincidencia parcial case-insensitive sobre nombre, código y descripción
-3. **Destinatario** — Colaborador / Cliente / Directivo
-4. **Ocasión** — Onboarding / Capacitación / Reconocimiento / Eventos / Fechas especiales
-5. **Rango de precio** — Económico / Intermedio / Premium
-6. **Técnica de personalización** — Laser, DTF, Tampografía, Bordado, Sublimación, etc.
+- Categorías (11): `bienestar`, `bolsos_mochilas`, `drinkware`, `escritorio`, `escritura`, `hogar`, `indumentaria`, `llaveros`, `outdoors`, `packaging`, `tecnologia`. Están definidas en `CATEGORIAS`, `CAT_NAMES` y `SUBCATS`.
+- Páginas SEO: `/categoria/:slug` (slugs en `CAT_LANDING_SLUGS`), `/ocasion/:slug` (slugs en `OCC_LANDING_SLUGS`), `/sustentable` y `/clientes`.
+- Filtros del lateral: Categoría y subcategoría, Eco / Sustentable, Ocasión (evento, fechas, onboarding, capacitacion), Destinatario (colaborador, cliente, directivo) y Marca. Hay un buscador de texto fijo arriba del catálogo (`#search-input`, `filtrar()`).
+- Los filtros son combinables y el resultado pasa por `renderProductos(lista)`.
+- Cada tarjeta muestra el código (`Cód. PP-XXX`), la categoría, hasta 2 ocasiones, el mínimo y el botón "+ Cotizar".
+- Endpoints que consume: `/api/productos`, `/api/marcas`, `/api/consultas` (envío de la solicitud), `/api/suscripciones`, `/api/auth/login` y `/logos-clientes/clientes.json`.
+- El candado del menú llama a `iniciarAdmin()`, que pide usuario y contraseña. La sesión de administración dura unos 15 minutos.
 
-Todos los filtros son combinables; el resultado se pasa a `renderProductos(visible)`.
+## Vocabulario del sitio (definido en octubre 2026)
 
-## Panel de administración (`admin.html`)
+- Todo el circuito de pedido se llama "cotización": "Solicitar cotización", "Mi cotización", "Agregar a mi cotización", botón "+ Cotizar" y mensaje "Solicitud enviada".
+- "Consultar precio" se usa solo cuando un producto no tiene rango de precio.
+- El menú y el footer dicen "Personalización" (no "Técnicas de personalización").
+- Tarjetas de producto: máximo 2 insignias y máximo 2 ocasiones. `badgesHtml(badges, max)` recibe el máximo como segundo argumento.
+- Los nombres internos (`abrirConsulta`, `cantidadConsulta`, `/api/consultas`) no se renombran.
 
-**Acceso:** contraseña configurada en `.env` (`ADMIN_PASSWORD`). Autenticación via API `/api/auth/login`.
+## Reglas de datos
 
-### Secciones
+- El campo vigente es `badges` (plural, arreglo JSON). `badge` (singular) es un resto de los scripts de importación viejos; la API manda sobre los scripts locales.
+- Las ocasiones se guardan en singular: `evento`, `fechas`, `onboarding`, `capacitacion`, `reconocimiento`. `OCC_LABEL` traduce cada una.
+- Formato de código de producto: `PP-XXX`. Hoy conviven códigos con guion (`PP-635`) y sin guion (`PP394`). Está pendiente normalizarlos, y se hace desde la base.
+- Nombres de producto: hay nombres repetidos (por ejemplo "Bolígrafo Plástico" en 16 productos), uno sin nombre (PP275) y unas pocas inconsistencias de mayúsculas, puntos finales y orden de palabras. Se corrigen en el admin o en la base, no en el HTML.
+- La cantidad "+500 productos" del encabezado se actualiza a mano.
 
-- **Dashboard** — estadísticas (total, publicados, borradores, categorías), tabla de productos recientes, acceso rápido a importación desde Drive
-- **Productos** — tabla con búsqueda, filtro de categoría y estado, botones editar/eliminar/publicar
-- **Importar de Drive** — UI para pegar una URL de carpeta de Google Drive; la importación actual es **simulada/demo** (no hay llamadas reales a la API de Drive)
-- **Categorías** — listado con conteo de productos por categoría
-- **Exportar datos** — descarga JSON del catálogo completo o CSV de la lista de productos
+## Seguridad y archivos estáticos
 
-### Modal de producto
+- `express.static` se reemplazó por `guardedStatic`, con una lista de directorios permitidos (`STATIC_ALLOWED_DIRS`). Un archivo o carpeta nueva devuelve 404 hasta que se agrega a esa lista.
+- Las rutas sensibles pasan por el middleware `requireAdmin`.
+- Cloudflare bloquea con WAF los tipos de archivo sensibles.
 
-Formulario con 25+ campos: código (`PP-XXXX`), nombre, categoría, rango de precio, cantidad mínima, material, medidas, colores, descripción, técnicas (checkboxes), destinatarios, ocasiones, imagen y código de Drive para importación por lote.
+## Cómo trabajar acá
 
-## Imágenes y Google Drive
+- Probar siempre contra `promoplanet-catalogo.onrender.com` con Ctrl+Shift+R. `promoplanet.ar` está cacheado por Cloudflare.
+- Antes de probar, confirmar en Render que el deploy figura como "Live" y corresponde al commit correcto.
+- La base de Turso no se puede consultar desde la PC local: toda verificación de datos se hace contra producción, después del deploy.
+- Después de editar archivos del servidor, correr `node --check server/index.js` antes de hacer commit.
+- No encadenar verificaciones con `&&`: `grep -c` sale con código 1 si no hay coincidencias. Usar `;`.
+- Agregar archivos a git de a uno (`git add archivo`), nunca `git add .`. Para confirmar que un push llegó: `git log origin/main -1 --oneline`.
+- Cada cambio se revisa antes de aplicarse, hunk por hunk. Primero se hace un diagnóstico de solo lectura y después la implementación.
+- Los archivos HTML usan saltos de línea de Windows (CRLF). Al editarlos por script hay que conservarlos.
 
-- La integración con Google Drive **no está implementada** — el formulario de URL existe pero `simularImport()` usa datos hardcodeados de `DEMO_ARCHIVOS`
-- La función `extraerCodigo()` parsea nombres de archivo con regex `/([A-Z]{1,3}\d{3,4}[A-Z]?)/` (ej: `G1603`, `M220`)
-- El script `aplicar_cambios.py` migra la nomenclatura a formato `PP-XXXX`
-- Para producción se necesitaría implementar OAuth + Google Drive API
+## Redacción
 
-## Nomenclatura de productos
+- Español rioplatense con "vos", tono formal pero cercano, sin giros porteños estereotipados. Se usa "talle" y no "talla", "entregas" y no "despachos", "cuaderno anillado" y no "espiralado".
+- Descripciones de producto: tono objetivo y descriptivo, empiezan con artículo, sin negrita, sin dirigirse al lector, cada oración en su propia línea sin líneas en blanco. Se destacan los atributos ecológicos cuando corresponde.
+- Plazo de respuesta de las cotizaciones: 24 a 48 hs. Entregas sin cargo en CABA y GBA.
 
-Formato objetivo: `PP-XXXX` (ej: `PP-1234`). El script Python `aplicar_cambios.py` realiza actualizaciones masivas de códigos en lote.
+## Pendientes conocidos
 
-## Limitaciones actuales (pendientes para producción)
-
-- **Sin deploy** — el servidor solo corre localmente en `localhost:3000`
-- **Importación de Drive** — la ruta `/api/drive` existe; verificar si las llamadas son reales o simuladas
-- **Sin almacenamiento de imágenes externo** — las fotos se sirven vía Drive; pendiente evaluar Cloudinary/S3
-- **MemoryStore de sesión** — las sesiones se pierden al reiniciar el servidor (aceptable para uso de un solo usuario local)
-
-## Comandos útiles
-
-```bash
-# Abrir catálogo en el navegador (no requiere servidor)
-open index.html
-
-# Abrir panel de admin
-open admin.html
-
-# Ejecutar script de actualización de nomenclatura
-python aplicar_cambios.py
-```
-
-> No hay servidor de desarrollo ni proceso de build. Cualquier cambio en los `.html` se refleja al recargar el navegador.
+- La selección de productos no sobrevive a una recarga o a la navegación.
+- El login del catálogo usa `prompt()` nativo; la propuesta usa un modal.
+- Primera campaña de Brevo sin enviar.
+- Revisar errores 404 en Search Console y la indexación de las páginas SEO.
+- Limpiar scripts y archivos que ya no se usan en la carpeta del proyecto (ver diagnóstico).
