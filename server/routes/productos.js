@@ -21,6 +21,13 @@ function _esNuevo(createdAt) {
   const ms = Date.now() - new Date(createdAt).getTime();
   return ms >= 0 && ms < DIAS_NUEVO * 24 * 60 * 60 * 1000;
 }
+const CAMPOS_PRIVADOS = ['precio_proveedor', 'proveedor', 'notas'];
+function ocultarCamposPrivados(p) {
+  const out = { ...p };
+  for (const f of CAMPOS_PRIVADOS) delete out[f];
+  return out;
+}
+
 function _conBadgeNuevo(p) {
   if (!_esNuevo(p.created_at)) return p;
   const badges = Array.isArray(p.badges) ? p.badges : [];
@@ -34,13 +41,13 @@ router.get('/', async (req, res) => {
   if (!cat && !q) {
     res.set('Cache-Control', 'public, max-age=0, s-maxage=300');
   }
-  res.json((await db.getProductos({ soloPublicados: true, cat, q })).map(_conBadgeNuevo));
+  res.json((await db.getProductos({ soloPublicados: true, cat, q })).map(p => ocultarCamposPrivados(_conBadgeNuevo(p))));
 });
 
 router.get('/:id', async (req, res) => {
   const p = await db.getProductoById(req.params.id);
   if (!p || p.estado !== 'publicado') return res.status(404).json({ error: 'No encontrado' });
-  res.json(_conBadgeNuevo(p));
+  res.json(ocultarCamposPrivados(_conBadgeNuevo(p)));
 });
 
 // Admin — todos los productos
