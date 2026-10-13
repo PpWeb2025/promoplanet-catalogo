@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenAI, Type } = require('@google/genai');
 const { requireAdmin } = require('../middleware/auth');
 
 async function fetchTextoDesdeURL(url) {
@@ -54,7 +54,15 @@ const SUBCATEGORIAS = {
 };
 
 // Lista de IDs válidos generada desde CATEGORIAS (fuente única de verdad)
-const CATEGORIA_IDS = Object.keys(CATEGORIAS).join(', ');
+const CATEGORIA_IDS = Object.keys(CATEGORIAS);
+
+// Lista completa para los prompts: ID, nombre y subcategorías de cada categoría
+const CATEGORIA_LISTA = Object.entries(CATEGORIAS)
+  .map(([id, nombre]) => {
+    const subs = SUBCATEGORIAS[id];
+    return subs?.length ? `${id} (${nombre}): subcats → ${subs.join(', ')}` : `${id} (${nombre})`;
+  })
+  .join('\n');
 
 async function generarConReintento(ai, params, maxIntentos = 3) {
   let ultimoError;
@@ -73,6 +81,72 @@ async function generarConReintento(ai, params, maxIntentos = 3) {
     }
   }
   throw ultimoError;
+}
+
+function sinAcentos(texto) {
+  return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+// Devuelve un ID válido de CATEGORIAS, o '' si el valor no corresponde a ninguna.
+// Acepta el ID, el nombre (con o sin mayúsculas o acentos) o un texto que contenga el ID.
+function normalizarCategoria(valor) {
+  const v = sinAcentos(valor);
+  if (!v) return '';
+  for (const [id, nombre] of Object.entries(CATEGORIAS)) {
+    if (v === id || v === sinAcentos(nombre)) return id;
+  }
+  const palabras = v.split(/[^a-z_]+/);
+  return CATEGORIA_IDS.find(id => palabras.includes(id)) || '';
+}
+
+// Devuelve el nombre exacto de la subcategoría si pertenece a la categoría, o ''.
+function normalizarSubcategoria(categoria, valor) {
+  const v = sinAcentos(valor);
+  if (!v) return '';
+  return (SUBCATEGORIAS[categoria] || []).find(s => sinAcentos(s) === v) || '';
+}
+
+// Segundo intento: la IA solo puede responder con uno de los ID de la lista.
+const ESQUEMA_CATEGORIA = {
+  type: Type.OBJECT,
+  properties: {
+    categoria:    { type: Type.STRING, enum: CATEGORIA_IDS },
+    subcategoria: { type: Type.STRING },
+  },
+  required: ['categoria', 'subcategoria'],
+};
+
+// Deja en datos.categoria y datos.subcategoria valores válidos, o cadena vacía.
+// Si la respuesta de la IA no trae una categoría válida, hace un segundo intento
+// con una respuesta restringida a los ID de la lista. Si también falla, queda
+// vacía y el admin avisa para que se elija a mano.
+async function resolverCategoria(ai, datos, partesExtra = []) {
+  let categoria = normalizarCategoria(datos.categoria);
+  let subcategoria = normalizarSubcategoria(categoria, datos.subcategoria);
+  if (!categoria) {
+    try {
+      const prompt = `Elegí la categoría y la subcategoría que corresponden a este producto promocional corporativo argentino.
+
+Producto: ${datos.nombre || '(sin nombre)'}
+${datos.material ? `Material: ${datos.material}\n` : ''}${datos.descripcion ? `Descripción: ${String(datos.descripcion).slice(0, 1500)}\n` : ''}
+Categorías disponibles:
+${CATEGORIA_LISTA}
+
+Respondé con un JSON con "categoria" (solo el ID) y "subcategoria" (nombre exacto de la lista, o cadena vacía si ninguna aplica).`;
+      const response = await generarConReintento(ai, {
+        model: MODELO_IA,
+        contents: partesExtra.length ? [...partesExtra, { text: prompt }] : prompt,
+        config: { responseMimeType: 'application/json', responseSchema: ESQUEMA_CATEGORIA },
+      });
+      const json = JSON.parse(response.text);
+      categoria = normalizarCategoria(json.categoria);
+      subcategoria = normalizarSubcategoria(categoria, json.subcategoria);
+    } catch (err) {
+      console.error('Error IA categoría (segundo intento):', err.message);
+    }
+  }
+  datos.categoria = categoria;
+  datos.subcategoria = subcategoria;
 }
 
 router.post('/adaptar', requireAdmin, async (req, res) => {
@@ -271,7 +345,8 @@ Respetá esos saltos de línea en el valor del campo "descripcion".
   "material": "Material principal del producto",
   "medidas": "Medidas formateadas según las reglas de formato, o cadena vacía si no hay.",
   "colores": "Colores formateados según las reglas de formato, o cadena vacía si no hay.",
-  "categoria": "Una de estas exactas: ${CATEGORIA_IDS}",
+  "categoria": "ID de la categoría que corresponde, elegido de esta lista (solo el ID, sin el nombre ni paréntesis):\n${CATEGORIA_LISTA}",
+  "subcategoria": "Nombre exacto de una subcategoría de la categoría elegida, o cadena vacía si ninguna aplica",
   "tecnicas": ["array", "con", "técnicas de personalización sugeridas de esta lista: laser, dtf, tampografia, bordado, sublimacion, hotstamping, serigrafia, dtf-textil"],
   "badges": ["array con badges sugeridos de: sale, oportunidad, ecofriendly, termico, premium, popular, exclusivo, corporativo, importado, kit, limitado"],
   "rango": "economico, intermedio o premium según el perfil del producto"
@@ -287,6 +362,7 @@ Respondé SOLO con el JSON, sin texto adicional antes ni después.`;
       config: { responseMimeType: 'application/json' },
     });
     const json = JSON.parse(response.text);
+    await resolverCategoria(ai, json);
     res.json(json);
   } catch (err) {
     console.error('Error IA:', err.message);
@@ -306,12 +382,7 @@ router.post('/analizar-fotos', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Se esperaba un array de fotos' });
   }
 
-  const catList = Object.entries(CATEGORIAS)
-    .map(([id, nombre]) => {
-      const subs = SUBCATEGORIAS[id];
-      return subs?.length ? `${id} (${nombre}): subcats → ${subs.join(', ')}` : `${id} (${nombre})`;
-    })
-    .join('\n');
+  const catList = CATEGORIA_LISTA;
 
   let textoScraped = '';
   if (urlProveedor) {
@@ -343,15 +414,17 @@ Respondé SOLO con el JSON, sin texto adicional.`;
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const partesFotos = fotos.slice(0, 4).map(f => ({ inlineData: { mimeType: f.mimeType, data: f.base64 } }));
     const response = await generarConReintento(ai, {
       model: MODELO_IA,
       contents: [
-        ...fotos.slice(0, 4).map(f => ({ inlineData: { mimeType: f.mimeType, data: f.base64 } })),
+        ...partesFotos,
         { text: prompt },
       ],
       config: { responseMimeType: 'application/json' },
     });
     const json = JSON.parse(response.text);
+    await resolverCategoria(ai, json, partesFotos);
     res.json(json);
   } catch (err) {
     console.error('Error IA analizar-fotos:', err.message);

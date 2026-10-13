@@ -2371,12 +2371,15 @@ async function analizarConIA(btn) {
 
     // URL tiene prioridad para el nombre (más preciso que la imagen sola)
     const nombre = dataURL?.nombre || dataFotos?.nombre || '';
-    const categoria = dataFotos?.categoria || dataURL?.categoria || '';
-    const subcategoria = dataFotos?.subcategoria || '';
+    // Categoría y subcategoría salen de la misma respuesta (fotos primero, después link o texto)
+    const origenCat = dataFotos?.categoria ? dataFotos : (dataURL?.categoria ? dataURL : null);
+    const categoria = origenCat?.categoria || '';
+    const subcategoria = origenCat?.subcategoria || '';
 
     document.getElementById('agregar-f-nombre').value = nombre;
     document.getElementById('agregar-f-categoria').value = categoria;
     actualizarSubcatsAgregar(categoria, subcategoria);
+    avisarSinCategoria('agregar-f-categoria');
     if (dataURL?.descripcion) {
       const descFormateada = dataURL.descripcion
         .replace(/([.!?])\s+/g, '$1\n')
@@ -2575,6 +2578,7 @@ function resetAgregar() {
   document.getElementById('agregar-ia-wrap').style.display = 'none';
   document.getElementById('agregar-f-nombre').value = '';
   document.getElementById('agregar-f-categoria').value = '';
+  document.getElementById('agregar-f-categoria').style.borderColor = '';
   document.getElementById('agregar-subcat-group').style.display = 'none';
   document.getElementById('agregar-url-proveedor').value = '';
   actualizarBtnAnalizar();
@@ -2781,6 +2785,8 @@ function cargarEnFormulario() {
   document.getElementById('f-colores').value = _iaData.colores || '';
   document.getElementById('f-categoria').value = _iaData.categoria || '';
   actualizarSubcats(_iaData.categoria || '');
+  if (_iaData.subcategoria) document.getElementById('f-subcategoria').value = _iaData.subcategoria;
+  avisarSinCategoria('f-categoria');
   document.getElementById('f-rango').value = _iaData.rango || '';
 
   ['tecnicas-group','badges-group'].forEach(gid => {
@@ -2894,8 +2900,9 @@ async function analizarConIAEdicion(btn) {
 
     // Prioridad: URL tiene más contexto de texto; fotos para categoría/subcategoría visual
     const nombre    = dataURL?.nombre    || dataFotos?.nombre    || '';
-    const categoria = dataFotos?.categoria || dataURL?.categoria || '';
-    const subcategoria = dataFotos?.subcategoria || '';
+    const origenCat = dataFotos?.categoria ? dataFotos : (dataURL?.categoria ? dataURL : null);
+    const categoria = origenCat?.categoria || '';
+    const subcategoria = origenCat?.subcategoria || '';
 
     if (nombre)    document.getElementById('f-nombre').value    = nombre;
     if (dataURL?.descripcion) document.getElementById('f-descripcion').value = dataURL.descripcion;
@@ -2908,6 +2915,7 @@ async function analizarConIAEdicion(btn) {
       actualizarSubcats(categoria);
       if (subcategoria) document.getElementById('f-subcategoria').value = subcategoria;
     }
+    avisarSinCategoria('f-categoria');
 
     // Pre-seleccionar chips
     const iaChips = {
@@ -3083,6 +3091,17 @@ function showToast(msg, tipo) {
   t.className = 'toast show' + (tipo ? ' ' + tipo : '');
   clearTimeout(window._toastTimer);
   window._toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Si después de aplicar la respuesta de la IA el campo de categoría quedó vacío,
+// lo resalta y avisa para que se elija a mano. El resaltado se quita al elegir.
+function avisarSinCategoria(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  if (sel.value) { sel.style.borderColor = ''; return; }
+  sel.style.borderColor = '#f59e0b';
+  sel.addEventListener('change', () => { sel.style.borderColor = ''; }, { once: true });
+  showToast('La IA no pudo elegir la categoría. Elegila vos.', 'warning');
 }
 </script>
 </body>
