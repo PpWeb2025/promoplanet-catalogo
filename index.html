@@ -183,6 +183,12 @@
     background: radial-gradient(circle, rgba(0,168,180,0.15) 0%, transparent 70%);
     border-radius: 50%;
   }
+  .hero-mariposa {
+    position: absolute; z-index: 0; right: 4%; top: 50%;
+    width: clamp(240px, 32vw, 440px); height: auto;
+    transform: translateY(-50%) rotate(8deg);
+    opacity: 0.1; pointer-events: none; user-select: none;
+  }
   .hero-inner { max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
   .hero-slogan { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--celeste); font-weight: 500; margin-bottom: 1rem; }
   .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.15; margin-bottom: 1.25rem; }
@@ -704,6 +710,7 @@
     .nav-links { display: none; }
     .nav-hamburger { display: flex; }
     .hero { padding: 3rem 1.25rem; }
+    .hero-mariposa { display: none; }
     .banda-confianza { display: none; }
     .cats-grid {
       display: grid !important;
@@ -1024,6 +1031,7 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-pattern"></div>
+  <img class="hero-mariposa" src="/mariposa-blanca.svg" alt="" aria-hidden="true" width="418" height="397">
   <div class="hero-inner" style="position:relative;z-index:1">
     <h1>Productos promocionales<br>para equipos que <em>importan</em></h1>
     <p>Encontrá el regalo corporativo ideal para cada ocasión. Personalizamos con tu marca en pedidos mayoristas para empresas.</p>
