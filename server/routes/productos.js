@@ -15,7 +15,9 @@ fs.mkdirSync(UPLOAD_TMP, { recursive: true });
 // bufferizar fotos en memoria contribuia a los reinicios por OOM.
 const upload = multer({ dest: UPLOAD_TMP, limits: { fileSize: 10 * 1024 * 1024 } });
 
-const DIAS_NUEVO = 60;
+// El cartelito "Nuevo" es automático: se calcula al mostrar el producto, según
+// la fecha de creación. Un "nuevo" guardado en la base se ignora.
+const DIAS_NUEVO = 15;
 function _esNuevo(createdAt) {
   if (!createdAt || createdAt === '2020-01-01') return false;
   const ms = Date.now() - new Date(createdAt).getTime();
@@ -29,9 +31,8 @@ function ocultarCamposPrivados(p) {
 }
 
 function _conBadgeNuevo(p) {
-  if (!_esNuevo(p.created_at)) return p;
-  const badges = Array.isArray(p.badges) ? p.badges : [];
-  if (badges.includes('nuevo')) return p;
+  const badges = (Array.isArray(p.badges) ? p.badges : []).filter(b => b !== 'nuevo');
+  if (!_esNuevo(p.created_at)) return { ...p, badges };
   return { ...p, badges: ['nuevo', ...badges] };
 }
 

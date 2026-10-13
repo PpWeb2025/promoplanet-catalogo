@@ -273,7 +273,7 @@ Respetá esos saltos de línea en el valor del campo "descripcion".
   "colores": "Colores formateados según las reglas de formato, o cadena vacía si no hay.",
   "categoria": "Una de estas exactas: ${CATEGORIA_IDS}",
   "tecnicas": ["array", "con", "técnicas de personalización sugeridas de esta lista: laser, dtf, tampografia, bordado, sublimacion, hotstamping, serigrafia, dtf-textil"],
-  "badges": ["array con badges sugeridos de: sale, oportunidad, nuevo, ecofriendly, termico, premium, popular, exclusivo, corporativo, importado, kit, limitado"],
+  "badges": ["array con badges sugeridos de: sale, oportunidad, ecofriendly, termico, premium, popular, exclusivo, corporativo, importado, kit, limitado"],
   "rango": "economico, intermedio o premium según el perfil del producto"
 }
 
