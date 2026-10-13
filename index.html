@@ -422,17 +422,18 @@
   .product-code { font-size: 0.65rem; color: var(--texto-suave); margin-bottom: 0.15rem; }
   .product-cat { font-size: 0.62rem; color: var(--celeste); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.3rem; flex: 1; }
   .product-tags { display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 0.4rem; }
-  .product-tag { background: var(--gris); color: var(--texto-suave); font-size: 0.62rem; padding: 1px 5px; border-radius: 4px; }
+  .product-tag { background: var(--gris); color: var(--texto-suave); font-size: 0.68rem; padding: 2px 6px; border-radius: 4px; }
   .product-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+  .product-min { font-size: 0.72rem; font-weight: 500; color: var(--texto); white-space: nowrap; }
   .rango-precio { display: none !important; }
   .rango-badge  { display: none !important; }
   .btn-add {
     background: var(--azul); color: var(--blanco);
     border: none; border-radius: 8px;
-    padding: 0.4rem 0.75rem; font-size: 0.78rem; font-weight: 600;
+    padding: 0.45rem 0.9rem; font-size: 0.8rem; font-weight: 600;
     cursor: pointer; font-family: 'DM Sans', sans-serif;
     transition: all 0.15s; white-space: nowrap;
-    display: flex; align-items: center; gap: 4px;
+    display: flex; align-items: center; gap: 4px; margin-left: auto;
   }
   .btn-add:hover { background: var(--celeste); }
   .btn-add.added { background: var(--celeste); }
@@ -1484,6 +1485,16 @@ function logoSrc(url) {
   return url;
 }
 
+// Colores de las insignias solo en el catálogo (badges.js no se toca: lo usa también la propuesta).
+// "Nuevo" va en turquesa de marca y las informativas en azul marino. SALE, Oportunidad y
+// Eco Friendly conservan su color porque el rojo, el naranja y el verde tienen significado propio.
+const AZUL_BADGE = '#003471';
+const COLOR_BADGE_CATALOGO = {
+  nuevo: '#00858F',
+  termico: AZUL_BADGE, popular: AZUL_BADGE, kit: AZUL_BADGE, premium: AZUL_BADGE,
+  exclusivo: AZUL_BADGE, importado: AZUL_BADGE, corporativo: AZUL_BADGE, limitado: AZUL_BADGE,
+};
+
 // max (opcional): cantidad máxima de insignias a mostrar; sin max se muestran todas
 function badgesHtml(badges, max) {
   if (!badges || !badges.length) return '';
@@ -1492,7 +1503,8 @@ function badgesHtml(badges, max) {
   if (!visibles.length) return '';
   const pills = visibles.map(id => {
     const b = BADGES[id];
-    return `<span class="prod-badge" style="background:${b.bg}">${b.label}</span>`;
+    const bg = COLOR_BADGE_CATALOGO[id] || b.bg;
+    return `<span class="prod-badge" style="background:${bg}">${b.label}</span>`;
   }).join('');
   return `<div class="prod-badges">${pills}</div>`;
 }
@@ -1928,9 +1940,9 @@ function renderProductos(lista) {
         <div class="product-cat">${CATEGORIAS.find(c=>c.id===p.categoria)?.nombre || ''}</div>
         <div class="product-tags">
           ${(p.ocasiones || []).slice(0, 2).map(o => `<span class="product-tag">${OCC_LABEL[o] || o}</span>`).join('')}
-          ${p.minimo ? `<span class="product-tag">Mín. ${p.minimo} u.</span>` : ""}
         </div>
         <div class="product-footer">
+          ${p.minimo ? `<span class="product-min">Mín. ${p.minimo} u.</span>` : ""}
           <div class="rango-precio">${p.rango ? `<strong>${RANGO_LABEL[p.rango]}</strong>` : `<span style="color:var(--texto-suave);font-style:italic">Consultar precio</span>`}</div>
           <button class="btn-add ${enSeleccion ? 'added' : ''}" onclick="event.stopPropagation(); agregarProducto(${p.id})" id="btn-add-${p.id}">
             ${enSeleccion ? '✓ Agregado' : '+ Cotizar'}
