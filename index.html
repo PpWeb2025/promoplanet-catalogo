@@ -183,6 +183,12 @@
     background: radial-gradient(circle, rgba(0,168,180,0.15) 0%, transparent 70%);
     border-radius: 50%;
   }
+  .hero-mariposa {
+    position: absolute; z-index: 0; right: 4%; top: 50%;
+    width: clamp(240px, 32vw, 440px); height: auto;
+    transform: translateY(-50%) rotate(8deg);
+    opacity: 0.1; pointer-events: none; user-select: none;
+  }
   .hero-inner { max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
   .hero-slogan { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--celeste); font-weight: 500; margin-bottom: 1rem; }
   .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.15; margin-bottom: 1.25rem; }
@@ -422,17 +428,18 @@
   .product-code { font-size: 0.65rem; color: var(--texto-suave); margin-bottom: 0.15rem; }
   .product-cat { font-size: 0.62rem; color: var(--celeste); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.3rem; flex: 1; }
   .product-tags { display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 0.4rem; }
-  .product-tag { background: var(--gris); color: var(--texto-suave); font-size: 0.62rem; padding: 1px 5px; border-radius: 4px; }
+  .product-tag { background: var(--gris); color: var(--texto-suave); font-size: 0.68rem; padding: 2px 6px; border-radius: 4px; }
   .product-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+  .product-min { font-size: 0.72rem; font-weight: 500; color: var(--texto); white-space: nowrap; }
   .rango-precio { display: none !important; }
   .rango-badge  { display: none !important; }
   .btn-add {
     background: var(--azul); color: var(--blanco);
     border: none; border-radius: 8px;
-    padding: 0.4rem 0.75rem; font-size: 0.78rem; font-weight: 600;
+    padding: 0.45rem 0.9rem; font-size: 0.8rem; font-weight: 600;
     cursor: pointer; font-family: 'DM Sans', sans-serif;
     transition: all 0.15s; white-space: nowrap;
-    display: flex; align-items: center; gap: 4px;
+    display: flex; align-items: center; gap: 4px; margin-left: auto;
   }
   .btn-add:hover { background: var(--celeste); }
   .btn-add.added { background: var(--celeste); }
@@ -603,6 +610,37 @@
   .cat-count { font-size: 0.68rem; color: var(--texto-suave); }
   .cat-emoji { display: none; }
 
+  /* ENTRADAS POR OCASIÓN */
+  .occ-block { margin-bottom: 1.75rem; }
+  .occ-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 0.85rem; }
+  .occ-card {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem;
+    padding: 0.9rem 0.95rem; text-align: left; cursor: pointer;
+    background: var(--blanco); border: 1.5px solid var(--gris-borde); border-radius: 12px;
+    font-family: inherit; color: var(--azul); min-width: 0;
+    transition: transform 0.22s, box-shadow 0.22s, border-color 0.22s;
+  }
+  .occ-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,52,113,0.11); border-color: var(--celeste); }
+  .occ-card:focus-visible { outline: 2px solid var(--celeste); outline-offset: 2px; }
+  .occ-card.active { border-color: var(--celeste); box-shadow: 0 0 0 1px var(--celeste); }
+  .occ-icon {
+    width: 38px; height: 38px; border-radius: 10px; margin-bottom: 0.2rem;
+    background: rgba(0,168,180,0.12); color: #00858F;
+    display: flex; align-items: center; justify-content: center; transition: all 0.22s;
+  }
+  .occ-icon svg { width: 20px; height: 20px; }
+  .occ-card:hover .occ-icon, .occ-card.active .occ-icon { background: #00858F; color: #fff; }
+  .occ-name { font-size: 0.92rem; font-weight: 600; line-height: 1.25; }
+  .occ-desc { font-size: 0.76rem; color: var(--texto-suave); line-height: 1.35; }
+  @media (max-width: 900px) {
+    .occ-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 768px) {
+    .occ-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .occ-card:last-child { grid-column: 1 / -1; }
+    .occ-card:hover { transform: none; box-shadow: none; }
+  }
+
   /* FOOTER */
   footer, footer-interno { background: var(--azul-dark); color: rgba(255,255,255,0.7); margin-top: 2.5rem; display: block; border-top: 4px solid var(--celeste); }
   footer { padding: 3rem 2rem 1.5rem; }
@@ -672,6 +710,7 @@
     .nav-links { display: none; }
     .nav-hamburger { display: flex; }
     .hero { padding: 3rem 1.25rem; }
+    .hero-mariposa { display: none; }
     .banda-confianza { display: none; }
     .cats-grid {
       display: grid !important;
@@ -992,6 +1031,7 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-pattern"></div>
+  <img class="hero-mariposa" src="/mariposa-blanca.svg" alt="" aria-hidden="true" width="418" height="397">
   <div class="hero-inner" style="position:relative;z-index:1">
     <h1>Productos promocionales<br>para equipos que <em>importan</em></h1>
     <p>Encontrá el regalo corporativo ideal para cada ocasión. Personalizamos con tu marca en pedidos mayoristas para empresas.</p>
@@ -1072,6 +1112,37 @@
 <!-- CATEGORÍAS GRID -->
 <section class="cats-section" id="categorias">
   <div class="cats-inner">
+    <div class="occ-block" id="ocasiones">
+      <h2 class="section-title">Explorá por ocasión</h2>
+      <p class="section-sub">Elegí según para qué es el regalo.</p>
+      <div class="occ-grid">
+        <button type="button" class="occ-card" data-occ="onboarding" onclick="setOccFromGrid('onboarding')">
+          <span class="occ-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg></span>
+          <span class="occ-name">Onboarding</span>
+          <span class="occ-desc">Kits de bienvenida</span>
+        </button>
+        <button type="button" class="occ-card" data-occ="reconocimiento" onclick="setOccFromGrid('reconocimiento')">
+          <span class="occ-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></span>
+          <span class="occ-name">Reconocimiento</span>
+          <span class="occ-desc">Premios y regalos de jerarquía</span>
+        </button>
+        <button type="button" class="occ-card" data-occ="capacitacion" onclick="setOccFromGrid('capacitacion')">
+          <span class="occ-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
+          <span class="occ-name">Capacitación</span>
+          <span class="occ-desc">Materiales para jornadas y workshops</span>
+        </button>
+        <button type="button" class="occ-card" data-occ="fechas" onclick="setOccFromGrid('fechas')">
+          <span class="occ-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg></span>
+          <span class="occ-name">Fechas especiales</span>
+          <span class="occ-desc">Fin de año y aniversarios</span>
+        </button>
+        <button type="button" class="occ-card" data-occ="evento" onclick="setOccFromGrid('evento')">
+          <span class="occ-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>
+          <span class="occ-name">Eventos</span>
+          <span class="occ-desc">Ferias, congresos y activaciones</span>
+        </button>
+      </div>
+    </div>
     <div class="cats-header">
       <div class="cats-header-text">
         <h2 class="section-title">Explorá por categoría</h2>
@@ -1117,6 +1188,9 @@
       </a>
       <a class="cat-item" href="/ocasion/onboarding" data-occ="onboarding" onclick="return toggleOccLink(event, this)">
         <span class="cat-dot" style="background:#003471"></span> 🚀 Onboarding
+      </a>
+      <a class="cat-item" href="/ocasion/reconocimiento" data-occ="reconocimiento" onclick="return toggleOccLink(event, this)">
+        <span class="cat-dot" style="background:#00A8B4"></span> 🏆 Reconocimiento
       </a>
       <a class="cat-item" href="/ocasion/capacitacion" data-occ="capacitacion" onclick="return toggleOccLink(event, this)">
         <span class="cat-dot" style="background:#0284c7"></span> 📚 Capacitaciones
@@ -1484,6 +1558,16 @@ function logoSrc(url) {
   return url;
 }
 
+// Colores de las insignias solo en el catálogo (badges.js no se toca: lo usa también la propuesta).
+// "Nuevo" va en turquesa de marca y las informativas en azul marino. SALE, Oportunidad y
+// Eco Friendly conservan su color porque el rojo, el naranja y el verde tienen significado propio.
+const AZUL_BADGE = '#003471';
+const COLOR_BADGE_CATALOGO = {
+  nuevo: '#00858F',
+  termico: AZUL_BADGE, popular: AZUL_BADGE, kit: AZUL_BADGE, premium: AZUL_BADGE,
+  exclusivo: AZUL_BADGE, importado: AZUL_BADGE, corporativo: AZUL_BADGE, limitado: AZUL_BADGE,
+};
+
 // max (opcional): cantidad máxima de insignias a mostrar; sin max se muestran todas
 function badgesHtml(badges, max) {
   if (!badges || !badges.length) return '';
@@ -1492,7 +1576,8 @@ function badgesHtml(badges, max) {
   if (!visibles.length) return '';
   const pills = visibles.map(id => {
     const b = BADGES[id];
-    return `<span class="prod-badge" style="background:${b.bg}">${b.label}</span>`;
+    const bg = COLOR_BADGE_CATALOGO[id] || b.bg;
+    return `<span class="prod-badge" style="background:${bg}">${b.label}</span>`;
   }).join('');
   return `<div class="prod-badges">${pills}</div>`;
 }
@@ -1560,6 +1645,7 @@ const OCC_LANDING_SLUGS = {
   evento:       'eventos',
   fechas:       'fechas-especiales',
   onboarding:   'onboarding',
+  reconocimiento: 'reconocimiento',
   capacitacion: 'capacitacion',
 };
 
@@ -1734,6 +1820,17 @@ function setCatLink(event, id, el) {
 function setMobileCatLink(event, id) {
   event.preventDefault();
   setMobileCat(id);
+}
+
+// Clic en un mosaico de "Explorá por ocasión": aplica el mismo filtro del lateral,
+// baja hasta el catálogo y actualiza la URL.
+function setOccFromGrid(occ) {
+  const el = document.querySelector(`.sidebar [data-occ="${occ}"]`) || document.querySelector(`[data-occ="${occ}"]`);
+  if (!el) return;
+  toggleOcc(el);
+  document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
+  const slug = OCC_LANDING_SLUGS[occ];
+  syncUrl(occActiva !== 'todos' && slug ? '/ocasion/' + slug : '/');
 }
 
 function toggleOccLink(event, el) {
@@ -1928,9 +2025,9 @@ function renderProductos(lista) {
         <div class="product-cat">${CATEGORIAS.find(c=>c.id===p.categoria)?.nombre || ''}</div>
         <div class="product-tags">
           ${(p.ocasiones || []).slice(0, 2).map(o => `<span class="product-tag">${OCC_LABEL[o] || o}</span>`).join('')}
-          ${p.minimo ? `<span class="product-tag">Mín. ${p.minimo} u.</span>` : ""}
         </div>
         <div class="product-footer">
+          ${p.minimo ? `<span class="product-min">Mín. ${p.minimo} u.</span>` : ""}
           <div class="rango-precio">${p.rango ? `<strong>${RANGO_LABEL[p.rango]}</strong>` : `<span style="color:var(--texto-suave);font-style:italic">Consultar precio</span>`}</div>
           <button class="btn-add ${enSeleccion ? 'added' : ''}" onclick="event.stopPropagation(); agregarProducto(${p.id})" id="btn-add-${p.id}">
             ${enSeleccion ? '✓ Agregado' : '+ Cotizar'}
