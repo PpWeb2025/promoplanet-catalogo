@@ -496,6 +496,7 @@
 
               <div id="agregar-ia-wrap" style="margin-top:1rem;display:none;align-items:center;gap:0.75rem">
                 <button class="btn btn-celeste" onclick="analizarConIA(this)">✨ Analizar →</button>
+                <button class="btn btn-outline" onclick="cargarSinIA()">✍️ Cargar sin IA</button>
                 <span id="agregar-ia-hint" style="font-size:0.78rem;color:var(--texto-suave)"></span>
               </div>
             </div>
@@ -510,7 +511,7 @@
               <button class="btn btn-outline btn-sm" onclick="resetAgregar()">← Volver</button>
             </div>
             <div class="panel-body">
-              <div style="background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:8px;padding:0.65rem 1rem;margin-bottom:1.25rem;font-size:0.85rem;color:var(--azul)">
+              <div id="agregar-banner-ia" style="background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:8px;padding:0.65rem 1rem;margin-bottom:1.25rem;font-size:0.85rem;color:var(--azul)">
                 ✨ La IA sugirió los datos abajo. Podés editarlos antes de confirmar.
               </div>
               <div class="form-grid">
@@ -2357,7 +2358,7 @@ async function analizarConIA(btn) {
       const errMsg = (tieneFortos    ? _rawFotos?.error : null)
                   || (tieneTextoOURL ? _rawURL?.error   : null)
                   || 'Error al analizar con IA. Intentá de nuevo.';
-      showToast(errMsg, 'error');
+      showToast(errMsg + ' También podés usar "Cargar sin IA".', 'error');
       return;
     }
     if (tieneFortos && !fotosOk) {
@@ -2413,6 +2414,7 @@ async function analizarConIA(btn) {
 
     const _textoTA = document.getElementById('agregar-texto-proveedor');
     if (_textoTA) _textoTA.value = '';
+    document.getElementById('agregar-banner-ia').textContent = BANNER_AGREGAR_IA;
     document.getElementById('agregar-step1').style.display = 'none';
     document.getElementById('agregar-step2').style.display = 'block';
     if (tieneFortos) renderConfirmFotos();
@@ -2425,6 +2427,32 @@ async function analizarConIA(btn) {
     btn.disabled = false;
     btn.innerHTML = '✨ Analizar →';
   }
+}
+
+const BANNER_AGREGAR_IA = '✨ La IA sugirió los datos abajo. Podés editarlos antes de confirmar.';
+
+// Pasa al paso 2 sin usar la IA. Si hay texto pegado, queda tal cual en la descripción.
+function cargarSinIA() {
+  const tieneFotos = _agregarFiles.length > 0;
+  const textoTA = document.getElementById('agregar-texto-proveedor');
+  const texto = (textoTA?.value || '').trim();
+
+  document.getElementById('agregar-f-nombre').value = '';
+  document.getElementById('agregar-f-categoria').value = '';
+  actualizarSubcatsAgregar('');
+  document.getElementById('agregar-f-descripcion').value = texto;
+  if (textoTA) textoTA.value = '';
+
+  document.getElementById('agregar-banner-ia').textContent = texto
+    ? '✍️ Carga manual, sin IA. El texto que pegaste quedó en Descripción; completá el resto de los datos.'
+    : '✍️ Carga manual, sin IA. Completá los datos del producto.';
+  document.getElementById('agregar-step1').style.display = 'none';
+  document.getElementById('agregar-step2').style.display = 'block';
+  if (tieneFotos) renderConfirmFotos();
+  actualizarNombresPreview();
+  document.getElementById('agregar-drive-hint').textContent =
+    tieneFotos ? '📁 Las fotos se subirán a Google Drive' : '';
+  document.getElementById('agregar-f-nombre').focus();
 }
 
 function actualizarSubcatsAgregar(catId, subcatPreset = '') {
@@ -2573,6 +2601,7 @@ function resetAgregar() {
   _agregarPrincipalIdx = 0;
   document.getElementById('agregar-step1').style.display = 'block';
   document.getElementById('agregar-step2').style.display = 'none';
+  document.getElementById('agregar-banner-ia').textContent = BANNER_AGREGAR_IA;
   document.getElementById('agregar-preview').innerHTML = '';
   document.getElementById('agregar-preview').style.display = 'none';
   document.getElementById('agregar-ia-wrap').style.display = 'none';
