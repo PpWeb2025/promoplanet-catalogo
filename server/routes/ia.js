@@ -64,23 +64,64 @@ const CATEGORIA_LISTA = Object.entries(CATEGORIAS)
   })
   .join('\n');
 
-async function generarConReintento(ai, params, maxIntentos = 3) {
-  let ultimoError;
-  for (let intento = 1; intento <= maxIntentos; intento++) {
+// Modelo alternativo que se usa solo si el principal sigue saturado después de los reintentos.
+// Se puede cambiar con la variable GEMINI_MODEL_FALLBACK (vacía = sin respaldo).
+const MODELO_IA_RESPALDO = process.env.GEMINI_MODEL_FALLBACK ?? 'gemini-3.5-flash-lite';
+const ESPERAS_REINTENTO_MS = [1500, 3000, 6000];
+
+function esSobrecarga(err) {
+  return err?.status === 'UNAVAILABLE' || err?.status === 503 || err?.code === 503 ||
+    /503|UNAVAILABLE|overloaded|high demand/i.test(err?.message || '');
+}
+
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+// Llama al modelo y, si responde "saturado", reintenta con las esperas indicadas.
+async function reintentarModelo(ai, params, esperas) {
+  for (let intento = 0; ; intento++) {
     try {
       return await ai.models.generateContent(params);
     } catch (err) {
-      ultimoError = err;
-      const esSobrecarga = err?.status === 'UNAVAILABLE' || err?.status === 503 ||
-        /503|UNAVAILABLE|overloaded|high demand/i.test(err?.message || '');
-      if (esSobrecarga && intento < maxIntentos) {
-        await new Promise(r => setTimeout(r, intento * 1500)); // espera creciente: 1.5s, 3s
-        continue;
-      }
+      if (!esSobrecarga(err) || intento >= esperas.length) throw err;
+      await esperar(esperas[intento]);
+    }
+  }
+}
+
+// Reintenta con el modelo principal y, si sigue saturado, prueba una vez con el de respaldo.
+// Si el respaldo también falla, se informa el error original.
+async function generarConReintento(ai, params) {
+  try {
+    return await reintentarModelo(ai, params, ESPERAS_REINTENTO_MS);
+  } catch (err) {
+    if (!esSobrecarga(err) || !MODELO_IA_RESPALDO || MODELO_IA_RESPALDO === params.model) throw err;
+    console.warn(`Modelo ${params.model} saturado, probando con ${MODELO_IA_RESPALDO}`);
+    try {
+      return await reintentarModelo(ai, { ...params, model: MODELO_IA_RESPALDO }, [2000]);
+    } catch (errRespaldo) {
+      console.error('El modelo de respaldo también falló:', errRespaldo.message);
       throw err;
     }
   }
-  throw ultimoError;
+}
+
+// Responde con un mensaje claro según el tipo de error de la IA.
+function responderErrorIA(res, err, etiqueta, mensajeGenerico) {
+  console.error(`Error IA ${etiqueta}:`, err.message);
+  const msg = err.message || '';
+  if (esSobrecarga(err)) {
+    return res.status(503).json({
+      error: 'La IA de Google está saturada en este momento. Suele ser temporal: probá de nuevo en unos minutos.',
+      codigo: 'IA_SATURADA',
+    });
+  }
+  if (msg.includes('RESOURCE_EXHAUSTED') || msg.includes('"code":429')) {
+    return res.status(429).json({ error: 'Se agotó la cuota diaria de la API de Gemini. Volvé a intentar mañana o habilitá facturación en Google Cloud.' });
+  }
+  if (msg.includes('NOT_FOUND') || msg.includes('"code":404')) {
+    return res.status(502).json({ error: 'El modelo de IA configurado no existe o fue dado de baja. Revisá la variable GEMINI_MODEL.' });
+  }
+  res.status(500).json({ error: mensajeGenerico });
 }
 
 function sinAcentos(texto) {
@@ -365,14 +406,7 @@ Respondé SOLO con el JSON, sin texto adicional antes ni después.`;
     await resolverCategoria(ai, json);
     res.json(json);
   } catch (err) {
-    console.error('Error IA:', err.message);
-    if (err.message?.includes('RESOURCE_EXHAUSTED') || err.message?.includes('"code":429')) {
-      return res.status(429).json({ error: 'Se agotó la cuota diaria de la API de Gemini. Volvé a intentar mañana o habilitá facturación en Google Cloud.' });
-    }
-    if (err.message?.includes('NOT_FOUND') || err.message?.includes('"code":404')) {
-      return res.status(502).json({ error: 'El modelo de IA configurado no existe o fue dado de baja. Revisá la variable GEMINI_MODEL.' });
-    }
-    res.status(500).json({ error: err.message || 'No se pudo procesar con IA. Intentá de nuevo.' });
+    responderErrorIA(res, err, 'adaptar', 'No se pudo procesar con IA. Intentá de nuevo.');
   }
 });
 
@@ -427,14 +461,7 @@ Respondé SOLO con el JSON, sin texto adicional.`;
     await resolverCategoria(ai, json, partesFotos);
     res.json(json);
   } catch (err) {
-    console.error('Error IA analizar-fotos:', err.message);
-    if (err.message?.includes('RESOURCE_EXHAUSTED') || err.message?.includes('"code":429')) {
-      return res.status(429).json({ error: 'Se agotó la cuota diaria de la API de Gemini. Volvé a intentar mañana o habilitá facturación en Google Cloud.' });
-    }
-    if (err.message?.includes('NOT_FOUND') || err.message?.includes('"code":404')) {
-      return res.status(502).json({ error: 'El modelo de IA configurado no existe o fue dado de baja. Revisá la variable GEMINI_MODEL.' });
-    }
-    res.status(500).json({ error: err.message || 'No se pudo analizar con IA. Intentá de nuevo.' });
+    responderErrorIA(res, err, 'analizar-fotos', 'No se pudo analizar con IA. Intentá de nuevo.');
   }
 });
 
