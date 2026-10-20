@@ -41,7 +41,7 @@ const CATEGORIAS = {
 
 const SUBCATEGORIAS = {
   bolsos_mochilas: ['Bolsos','Maletines y portfolios','Mochilas','Necessaires y accesorios','Tote bags y bolsas','Valijas y carry on'],
-  drinkware:       ['Botellas standard','Botellas térmicas','Jarros y mugs','Mates y accesorios','Termos'],
+  drinkware:       ['Botellas estándar','Botellas térmicas','Jarros y mugs','Mates y accesorios','Termos','Vasos reutilizables'],
   escritorio:      ['Cuadernos y agendas','Organizadores'],
   escritura:       ['Bolígrafos ecológicos','Bolígrafos metálicos','Bolígrafos plásticos','Escritura fina','Lápices','Marcadores y resaltadores'],
   indumentaria:    ['Abrigos','Delantales y pecheras','Gorras','Remeras y chombas'],
