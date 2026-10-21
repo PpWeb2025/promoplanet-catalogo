@@ -221,6 +221,9 @@
   .foto-item[draggable="true"] { cursor: grab; }
   .foto-item.drag-over { outline: 2px dashed var(--celeste); outline-offset: 2px; }
   .foto-badge-principal { position: absolute; top: 4px; left: 4px; background: var(--celeste); color: var(--blanco); font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 4px; }
+  .foto-delete { position: absolute; top: 4px; right: 4px; z-index: 3; width: 26px; height: 26px; padding: 0; border: none; border-radius: 50%; background: rgba(220,38,38,0.92); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.35); transition: background 0.15s, transform 0.15s; }
+  .foto-delete:hover { background: #b91c1c; transform: scale(1.1); }
+  .foto-delete svg { pointer-events: none; }
 
   /* DRIVE IMPORT */
   .drive-import-box { background: var(--azul-light); border: 1.5px solid rgba(0,52,113,0.2); border-radius: var(--radio); padding: 1.25rem; }
@@ -1349,6 +1352,10 @@ function fotoSrc(id) {
   return id && id.startsWith('http') ? id : `/api/drive/imagen/${id}?fmt=${IMG_FMT}`;
 }
 
+function botonEliminarFoto(onclick) {
+  return `<button type="button" class="foto-delete" title="Eliminar foto" aria-label="Eliminar foto" onclick="${onclick}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`;
+}
+
 function logoSrc(url) {
   if (!url) return '';
   if (url.startsWith('/api/drive/imagen/') && !url.includes('?')) return `${url}?w=200&fmt=${IMG_FMT}`;
@@ -1366,8 +1373,8 @@ function mostrarFotosExistentes(fotos) {
       ${i === 0 ? '<span class="foto-badge-principal">Principal</span>' : ''}
       <div class="foto-overlay">
         <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
-        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
-      </div>`;
+      </div>
+      ${botonEliminarFoto('eliminarFotoExistente(this)')}`;
     grid.appendChild(div);
   });
 }
@@ -1382,9 +1389,21 @@ function agregarFotoAlGrid(url) {
     ${esPrimera ? '<span class="foto-badge-principal">Principal</span>' : ''}
     <div class="foto-overlay">
       <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipal(this.closest('.foto-item'))">⭐</button>
-      <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="this.closest('.foto-item').remove()">✕</button>
-    </div>`;
+    </div>
+    ${botonEliminarFoto('eliminarFotoExistente(this)')}`;
   grid.appendChild(div);
+}
+
+function eliminarFotoExistente(btn) {
+  const item = btn.closest('.foto-item');
+  if (!item) return;
+  const grid = item.parentElement;
+  const eraPrincipal = item.classList.contains('principal');
+  item.remove();
+  if (eraPrincipal) {
+    const primera = grid.querySelector('.foto-item');
+    if (primera) setPrincipal(primera);
+  }
 }
 
 async function leerRespuestaIA(r) {
@@ -2279,8 +2298,8 @@ function renderAgregarPreview() {
       ${esPrincipal ? '<span class="foto-badge-principal">Principal</span>' : ''}
       <div class="foto-overlay">
         <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="setPrincipalAgregar(${i})">⭐</button>
-        <button class="btn btn-sm" style="background:rgba(220,38,38,0.9);color:white" onclick="removeAgregarFile(${i})">✕</button>
       </div>
+      ${botonEliminarFoto(`removeAgregarFile(${i})`)}
     </div>`;
   }).join('');
   actualizarBtnAnalizar();
@@ -2293,8 +2312,13 @@ function setPrincipalAgregar(idx) {
 }
 
 function removeAgregarFile(idx) {
+  const eraPrincipal = idx === _agregarPrincipalIdx;
   _agregarFiles.splice(idx, 1);
-  if (_agregarPrincipalIdx >= _agregarFiles.length) _agregarPrincipalIdx = 0;
+  if (!_agregarFiles.length || eraPrincipal) {
+    _agregarPrincipalIdx = 0;
+  } else if (idx < _agregarPrincipalIdx) {
+    _agregarPrincipalIdx--;
+  }
   renderAgregarPreview();
 }
 
@@ -2477,10 +2501,33 @@ function renderConfirmFotos() {
       <img src="${url}">
       ${esPrincipal ? '<span class="foto-badge-principal">Principal</span>' : ''}
       <div class="foto-overlay">
-        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="marcarPrincipalAgregar(${i})">⭐</button>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.9);color:var(--texto)" onclick="marcarPrincipalAgregar(parseInt(this.closest('.foto-item').dataset.fileindex))">⭐</button>
       </div>
+      ${botonEliminarFoto('eliminarFotoAgregar(this)')}
     </div>`;
   }).join('');
+}
+
+function eliminarFotoAgregar(btn) {
+  const item = btn.closest('.foto-item');
+  if (!item) return;
+  const idx = parseInt(item.dataset.fileindex);
+  if (isNaN(idx) || idx < 0 || idx >= _agregarFiles.length) return;
+  const eraPrincipal = idx === _agregarPrincipalIdx;
+  _agregarFiles.splice(idx, 1);
+  if (!_agregarFiles.length || eraPrincipal) {
+    _agregarPrincipalIdx = 0;
+  } else if (idx < _agregarPrincipalIdx) {
+    _agregarPrincipalIdx--;
+  }
+  renderConfirmFotos();
+  const box = document.getElementById('agregar-nombres-preview');
+  if (_agregarFiles.length) {
+    actualizarNombresPreview();
+  } else if (box) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }
 }
 
 function marcarPrincipalAgregar(index) {
