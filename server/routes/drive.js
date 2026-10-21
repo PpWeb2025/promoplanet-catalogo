@@ -217,45 +217,128 @@ router.post('/importar', requireAdmin, async (req, res) => {
   res.json({ importados: importados.length, omitidos, actualizados });
 });
 
+// ── Reintentos para la subida a Drive ──────────────────────────────────────────
+
+function esErrorTransitorio(err) {
+  const estado = Number(err?.code || err?.response?.status || err?.status);
+  if ([429, 500, 502, 503, 504].includes(estado)) return true;
+  const razon = err?.errors?.[0]?.reason || err?.response?.data?.error?.errors?.[0]?.reason;
+  if (['rateLimitExceeded', 'userRateLimitExceeded', 'backendError', 'internalError'].includes(razon)) return true;
+  const codigoRed = typeof err?.code === 'string' ? err.code : '';
+  return ['ECONNRESET', 'ETIMEDOUT', 'EPIPE', 'EAI_AGAIN', 'ECONNREFUSED', 'ENOTFOUND'].includes(codigoRed);
+}
+
+async function conReintentos(descripcion, fn, intentos = 4) {
+  let ultimoError;
+  for (let intento = 1; intento <= intentos; intento++) {
+    try {
+      return await fn(intento);
+    } catch (err) {
+      ultimoError = err;
+      if (!esErrorTransitorio(err) || intento === intentos) break;
+      const espera = 1000 * 2 ** (intento - 1) + Math.floor(Math.random() * 400);
+      console.warn(`Drive: ${descripcion} falló (intento ${intento}/${intentos}): ${err.message}. Reintentando en ${espera} ms`);
+      await new Promise(resolve => setTimeout(resolve, espera));
+    }
+  }
+  throw ultimoError;
+}
+
+async function buscarSubidaReciente(drive, nombre, folderId, desdeISO) {
+  try {
+    const nombreEscapado = nombre.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const { data } = await drive.files.list({
+      q: `name = '${nombreEscapado}' and '${folderId}' in parents and trashed = false and createdTime > '${desdeISO}'`,
+      fields: 'files(id)',
+      pageSize: 1,
+    });
+    return data.files?.[0]?.id || null;
+  } catch (err) {
+    console.warn(`Drive: no se pudo verificar si ${nombre} ya estaba subido: ${err.message}`);
+    return null;
+  }
+}
+
+async function subirArchivoADrive(drive, file, nombre, folderId, desdeISO, creados) {
+  const id = await conReintentos(`crear ${nombre}`, async (intento) => {
+    if (intento > 1 && folderId) {
+      const existente = await buscarSubidaReciente(drive, nombre, folderId, desdeISO);
+      if (existente) {
+        console.warn(`Drive: ${nombre} ya figuraba subido, se reutiliza (${existente})`);
+        return existente;
+      }
+    }
+    const { data } = await drive.files.create({
+      requestBody: {
+        name: nombre,
+        ...(folderId && { parents: [folderId] }),
+      },
+      media: { mimeType: file.mimetype, body: fs.createReadStream(file.path) },
+      fields: 'id',
+    });
+    return data.id;
+  });
+  creados.push(id);
+
+  await conReintentos(`compartir ${nombre}`, () => drive.permissions.create({
+    fileId: id,
+    requestBody: { role: 'reader', type: 'user', emailAddress: SA_EMAIL },
+    sendNotificationEmail: false,
+  }));
+
+  return id;
+}
+
+async function limpiarSubidasParciales(drive, ids) {
+  for (const id of ids) {
+    try {
+      await drive.files.update({ fileId: id, requestBody: { trashed: true } });
+      console.warn(`Drive: archivo ${id} de una subida incompleta movido a la papelera`);
+    } catch (err) {
+      console.error(`Drive: no se pudo limpiar ${id}: ${err.message}`);
+    }
+  }
+}
+
 // POST /api/drive/subir — requiere admin
 // FormData: fotos[] (archivos), nombres (JSON array de strings)
-// Sube a Google Drive y devuelve { fileIds }
+// Sube a Google Drive con reintentos y devuelve { fileIds }.
+// Si la subida falla definitivamente, mueve a la papelera lo que alcanzó a subir.
 router.post('/subir', requireAdmin, uploadDisk.array('fotos', 20), async (req, res) => {
   if (!req.files?.length) {
     return res.status(400).json({ error: 'No se recibieron archivos' });
   }
 
   const nombres = JSON.parse(req.body.nombres || '[]');
+  const creados = [];
+  let drive;
 
   try {
-    const drive = getOAuthDriveClient();
+    drive = getOAuthDriveClient();
     const folderId = process.env.DRIVE_UPLOAD_FOLDER_ID;
+    const desdeISO = new Date(Date.now() - 10000).toISOString();
     const fileIds = [];
     // Secuencial a propósito: subir 20 fotos en paralelo desde una
     // instancia de 512 MB era parte del problema de memoria.
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
       const nombre = limpiarNombreArchivo(nombres[i] || corregirNombreArchivo(file.originalname));
-      const { data } = await drive.files.create({
-        requestBody: {
-          name: nombre,
-          ...(folderId && { parents: [folderId] }),
-        },
-        media: { mimeType: file.mimetype, body: fs.createReadStream(file.path) },
-        fields: 'id',
-      });
-      await drive.permissions.create({
-        fileId: data.id,
-        requestBody: { role: 'reader', type: 'user', emailAddress: SA_EMAIL },
-        sendNotificationEmail: false,
-      });
-      fileIds.push(data.id);
+      const id = await subirArchivoADrive(drive, file, nombre, folderId, desdeISO, creados);
+      fileIds.push(id);
     }
 
     res.json({ fileIds });
   } catch (err) {
     console.error('Drive subir error:', err.message);
-    res.status(500).json({ error: 'Error al subir a Drive: ' + err.message });
+    if (drive && creados.length) {
+      await limpiarSubidasParciales(drive, creados);
+    }
+    const transitorio = esErrorTransitorio(err);
+    res.status(500).json({
+      error: 'Error al subir a Drive: ' + err.message + (transitorio
+        ? ' (se reintentó automáticamente). Probá de nuevo en unos minutos.'
+        : ''),
+    });
   } finally {
     limpiarTmp(req.files);
   }
