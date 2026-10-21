@@ -511,7 +511,7 @@
           <div class="panel">
             <div class="panel-header">
               <span class="panel-title">Confirmar y crear producto</span>
-              <button class="btn btn-outline btn-sm" onclick="resetAgregar()">← Volver</button>
+              <button class="btn btn-outline btn-sm" onclick="volverPaso1()">← Volver</button>
             </div>
             <div class="panel-body">
               <div id="agregar-banner-ia" style="background:var(--celeste-light);border:1.5px solid var(--celeste);border-radius:8px;padding:0.65rem 1rem;margin-bottom:1.25rem;font-size:0.85rem;color:var(--azul)">
@@ -2231,6 +2231,7 @@ function descargar(nombre, contenido, tipo) {
 let _agregarFiles = [];
 let _agregarPrincipalIdx = 0;
 let _agregarCodigo = '';
+let _agregarSubidas = null;
 
 async function initAgregarSection() {
   _agregarCodigo = '';
@@ -2643,7 +2644,15 @@ function toggleAgregarProveedorOtro() {
   if (mostrar) inp.focus();
 }
 
+function volverPaso1() {
+  document.getElementById('agregar-step2').style.display = 'none';
+  document.getElementById('agregar-step1').style.display = 'block';
+  renderAgregarPreview();
+  actualizarBtnAnalizar();
+}
+
 function resetAgregar() {
+  _agregarSubidas = null;
   _agregarFiles = [];
   _agregarPrincipalIdx = 0;
   document.getElementById('agregar-step1').style.display = 'block';
@@ -2713,17 +2722,29 @@ async function confirmarAgregarProducto(btn, estadoForzado) {
 
   try {
     // Subir fotos a Google Drive
-    const fd = new FormData();
-    orderedFiles.forEach(f => fd.append('fotos', f));
-    fd.append('subcategoria', subcategoria);
-    fd.append('nombres', JSON.stringify(nombres));
+    const firmaSubida = JSON.stringify({
+      nombres,
+      subcategoria,
+      archivos: orderedFiles.map(f => [f.name, f.size, f.lastModified]),
+    });
 
-    const uploadRes = await fetch('/api/drive/subir', { method: 'POST', body: fd });
-    if (!uploadRes.ok) {
-      const err = await uploadRes.json().catch(() => ({}));
-      throw new Error(err.error || 'Error al subir fotos');
+    let fileIds;
+    if (_agregarSubidas && _agregarSubidas.firma === firmaSubida) {
+      fileIds = _agregarSubidas.fileIds;
+    } else {
+      const fd = new FormData();
+      orderedFiles.forEach(f => fd.append('fotos', f));
+      fd.append('subcategoria', subcategoria);
+      fd.append('nombres', JSON.stringify(nombres));
+
+      const uploadRes = await fetch('/api/drive/subir', { method: 'POST', body: fd });
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err.error || 'Error al subir fotos');
+      }
+      ({ fileIds } = await uploadRes.json());
+      _agregarSubidas = { firma: firmaSubida, fileIds };
     }
-    const { fileIds } = await uploadRes.json();
 
     btn.innerHTML = '⏳ Creando producto…';
 
