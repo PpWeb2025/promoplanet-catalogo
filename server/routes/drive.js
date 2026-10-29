@@ -37,26 +37,54 @@ const imageCache = new Map();
 const IMG_CACHE_DIR = path.join(os.tmpdir(), 'pp-img-cache');
 fs.mkdirSync(IMG_CACHE_DIR, { recursive: true });
 let imgCacheCount = fs.readdirSync(IMG_CACHE_DIR).length;
-const IMG_CACHE_MAX = 500;
+const IMG_CACHE_MAX = 1500;
+// Cuando se llega al tope se borra el 20 % más viejo, no todo junto:
+// vaciar todo hacía que las visitas siguientes bajaran todas las fotos de Drive de nuevo.
+const IMG_CACHE_PURGA = 0.2;
 
 function cachePathFor(fileId, w, ext) {
   const safe = String(fileId).replace(/[^A-Za-z0-9_-]/g, '');
   return path.join(IMG_CACHE_DIR, `${safe}_w${w}.${ext}`);
 }
 
+function purgarCacheVieja() {
+  const archivos = [];
+  for (const f of fs.readdirSync(IMG_CACHE_DIR)) {
+    const ruta = path.join(IMG_CACHE_DIR, f);
+    try {
+      archivos.push({ ruta, mtime: fs.statSync(ruta).mtimeMs });
+    } catch { /* otro proceso lo borró */ }
+  }
+  archivos.sort((a, b) => a.mtime - b.mtime);
+  const borrar = Math.max(1, Math.ceil(archivos.length * IMG_CACHE_PURGA));
+  let borrados = 0;
+  for (const { ruta } of archivos.slice(0, borrar)) {
+    try {
+      fs.unlinkSync(ruta);
+      borrados++;
+    } catch { /* idem */ }
+  }
+  imgCacheCount = Math.max(0, archivos.length - borrados);
+}
+
 function guardarEnCache(cachePath, buffer) {
   try {
-    if (imgCacheCount >= IMG_CACHE_MAX) {
-      for (const f of fs.readdirSync(IMG_CACHE_DIR)) {
-        fs.unlinkSync(path.join(IMG_CACHE_DIR, f));
-      }
-      imgCacheCount = 0;
-    }
+    if (imgCacheCount >= IMG_CACHE_MAX) purgarCacheVieja();
     fs.writeFile(cachePath, buffer, err => { if (!err) imgCacheCount++; });
   } catch { /* la cache es best-effort */ }
 }
 
+// Un único cliente por tipo de acceso: GoogleAuth guarda el token y lo renueva solo.
+// Antes se creaba uno nuevo en cada pedido y cada imagen podía pedir un token propio.
+const _clientesDrive = new Map();
+
 function getDriveClient(write = false) {
+  const clave = write ? 'write' : 'read';
+  if (!_clientesDrive.has(clave)) _clientesDrive.set(clave, crearDriveClient(write));
+  return _clientesDrive.get(clave);
+}
+
+function crearDriveClient(write) {
   const authOptions = {
     scopes: [write
       ? 'https://www.googleapis.com/auth/drive'
@@ -346,25 +374,70 @@ router.post('/subir', requireAdmin, uploadDisk.array('fotos', 20), async (req, r
 
 const ALLOWED_WIDTHS = new Set([200, 400, 800, 1200]);
 
+// Tiempos máximos contra Drive. Sin ellos, una descarga colgada ocupaba para
+// siempre uno de los 2 lugares del limitador y todas las imágenes nuevas
+// quedaban esperando en la fila.
+const DRIVE_META_TIMEOUT_MS = 15_000;
+const DRIVE_DESCARGA_TIMEOUT_MS = 25_000;
+// Las imágenes que tardan más que esto se registran en el log.
+const IMAGEN_LENTA_MS = 5_000;
+
 // Limitador global de trabajos de imagen. Antes solo limitaba la etapa
 // de sharp: con 40 miniaturas pedidas a la vez, las 40 descargas desde
 // Drive se bufferizaban en RAM al mismo tiempo (fotos de varios MB cada
 // una) mientras esperaban su turno de sharp → pico de memoria → OOM.
 // Ahora descarga + resize cuentan como UN trabajo y corren de a 2.
+// Si `omitir()` devuelve true cuando le toca el turno (el visitante ya
+// cerró la conexión), el trabajo no se ejecuta y el lugar pasa al siguiente.
 let _jobsActive = 0;
 const _jobQueue = [];
 const MAX_IMAGE_JOBS = 2;
-function withImageJobLimit(fn) {
+function siguienteDeLaCola() {
+  if (_jobQueue.length > 0 && _jobsActive < MAX_IMAGE_JOBS) _jobQueue.shift()();
+}
+function withImageJobLimit(fn, omitir) {
   return new Promise((resolve, reject) => {
     const run = () => {
+      if (omitir && omitir()) {
+        resolve();
+        siguienteDeLaCola();
+        return;
+      }
       _jobsActive++;
       Promise.resolve().then(fn).then(resolve, reject).finally(() => {
         _jobsActive--;
-        if (_jobQueue.length > 0) _jobQueue.shift()();
+        siguienteDeLaCola();
       });
     };
     if (_jobsActive < MAX_IMAGE_JOBS) run();
     else _jobQueue.push(run);
+  });
+}
+
+// Descarga el archivo de Drive completo en un Buffer. Se corta si la señal
+// se aborta (tiempo agotado o visitante que se fue), liberando la conexión.
+async function descargarBuffer(drive, fileId, signal) {
+  const { data: flujo } = await drive.files.get(
+    { fileId, alt: 'media' },
+    { responseType: 'stream', signal },
+  );
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    const alAbortar = () => {
+      flujo.destroy();
+      reject(new Error('Descarga interrumpida'));
+    };
+    if (signal.aborted) return alAbortar();
+    signal.addEventListener('abort', alAbortar, { once: true });
+    flujo.on('data', c => chunks.push(c));
+    flujo.on('end', () => {
+      signal.removeEventListener('abort', alAbortar);
+      resolve(Buffer.concat(chunks));
+    });
+    flujo.on('error', err => {
+      signal.removeEventListener('abort', alAbortar);
+      reject(err);
+    });
   });
 }
 
@@ -390,12 +463,38 @@ router.get('/imagen/:fileId', async (req, res) => {
     }
   }
 
+  const inicio = Date.now();
+  const ac = new AbortController();
+  const estado = { vencido: false, cancelado: false, colaMs: 0, descargaMs: 0 };
+
+  // Si el visitante cierra la conexión antes de recibir la imagen, se corta
+  // lo que esté en curso y se descarta el trabajo si todavía está en la fila.
+  res.on('close', () => {
+    if (!res.writableFinished) {
+      estado.cancelado = true;
+      ac.abort();
+    }
+  });
+
+  const conLimite = async (ms, fn) => {
+    const timer = setTimeout(() => {
+      estado.vencido = true;
+      ac.abort();
+    }, ms);
+    try {
+      return await fn();
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
   try {
     const drive = getDriveClient();
 
     let meta = imageCache.get(fileId);
     if (!meta) {
-      const metaRes = await drive.files.get({ fileId, fields: 'mimeType,name' });
+      const metaRes = await conLimite(DRIVE_META_TIMEOUT_MS,
+        () => drive.files.get({ fileId, fields: 'mimeType,name' }, { signal: ac.signal }));
       meta = metaRes.data;
       imageCache.set(fileId, meta);
       setTimeout(() => imageCache.delete(fileId), 3600_000);
@@ -405,21 +504,30 @@ router.get('/imagen/:fileId', async (req, res) => {
       // Sin ?w válido: devolver original en streaming (no se bufferiza)
       res.setHeader('Content-Type', meta.mimeType || 'image/jpeg');
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      const stream = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
+      const stream = await conLimite(DRIVE_META_TIMEOUT_MS,
+        () => drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream', signal: ac.signal }));
+      stream.data.on('error', () => res.destroy());
+      res.on('close', () => stream.data.destroy());
       stream.data.pipe(res);
       return;
     }
 
     // 2) Con ?w válido: descarga + resize dentro del limitador global
+    const entroEnLaFila = Date.now();
     await withImageJobLimit(async () => {
-      const driveStream = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
-      const chunks = [];
-      await new Promise((resolve, reject) => {
-        driveStream.data.on('data', c => chunks.push(c));
-        driveStream.data.on('end', resolve);
-        driveStream.data.on('error', reject);
-      });
-      const buffer = Buffer.concat(chunks);
+      estado.colaMs = Date.now() - entroEnLaFila;
+
+      const inicioDescarga = Date.now();
+      let buffer;
+      try {
+        buffer = await conLimite(DRIVE_DESCARGA_TIMEOUT_MS,
+          () => descargarBuffer(drive, fileId, ac.signal));
+      } finally {
+        estado.descargaMs = Date.now() - inicioDescarga;
+      }
+
+      // Si el visitante ya se fue, no vale la pena gastar CPU en sharp.
+      if (estado.cancelado || res.destroyed) return;
 
       try {
         const pipe = sharp(buffer).resize({ width: w, withoutEnlargement: true });
@@ -427,8 +535,10 @@ router.get('/imagen/:fileId', async (req, res) => {
           ? await pipe.webp({ quality: 78 }).toBuffer()
           : await pipe.flatten({ background: '#ffffff' }).jpeg({ quality: 80 }).toBuffer();
 
+        // La miniatura se guarda aunque el visitante se haya ido: la próxima visita ya la tiene.
         guardarEnCache(cachePathFor(fileId, w, ext), output);
 
+        if (res.destroyed) return;
         res.setHeader('Content-Type', contentTypeOut);
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         res.setHeader('Content-Length', output.length);
@@ -436,14 +546,35 @@ router.get('/imagen/:fileId', async (req, res) => {
       } catch (sharpErr) {
         // Fallback: devolver original si sharp no puede procesarlo
         console.error('Drive imagen sharp error:', sharpErr.message, '— enviando original');
+        if (res.destroyed) return;
         res.setHeader('Content-Type', meta.mimeType || 'image/jpeg');
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         res.send(buffer);
       }
-    });
+    }, () => estado.cancelado);
   } catch (err) {
-    console.error('Drive imagen error:', err.message);
-    res.status(404).send('Imagen no disponible');
+    if (estado.cancelado || res.destroyed) {
+      // El visitante cerró la conexión: no hay a quién responder.
+    } else {
+      console.error('Drive imagen error:', estado.vencido ? 'tiempo agotado esperando a Drive' : err.message);
+      if (res.headersSent) {
+        res.destroy();
+      } else {
+        // Un error transitorio no debe quedar cacheado en Cloudflare ni en el navegador.
+        res.removeHeader('Content-Type');
+        res.setHeader('Cache-Control', 'no-store');
+        res.status(estado.vencido ? 504 : 404).send(estado.vencido ? 'Drive no respondió a tiempo' : 'Imagen no disponible');
+      }
+    }
+  } finally {
+    const total = Date.now() - inicio;
+    if (total > IMAGEN_LENTA_MS || estado.vencido) {
+      console.warn(
+        `Imagen lenta: ${fileId} ${resize ? 'w=' + w : 'original'} total ${total} ms ` +
+        `(fila ${estado.colaMs} ms, descarga ${estado.descargaMs} ms)` +
+        `${estado.vencido ? ' [tiempo agotado]' : ''}${estado.cancelado ? ' [cancelada por el visitante]' : ''}`
+      );
+    }
   }
 });
 
