@@ -2,6 +2,7 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }
 
 const express = require('express');
 const session = require('express-session');
+const compression = require('compression');
 const path = require('path');
 const fs = require('fs');
 const { initDb, getProductos, getProductoByCodigo } = require('./db');
@@ -55,6 +56,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(require('./middleware/redirectOnrender'));
+
+// Comprime las respuestas de texto (HTML, JSON, CSS, JS, XML) para reducir el ancho de banda de salida.
+// Las imágenes ya salen comprimidas (WebP/JPEG) y el middleware las deja pasar sin tocarlas.
+app.use(compression());
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 if (!SESSION_SECRET) {
@@ -149,8 +154,21 @@ function parseArray(val) {
 
 const CANONICAL_PLACEHOLDER = '<link rel="canonical" href="https://promoplanet.ar/">';
 
+// index.html se lee del disco una sola vez y se vuelve a leer solo si el archivo cambió.
+// Antes se leía completo (unos 150 KB) en cada visita a una ficha, una landing o el catálogo.
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+let indexHtmlCache = { mtimeMs: 0, html: '' };
+
+function readIndexHtml() {
+  const { mtimeMs } = fs.statSync(INDEX_HTML_PATH);
+  if (mtimeMs !== indexHtmlCache.mtimeMs) {
+    indexHtmlCache = { mtimeMs, html: fs.readFileSync(INDEX_HTML_PATH, 'utf8') };
+  }
+  return indexHtmlCache.html;
+}
+
 function renderSPA(res, canonicalPath) {
-  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const html = readIndexHtml();
   const replaced = html.replace(
     CANONICAL_PLACEHOLDER,
     `<link rel="canonical" href="https://promoplanet.ar${canonicalPath}">`
@@ -218,8 +236,7 @@ function render503(res) {
 }
 
 app.get('/producto/:codigo', async (req, res) => {
-  const htmlPath = path.join(__dirname, '..', 'index.html');
-  const baseHtml = fs.readFileSync(htmlPath, 'utf8');
+  const baseHtml = readIndexHtml();
   try {
     const p = await getProductoByCodigo(req.params.codigo);
     if (!p) return render404(res);
@@ -237,15 +254,17 @@ app.get('/producto/:codigo', async (req, res) => {
     }
     const metaDesc = escapeAttr(truncDesc || genericDesc);
     const fotoId = Array.isArray(p.fotos) && p.fotos[0];
+    // La imagen de la ficha (og:image y JSON-LD) se pide a 1200 px en JPEG, no el original de Drive:
+    // Google y las redes sociales la descargan seguido y el original pesa varios MB.
     const image = fotoId
-      ? (fotoId.startsWith('http') || fotoId.startsWith('/') ? fotoId : `https://promoplanet.ar/api/drive/imagen/${fotoId}`)
+      ? (fotoId.startsWith('http') || fotoId.startsWith('/') ? fotoId : `https://promoplanet.ar/api/drive/imagen/${fotoId}?w=1200&fmt=jpg`)
       : 'https://promoplanet.ar/og-image.jpg';
     const url = `https://promoplanet.ar/producto/${encodeURIComponent(p.codigo)}`;
     const meta = [
       `<title>${title}</title>`,
       `<meta property="og:title" content="${title}">`,
       `<meta property="og:description" content="${metaDesc}">`,
-      `<meta property="og:image" content="${image}">`,
+      `<meta property="og:image" content="${escapeAttr(image)}">`,
       `<meta property="og:url" content="${url}">`,
       `<meta property="og:type" content="product">`,
     ].join('\n');
@@ -286,7 +305,7 @@ ${items}
 }
 
 async function renderLanding(res, landing, canonicalUrl) {
-  const baseHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const baseHtml = readIndexHtml();
   try {
     const todos = await getProductos({ soloPublicados: true });
     const productos = todos.filter(p => {
