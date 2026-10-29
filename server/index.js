@@ -271,9 +271,11 @@ const CATEGORIA_NOMBRES = {
 function buildProductoSection(p, fotoId) {
   const lineas = String(p.descripcion || '').split('\n').map(s => s.trim()).filter(Boolean);
   const datos = [];
-  if (p.material && String(p.material).trim()) datos.push(`Material: ${escapeHtml(String(p.material).trim())}`);
-  if (p.medidas && String(p.medidas).trim()) datos.push(`Medidas: ${escapeHtml(String(p.medidas).trim())}`);
-  if (p.colores && String(p.colores).trim()) datos.push(`Colores: ${escapeHtml(String(p.colores).trim())}`);
+  // Se quita el punto final de cada dato, porque se unen con ". " y algunos ya vienen con punto.
+  const limpio = v => String(v || '').trim().replace(/[.\s]+$/, '');
+  if (limpio(p.material)) datos.push(`Material: ${escapeHtml(limpio(p.material))}`);
+  if (limpio(p.medidas)) datos.push(`Medidas: ${escapeHtml(limpio(p.medidas))}`);
+  if (limpio(p.colores)) datos.push(`Colores: ${escapeHtml(limpio(p.colores))}`);
   if (Number(p.minimo) > 0) datos.push(`Pedido mínimo: ${Number(p.minimo)} unidades`);
 
   const categoriaNombre = CATEGORIA_NOMBRES[p.categoria];
