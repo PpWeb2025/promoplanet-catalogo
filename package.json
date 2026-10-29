@@ -7,6 +7,9 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js"
   },
+  "engines": {
+    "node": ">=22.23.4 <23"
+  },
   "dependencies": {
     "@google/genai": "^2.10.0",
     "@libsql/client": "^0.14.0",
