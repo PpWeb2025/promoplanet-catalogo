@@ -48,6 +48,12 @@ const REDIRECTS_301 = {
   '/catalogo':                '/',
   // Detectados en Cloudflare (octubre 2026)
   '/producto/PP424':          '/',
+  '/producto/PP165':          '/',
+  '/producto/PP077':          '/',
+  '/producto/PP367':          '/',
+  '/producto/PP125':          '/',
+  '/producto/PP-436':         '/',
+  '/producto/PP-462':         '/',
   '/product/350540/cuaderno-bioy': '/categoria/escritorio-y-oficina',
 };
 
