@@ -250,11 +250,64 @@ function render503(res) {
 </html>`);
 }
 
+// Nombres de categoría para el texto de la ficha (los mismos que usa el catálogo en CATEGORIAS, dentro de index.html).
+const CATEGORIA_NOMBRES = {
+  bienestar:       'Bienestar y Autocuidado',
+  bolsos_mochilas: 'Bolsos y Mochilas',
+  drinkware:       'Drinkware',
+  escritorio:      'Escritorio y Oficina',
+  escritura:       'Escritura',
+  hogar:           'Hogar y Cocina',
+  indumentaria:    'Indumentaria Corporativa',
+  llaveros:        'Llaveros y Accesorios',
+  outdoors:        'Outdoors y Fitness',
+  packaging:       'Packaging y Presentación',
+  tecnologia:      'Tecnología',
+};
+
+// Contenido de la ficha dentro del HTML (nombre, descripción, datos y foto), para que Google lo lea sin ejecutar JavaScript.
+// Usa el mismo contenedor #landing-seo que las categorías: el catálogo lo oculta solo cuando se navega a otra URL.
+// Solo incluye campos públicos del producto.
+function buildProductoSection(p, fotoId) {
+  const lineas = String(p.descripcion || '').split('\n').map(s => s.trim()).filter(Boolean);
+  const datos = [];
+  if (p.material && String(p.material).trim()) datos.push(`Material: ${escapeHtml(String(p.material).trim())}`);
+  if (p.medidas && String(p.medidas).trim()) datos.push(`Medidas: ${escapeHtml(String(p.medidas).trim())}`);
+  if (p.colores && String(p.colores).trim()) datos.push(`Colores: ${escapeHtml(String(p.colores).trim())}`);
+  if (Number(p.minimo) > 0) datos.push(`Pedido mínimo: ${Number(p.minimo)} unidades`);
+
+  const categoriaNombre = CATEGORIA_NOMBRES[p.categoria];
+  const landing = LANDINGS.find(l => l.tipo === 'categoria' && l.filtro === p.categoria);
+  let categoria = '';
+  if (categoriaNombre) {
+    categoria = landing
+      ? ` Categoría: <a href="/categoria/${landing.slug}">${escapeHtml(categoriaNombre)}</a>.`
+      : ` Categoría: ${escapeHtml(categoriaNombre)}.`;
+  }
+
+  let foto = '';
+  if (fotoId) {
+    const src = fotoId.startsWith('http') || fotoId.startsWith('/') ? fotoId : `/api/drive/imagen/${fotoId}?w=400&fmt=webp`;
+    foto = `    <img src="${escapeAttr(src)}" alt="${escapeAttr(p.nombre)}" width="200" loading="lazy" style="display:block;width:200px;max-width:100%;height:auto;margin:0.75rem 0;border-radius:8px">\n`;
+  }
+
+  const parrafos = lineas.map(l => `    <p>${escapeHtml(l)}</p>\n`).join('');
+  const lineaDatos = datos.length ? `    <p>${datos.join('. ')}.</p>\n` : '';
+  return `<section id="landing-seo" data-tipo="producto" data-filtro="${escapeAttr(p.codigo)}">
+  <div class="landing-intro">
+    <h1>${escapeHtml(p.nombre)}</h1>
+${parrafos}${foto}${lineaDatos}    <p>Código: ${escapeHtml(p.codigo)}.${categoria}</p>
+  </div>
+</section>`;
+}
+
 app.get('/producto/:codigo', async (req, res) => {
   const baseHtml = readIndexHtml();
   try {
     const p = await getProductoByCodigo(req.params.codigo);
-    if (!p) return render404(res);
+    // Los productos en borrador solo se ven con la sesión de administración; el resto recibe 404.
+    const esAdmin = !!(req.session && req.session.admin === true);
+    if (!p || (p.estado !== 'publicado' && !esAdmin)) return render404(res);
     const title = escapeAttr(`${p.nombre} — PromoPlanet`);
     const rawDesc = (p.descripcion || '').replace(/\n/g, ' ').trim();
     const genericDesc = 'Catálogo de productos promocionales personalizados para empresas. Drinkware, indumentaria, tecnología, packaging y más. Entregas en CABA y GBA.';
@@ -294,12 +347,16 @@ app.get('/producto/:codigo', async (req, res) => {
     };
     const jsonLdScript = `<script type="application/ld+json">\n${JSON.stringify(jsonLd, null, 2)}\n</script>`;
     res.set('Cache-Control', 'no-cache');
+    // Los reemplazos usan funciones para que un "$" dentro de la descripción no se interprete como patrón de replace().
     res.send(
       baseHtml
-        .replace('<title>PromoPlanet — Productos promocionales y regalos corporativos en Buenos Aires</title>', meta)
-        .replace('<meta name="description" content="Catálogo de productos promocionales personalizados para empresas. Drinkware, indumentaria, tecnología, packaging y más. Entregas en CABA y GBA.">', `<meta name="description" content="${metaDesc}">`)
-        .replace('<link rel="canonical" href="https://promoplanet.ar/">', `<link rel="canonical" href="${url}">`)
-        .replace('</head>', `${jsonLdScript}\n</head>`)
+        .replace('<title>PromoPlanet — Productos promocionales y regalos corporativos en Buenos Aires</title>', () => meta)
+        .replace('<meta name="description" content="Catálogo de productos promocionales personalizados para empresas. Drinkware, indumentaria, tecnología, packaging y más. Entregas en CABA y GBA.">', () => `<meta name="description" content="${metaDesc}">`)
+        .replace('<link rel="canonical" href="https://promoplanet.ar/">', () => `<link rel="canonical" href="${url}">`)
+        .replace('<h1>Productos promocionales<br>para equipos que <em>importan</em></h1>',
+          '<p class="hero-h1-home">Productos promocionales<br>para equipos que <em>importan</em></p>')
+        .replace('<!-- LANDING SEO SECTION -->', () => buildProductoSection(p, fotoId))
+        .replace('</head>', () => `${jsonLdScript}\n</head>`)
     );
   } catch (err) {
     console.error('Producto render error:', err);
