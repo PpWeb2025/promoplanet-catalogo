@@ -46,6 +46,9 @@ const REDIRECTS_301 = {
   '/producto/PP-437':         '/',
   '/producto/PP-463':         '/',
   '/catalogo':                '/',
+  // Detectados en Cloudflare (octubre 2026)
+  '/producto/PP424':          '/',
+  '/product/350540/cuaderno-bioy': '/categoria/escritorio-y-oficina',
 };
 
 // Slugs del sitio anterior sin equivalente en el mapa: /algo-g123, /es-ar/algo-g123r, /catalogo/algo-g123.
@@ -100,13 +103,25 @@ app.use('/api/proveedores', require('./routes/proveedores'));
 
 // Se bloquea /api/ salvo el proxy de imágenes, para que Google pueda rastrear las fotos de los productos.
 // La regla más específica (Allow) gana sobre Disallow. Se lista primero por compatibilidad con otros rastreadores.
+// Los rastreadores de herramientas de SEO/datos comerciales (Semrush, Ahrefs, Dataprovider) quedan excluidos
+// por completo: no aportan tráfico y consumen ancho de banda del servidor.
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
   res.send([
+    'User-agent: SemrushBot',
+    'Disallow: /',
+    '',
+    'User-agent: AhrefsBot',
+    'Disallow: /',
+    '',
+    'User-agent: Dataprovider.com',
+    'Disallow: /',
+    '',
     'User-agent: *',
     'Allow: /api/drive/imagen/',
     'Disallow: /api/',
     'Allow: /',
+    '',
     'Sitemap: https://promoplanet.ar/sitemap.xml',
   ].join('\n'));
 });
