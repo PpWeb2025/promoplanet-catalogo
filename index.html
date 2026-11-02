@@ -2326,9 +2326,19 @@ async function enviarConsulta() {
   }
 }
 
-// Al escribir en un campo marcado en rojo, se le quita la marca
+// Al escribir en un campo marcado en rojo, se le quita la marca;
+// si ya no queda ninguno en rojo, también se oculta el aviso general.
 document.querySelectorAll('#modal-consulta .form-group input').forEach(input => {
-  input.addEventListener('input', () => input.closest('.form-group').classList.remove('invalid'));
+  input.addEventListener('input', () => {
+    const grupo = input.closest('.form-group');
+    if (!grupo.classList.contains('invalid')) return;
+    grupo.classList.remove('invalid');
+    if (!document.querySelector('#modal-consulta .form-group.invalid')) {
+      const aviso = document.getElementById('consulta-aviso');
+      aviso.classList.remove('show');
+      aviso.textContent = '';
+    }
+  });
 });
 
 // ============================================================
