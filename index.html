@@ -504,6 +504,12 @@
     cursor: pointer; transition: all 0.2s; margin-top: 0.5rem;
   }
   .btn-enviar:hover { background: var(--celeste); }
+  .form-group.invalid input, .form-group.invalid select, .form-group.invalid textarea { border-color: #dc3545; background: #fff8f8; }
+  .campo-error { display: none; font-size: 0.75rem; font-weight: 500; color: #b02a37; }
+  .form-group.invalid .campo-error { display: block; }
+  .form-aviso { display: none; margin-bottom: 0.75rem; padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.85rem; line-height: 1.45; background: #fdecee; color: #8a1c28; border: 1px solid #f3b8be; }
+  .form-aviso.show { display: block; }
+  .form-aviso a { color: inherit; font-weight: 600; text-decoration: underline; }
 
   /* MODAL PRODUCTO DETALLE */
   .modal-prod-img { width: 100%; margin-bottom: 0.75rem; }
@@ -1273,15 +1279,18 @@
       <div class="form-row">
         <div class="form-group">
           <label>Nombre y apellido *</label>
-          <input type="text" id="f-nombre" placeholder="Ana García">
+          <input type="text" id="f-nombre" aria-describedby="err-nombre" placeholder="Ana García">
+          <span class="campo-error" id="err-nombre"></span>
         </div>
         <div class="form-group">
           <label>Empresa *</label>
-          <input type="text" id="f-empresa" placeholder="Mi Empresa S.A.">
+          <input type="text" id="f-empresa" aria-describedby="err-empresa" placeholder="Mi Empresa S.A.">
+          <span class="campo-error" id="err-empresa"></span>
         </div>
         <div class="form-group">
           <label>Email *</label>
-          <input type="email" id="f-email" placeholder="ana@empresa.com">
+          <input type="email" id="f-email" aria-describedby="err-email" placeholder="ana@empresa.com">
+          <span class="campo-error" id="err-email"></span>
         </div>
         <div class="form-group">
           <label>Teléfono / WhatsApp</label>
@@ -1307,6 +1316,7 @@
           <textarea id="f-comentarios" placeholder="Colores de marca, ocasión, destinatarios, dudas..."></textarea>
         </div>
       </div>
+      <div class="form-aviso" id="consulta-aviso" role="alert" aria-live="assertive"></div>
       <button class="btn-enviar" onclick="enviarConsulta()">Enviar solicitud de cotización →</button>
     </div>
   </div>
@@ -2220,15 +2230,67 @@ function galleryNav(dir) {
 // ============================================================
 function abrirConsulta() {
   renderSeleccionModal();
+  limpiarErroresConsulta();
   document.getElementById('modal-consulta').classList.add('open');
 }
 function cerrarConsulta() { document.getElementById('modal-consulta').classList.remove('open'); }
 
+// Quita las marcas de error y el aviso general del formulario
+function limpiarErroresConsulta() {
+  document.querySelectorAll('#modal-consulta .form-group.invalid').forEach(g => g.classList.remove('invalid'));
+  const aviso = document.getElementById('consulta-aviso');
+  aviso.classList.remove('show');
+  aviso.textContent = '';
+}
+
+// Marca un campo en rojo y muestra el motivo debajo
+function marcarCampoConsulta(id, mensaje) {
+  const grupo = document.getElementById(id).closest('.form-group');
+  grupo.classList.add('invalid');
+  const error = grupo.querySelector('.campo-error');
+  if (error) error.textContent = mensaje;
+}
+
+// Muestra un aviso general arriba del botón de envío (reemplaza a los alert del navegador)
+function mostrarAvisoConsulta(mensaje, irAlAviso) {
+  const aviso = document.getElementById('consulta-aviso');
+  const seguro = String(mensaje).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  aviso.innerHTML = seguro.replace('hola@promoplanet.ar', '<a href="mailto:hola@promoplanet.ar">hola@promoplanet.ar</a>');
+  aviso.classList.add('show');
+  if (irAlAviso) aviso.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 async function enviarConsulta() {
+  limpiarErroresConsulta();
+
   const nombre = document.getElementById('f-nombre').value.trim();
   const empresa = document.getElementById('f-empresa').value.trim();
   const email = document.getElementById('f-email').value.trim();
-  if (!nombre || !empresa || !email) { alert('Por favor completá nombre, empresa y email para continuar.'); return; }
+
+  let primerCampoConError = null;
+  if (!nombre) {
+    marcarCampoConsulta('f-nombre', 'Escribí tu nombre y apellido.');
+    primerCampoConError = primerCampoConError || 'f-nombre';
+  }
+  if (!empresa) {
+    marcarCampoConsulta('f-empresa', 'Escribí el nombre de tu empresa.');
+    primerCampoConError = primerCampoConError || 'f-empresa';
+  }
+  if (!email) {
+    marcarCampoConsulta('f-email', 'Escribí tu email para poder responderte.');
+    primerCampoConError = primerCampoConError || 'f-email';
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    marcarCampoConsulta('f-email', 'El email no parece válido. Revisalo, por favor.');
+    primerCampoConError = primerCampoConError || 'f-email';
+  }
+
+  if (primerCampoConError) {
+    mostrarAvisoConsulta('Revisá los campos marcados en rojo para poder enviar tu solicitud.', false);
+    const campo = document.getElementById(primerCampoConError);
+    campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    campo.focus({ preventScroll: true });
+    return;
+  }
 
   const btn = document.querySelector('#modal-consulta .btn-enviar');
   btn.disabled = true;
@@ -2251,18 +2313,23 @@ async function enviarConsulta() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      alert(err.error || 'No se pudo enviar. Intentá de nuevo o escribinos a hola@promoplanet.ar');
+      mostrarAvisoConsulta(err.error || 'No se pudo enviar. Intentá de nuevo o escribinos a hola@promoplanet.ar', true);
       return;
     }
     cerrarConsulta();
     showToast('¡Solicitud enviada! Te respondemos en 24 a 48 hs.');
   } catch {
-    alert('Error de conexión. Escribinos directamente a hola@promoplanet.ar');
+    mostrarAvisoConsulta('Error de conexión. Revisá tu internet e intentá de nuevo, o escribinos a hola@promoplanet.ar', true);
   } finally {
     btn.disabled = false;
     btn.textContent = 'Enviar solicitud de cotización →';
   }
 }
+
+// Al escribir en un campo marcado en rojo, se le quita la marca
+document.querySelectorAll('#modal-consulta .form-group input').forEach(input => {
+  input.addEventListener('input', () => input.closest('.form-group').classList.remove('invalid'));
+});
 
 // ============================================================
 // UTILS
