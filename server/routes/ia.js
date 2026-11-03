@@ -350,7 +350,7 @@ Nunca empieces con "Este" ni "Esta", y no te dirijas al lector.
 Orden: cada oración trata un solo tema, y los temas siguen este orden. Los que no tengan datos se omiten sin mencionarlos.
 1. Qué es y para qué sirve: tipo de producto, función principal y qué hace.
 2. Funcionamiento y datos técnicos: compatibilidad, potencias, voltajes, capacidad, autonomía, conexión, certificaciones.
-3. Diseño y construcción: material (con la aclaración eco si corresponde), componentes, sistemas de cierre, partes plegables, soportes, bolsillos, luces indicadoras u otros detalles físicos o funciones integradas al producto.
+3. Diseño y construcción: material (con la aclaración eco si corresponde), componentes, sistemas de cierre, partes plegables, soportes, bolsillos, luces indicadoras u otros detalles físicos o funciones integradas al producto. En indumentaria, los talles disponibles también van en este tema (por ejemplo "Disponible en talles del S al XXL"); no tienen campo propio.
 4. Qué incluye: solo los elementos que acompañan al producto (cables, fundas, accesorios, repuestos). Una luz, un soporte o cualquier función integrada NO es parte de lo que incluye: va en el tema 3.
 
 Datos numéricos: transcribilos completos y con el dispositivo o la parte a la que corresponden, por ejemplo "15 W para el teléfono, 3 W para el reloj y 2 W para los auriculares" o "entradas de 5 V/3 A, 9 V/2 A y 12 V/1,5 A".
@@ -449,6 +449,9 @@ apenas un detalle del producto.
 Si el proveedor indica que la caja o el envase es reciclable, reciclado o
 reutilizable, mencionalo en la oración de presentación, con esas mismas palabras
 y sin ampliar la afirmación al producto.
+Usá solo la característica que el proveedor menciona: si dice "reciclado", escribí
+"reciclado" y no agregues "reutilizable", "renovable", "biodegradable" ni otra
+cualidad que no figure en los datos. Vale para el packaging y para cualquier material.
 
 Nunca menciones certificaciones (FSC, GRS, OEKO-TEX, GOTS) salvo que estén
 explícitas en los datos del proveedor.
