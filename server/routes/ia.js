@@ -286,6 +286,20 @@ router.post('/adaptar', requireAdmin, async (req, res) => {
 
 Tu tarea es analizar información de un producto de proveedor y adaptarla al estilo editorial de PromoPlanet.
 
+## Quién lee la descripción
+
+La lee un posible cliente: una empresa (áreas de RR. HH., Marketing o compras) que busca un producto promocional para regalar con su marca impresa.
+Todos los productos de PromoPlanet se compran con ese fin: que la marca del cliente quede presente y asociada a un momento o a un ámbito agradable de la vida de quien recibe el regalo (por ejemplo, un parlante se asocia con un momento de música y descanso).
+
+Al elegir qué datos destacar y qué usos mencionar, pensá qué le resulta atractivo a ese comprador para ese fin:
+- que el producto se use seguido y quede a la vista en la vida cotidiana de quien lo recibe;
+- que sea útil o agradable en momentos y ámbitos concretos (casa, escritorio, oficina, viaje, aire libre, bienestar);
+- que tenga una presentación cuidada, si el proveedor la informa;
+- que tenga atributos ecológicos, si los hay.
+
+Esta perspectiva guía qué información se prioriza y cómo se redacta la oración final de usos.
+No cambia el tono: la redacción sigue siendo objetiva y descriptiva, en tercera persona, sin dirigirse al lector, sin decir "tu marca", "tu logo" ni "tu empresa", sin mencionar la impresión o personalización del producto y sin las fórmulas prohibidas más abajo.
+
 ## Ejemplos de estilo PromoPlanet
 
 Estos cinco ejemplos definen el estilo. Imitá su registro, su orden y su nivel de detalle. No imites su contenido.
@@ -298,13 +312,13 @@ La superficie de carga lleva un aro de silicona antideslizante y una luz LED ind
 Incluye cable USB a USB-C de 1,2 m.
 Se presenta en una caja de cartón reciclado.
 
-Es ideal para kits de onboarding y programas de reconocimiento.
+Es ideal para cargar el celular en el escritorio o en la mesa de luz, y para kits de onboarding.
 
 Libreta A6 de tapa dura:
 La libreta tiene tapa dura, formato A6 y 80 hojas rayadas de papel reciclado.
 Incluye banda elástica de cierre, señalador de tela al tono y bolsillo interior para notas sueltas.
 
-Apropiada para capacitaciones y kits de bienvenida.
+Apropiada para tomar notas en reuniones y capacitaciones, y para kits de bienvenida.
 
 Botella térmica deportiva:
 La botella es de acero inoxidable de doble pared, con capacidad de 550 ml.
@@ -313,19 +327,19 @@ La tapa cuenta con pico reforzado y sistema antiderrame, y la base es antidesliz
 Es libre de BPA y cuenta con aval del I.N.A.L.
 Es apta para bebidas frías y calientes, y se lava a mano.
 
-Recomendada para kits de bienvenida y acciones de bienestar.
+Recomendada para el uso diario en la oficina, el gimnasio o al aire libre, y para acciones de bienestar.
 
 Mochila porta notebook:
 La mochila está confeccionada en poliéster engomado impermeable.
 Cuenta con compartimento acolchado para notebook de hasta 17 pulgadas y bolsillos de acceso rápido en el frente y los laterales.
 Tiene correas ajustables con refuerzo en los hombros y una banda de sujeción para valija en la parte trasera.
 
-Suele elegirse para reconocimientos y entregas a equipos de liderazgo.
+Suele elegirse para el trayecto diario al trabajo y para viajes cortos, y como reconocimiento a equipos de liderazgo.
 
 Llavero metálico redondo:
 El llavero es de metal, de formato redondo.
 
-Es ideal para ferias, eventos y acciones de alcance amplio.
+Es apropiado para el uso diario en las llaves de casa, la oficina o el auto.
 
 ## Información del proveedor (${fuenteLabel})
 ${contenidoFuente}
@@ -359,6 +373,8 @@ Si un valor del proveedor es ambiguo o parece inconsistente, usá solo la parte 
 Nombres de dispositivos o marcas que mencione el proveedor (por ejemplo Apple Watch) se conservan tal como figuran.
 5. Presentación: la caja o el envase, solo si es destacable (ver más abajo).
 No mezcles temas en una misma oración: una característica técnica no se junta con una de packaging, ni un accesorio con un dato de funcionamiento.
+Respetá el orden de los temas de punta a punta: una vez que pasaste a un tema, no vuelvas a uno anterior (por ejemplo, un detalle de diseño como una base antideslizante va antes de "Incluye", nunca después).
+No menciones colores de ningún elemento (ni de cables, cuerdas, tapas ni accesorios): los colores tienen campo propio.
 Si un tema tiene pocos datos, se puede unir con el tema vecino siempre que sean del mismo orden (por ejemplo, funcionamiento con compatibilidad).
 
 Presentación y packaging:
@@ -370,29 +386,43 @@ Nunca escribas frases como "no incluye packaging", "se entrega sin caja" ni "no 
 
 Cada oración va en su propia línea, sin líneas en blanco entre ellas.
 
-### BLOQUE 2 — contexto de uso
+### BLOQUE 2 — usos reales del producto
 
 Una sola oración corta, precedida de una línea en blanco.
-Recomendá en qué tipo de entrega corporativa conviene el producto.
+
+Antes de escribirla, pensá cómo usa de verdad el producto la persona que lo recibe:
+dónde lo usa (casa, oficina, escritorio, viaje, aire libre, gimnasio, cocina, auto),
+en qué momentos y para qué. La oración tiene que describir esos usos reales,
+deducidos de lo que el producto es y hace (su tipo, su tamaño, si es portátil,
+si es de uso diario, si es para escribir, para llevar, para tomar, etc.).
+
+Después, y solo si encaja de forma evidente con ese uso, se puede sumar un contexto
+de entrega corporativa: kits de onboarding, kits de bienvenida, capacitaciones,
+reconocimientos, fechas especiales, acciones de bienestar.
+El uso real va primero. El contexto de entrega es opcional y nunca reemplaza al uso.
+
+Control obligatorio: preguntate "¿una persona usaría o recibiría este producto en esa
+situación?". Si la respuesta no es un sí claro, descartá ese contexto.
+- Ferias y eventos: nombralos solo si el producto es algo que se usa o se lleva puesto
+  en esas situaciones (por ejemplo credenciales, portacredenciales, gorras o bolsas).
+  No los uses para productos de uso personal, doméstico o de escritorio.
+  Ejemplo de error: decir que un parlante portátil es "para eventos y ferias".
+  Ejemplo correcto para un parlante portátil: "Es apropiado para escuchar música en casa, llevarlo de una habitación a otra o usarlo al aire libre, y para kits de bienvenida y reconocimientos."
+- No inventes usos que el producto no permite (un termo no es para cocinar, una libreta
+  no es para cargar dispositivos).
+- Nunca un valor abstracto de marca (profesionalismo, innovación, sustentabilidad,
+  estilo de vida).
 
 Alterná la construcción de una descripción a otra:
 "Es ideal para...", "Apropiado para...", "Recomendado para...",
-"Suele elegirse para...". No uses siempre la misma.
+"Suele elegirse para...", "Se puede usar en...". No uses siempre la misma.
 
-Lo que sigue tiene que ser un contexto concreto de entrega: kits de onboarding,
-kits de bienvenida, capacitaciones, reconocimientos, ferias, eventos, fechas
-especiales, acciones de bienestar. Nunca un valor abstracto de marca
-(profesionalismo, innovación, sustentabilidad, estilo de vida).
+Si vienen los campos Ocasiones y Destinatarios, usalos como apoyo, pero siempre
+verificándolos contra el producto con el control obligatorio de arriba. Si están
+vacíos, deducí el uso a partir del tipo de producto.
 
-Si vienen los campos Ocasiones y Destinatarios, usalos como base. Si están
-vacíos, deducí el contexto de la categoría del producto.
-
-Este bloque va siempre, después de una línea en blanco. Si los campos
-Ocasiones y Destinatarios están vacíos, deducí el contexto del tipo de producto
-(por ejemplo, un cargador o un accesorio tecnológico: kits de onboarding y
-reconocimientos; una libreta: capacitaciones y kits de bienvenida).
-Omitilo únicamente si el producto es tan genérico que cualquier contexto de
-entrega sería inventado.
+Este bloque va siempre, después de una línea en blanco.
+Omitilo únicamente si el producto es tan genérico que cualquier uso sería inventado.
 
 ### PROHIBIDO
 
