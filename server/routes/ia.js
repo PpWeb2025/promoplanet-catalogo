@@ -10,17 +10,52 @@ async function fetchTextoDesdeURL(url) {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status} al acceder a ${url}`);
   const html = await res.text();
-  return html
+
+  // Primero intenta una limpieza más agresiva (sin menú, encabezado ni pie) para que
+  // el límite de caracteres se use en la información del producto y no en la navegación.
+  const limpio = htmlATexto(extraerContenidoPrincipal(html), true);
+  if (limpio.length >= 300) return limpio.slice(0, LIMITE_TEXTO_PROVEEDOR);
+
+  // Si quedó muy poco texto, la página tiene una estructura distinta: se usa la limpieza básica.
+  return htmlATexto(html, false).slice(0, LIMITE_TEXTO_PROVEEDOR);
+}
+
+const LIMITE_TEXTO_PROVEEDOR = 12000;
+
+// Si la página tiene una etiqueta <main>, se queda con ese contenido.
+function extraerContenidoPrincipal(html) {
+  const m = html.match(/<main[\s\S]*?<\/main>/i);
+  return m ? m[0] : html;
+}
+
+function htmlATexto(html, agresivo) {
+  let h = html
+    .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+    .replace(/<svg[\s\S]*?<\/svg>/gi, '');
+  if (agresivo) {
+    h = h
+      .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+      .replace(/<header[\s\S]*?<\/header>/gi, '')
+      .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+      .replace(/<aside[\s\S]*?<\/aside>/gi, '')
+      .replace(/<form[\s\S]*?<\/form>/gi, '');
+  }
+  return h
+    .replace(/<\/(p|div|li|tr|h[1-6]|br)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    .slice(0, 6000);
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\s*\n\s*/g, '\n')
+    .trim();
 }
 
 const MODELO_IA = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
@@ -232,36 +267,42 @@ Tu tarea es analizar información de un producto de proveedor y adaptarla al est
 
 ## Ejemplos de estilo PromoPlanet
 
-Estos cinco ejemplos definen el estilo. Imitá su registro, su longitud y su estructura. No imites su contenido.
+Estos cinco ejemplos definen el estilo. Imitá su registro, su orden y su nivel de detalle. No imites su contenido.
+Fijate que el largo depende de la cantidad de información que hay: un producto simple lleva pocas oraciones y uno técnico o con varios componentes lleva más.
 
 Cargador inalámbrico de bambú y RPET:
-Cargador con base de bambú, un material renovable, y detalles en RPET.
-Es compatible con carga inalámbrica QI y se conecta por USB.
+El cargador inalámbrico tiene base de bambú, un material renovable, y detalles en RPET.
+Es compatible con carga inalámbrica QI y entrega hasta 10 W a smartphones.
+La superficie de carga lleva un aro de silicona antideslizante y una luz LED indica que la carga está en curso.
+Incluye cable USB a USB-C de 1,2 m.
+Se presenta en una caja de cartón reciclado.
 
 Es ideal para kits de onboarding y programas de reconocimiento.
 
 Libreta A6 de tapa dura:
-Libreta con tapa dura, formato A6 y hojas rayadas.
-Incluye banda elástica de cierre y señalador de tela al tono.
+La libreta tiene tapa dura, formato A6 y 80 hojas rayadas de papel reciclado.
+Incluye banda elástica de cierre, señalador de tela al tono y bolsillo interior para notas sueltas.
 
 Apropiada para capacitaciones y kits de bienvenida.
 
 Botella térmica deportiva:
-Botella de acero inoxidable de doble pared, con capacidad de 550 ml.
+La botella es de acero inoxidable de doble pared, con capacidad de 550 ml.
 Mantiene frío hasta 24 horas y calor hasta 12.
 La tapa cuenta con pico reforzado y sistema antiderrame, y la base es antideslizante.
 Es libre de BPA y cuenta con aval del I.N.A.L.
+Es apta para bebidas frías y calientes, y se lava a mano.
 
 Recomendada para kits de bienvenida y acciones de bienestar.
 
 Mochila porta notebook:
-Mochila confeccionada en poliéster engomado impermeable.
-Cuenta con compartimento para notebook de hasta 17 pulgadas, bolsillos de acceso rápido y banda de sujeción para valija.
+La mochila está confeccionada en poliéster engomado impermeable.
+Cuenta con compartimento acolchado para notebook de hasta 17 pulgadas y bolsillos de acceso rápido en el frente y los laterales.
+Tiene correas ajustables con refuerzo en los hombros y una banda de sujeción para valija en la parte trasera.
 
 Suele elegirse para reconocimientos y entregas a equipos de liderazgo.
 
 Llavero metálico redondo:
-Llavero de metal, de formato redondo.
+El llavero es de metal, de formato redondo.
 
 Es ideal para ferias, eventos y acciones de alcance amplio.
 
@@ -276,10 +317,31 @@ lector.
 
 ### BLOQUE 1 — el producto
 
-De dos a cuatro oraciones.
-Contenido: material, componentes, capacidad, funcionamiento, certificaciones.
-Empezá directo con el sustantivo del producto, sin artículo inicial: "Botella de acero...", "Libreta con tapa...", "Mochila confeccionada en...".
-Nunca empieces con artículo ("La", "El", "Los", "Las"), ni con "Este" ni "Esta".
+Largo: depende de la información que da el proveedor.
+Un producto simple lleva de dos a tres oraciones.
+Un producto con varias funciones, componentes o datos técnicos lleva de cuatro a seis oraciones.
+Las oraciones pueden ser completas, de entre 15 y 30 palabras cuando hay contenido que las justifique.
+No omitas datos relevantes del proveedor solo para acortar la descripción. Tampoco rellenes con frases vacías si no hay más datos.
+
+Inicio: la primera oración empieza con artículo y el sustantivo del producto: "El cargador...", "La libreta...", "La botella...", "El llavero...".
+Nunca empieces con "Este" ni "Esta", y no te dirijas al lector.
+
+Orden: cada oración trata un solo tema, y los temas siguen este orden. Los que no tengan datos se omiten sin mencionarlos.
+1. Qué es y para qué sirve: tipo de producto, función principal y qué hace.
+2. Funcionamiento y datos técnicos: compatibilidad, potencias, voltajes, capacidad, autonomía, conexión, certificaciones.
+3. Diseño y construcción: material (con la aclaración eco si corresponde), componentes, sistemas de cierre, partes plegables, soportes, bolsillos, luces u otros detalles físicos.
+4. Qué incluye: cables, accesorios, repuestos o componentes que vienen con el producto.
+5. Presentación: la caja o el envase, solo si es destacable (ver más abajo).
+No mezcles temas en una misma oración: una característica técnica no se junta con una de packaging, ni un accesorio con un dato de funcionamiento.
+Si un tema tiene pocos datos, se puede unir con el tema vecino siempre que sean del mismo orden (por ejemplo, funcionamiento con compatibilidad).
+
+Presentación y packaging:
+No es información de la operación comercial, así que se puede describir.
+Se menciona únicamente cuando el proveedor indica una presentación concreta y destacable: una caja de regalo, un estuche, un material reciclado o reutilizable, un envase especial.
+Va siempre en la última oración del bloque 1.
+Si el proveedor no dice nada sobre el packaging, no lo menciones ni aclares que no hay datos: puede existir aunque no esté informado.
+Nunca escribas frases como "no incluye packaging", "se entrega sin caja" ni "no se especifica".
+
 Cada oración va en su propia línea, sin líneas en blanco entre ellas.
 
 ### BLOQUE 2 — contexto de uso
@@ -300,7 +362,7 @@ Si vienen los campos Ocasiones y Destinatarios, usalos como base. Si están
 vacíos, deducí el contexto de la categoría del producto.
 
 Omití este bloque solamente si tendrías que inventar algo que los datos no
-respaldan. Una descripción de dos oraciones es correcta.
+respaldan. Una descripción sin este bloque es correcta.
 
 ### PROHIBIDO
 
@@ -315,7 +377,10 @@ respaldan. Una descripción de dos oraciones es correcta.
    de...", "en cada momento".
 
 3. Información de la operación comercial: cantidad mínima, precio, rango de
-   precio, plazos de entrega y técnicas de marcación o personalización. Tampoco
+   precio, plazos de entrega, técnicas de marcación o personalización y datos
+   de packing logístico (medidas de la caja de embalaje, unidades por caja,
+   peso de la caja). La presentación del producto (caja de regalo, estuche) no
+   entra en esta prohibición: se rige por la regla de "Presentación y packaging". Tampoco
    de forma indirecta: nada de "artículo de entrega masiva", "opción accesible",
    "para grandes volúmenes". Esos datos tienen campos propios y cambian con el
    tiempo.
@@ -351,12 +416,16 @@ Calibrá el alcance de la afirmación:
 El mismo criterio vale para el badge "ecofriendly": no lo sugieras si lo eco es
 apenas un detalle del producto.
 
+Si el proveedor indica que la caja o el envase es reciclable, reciclado o
+reutilizable, mencionalo en la oración de presentación, con esas mismas palabras
+y sin ampliar la afirmación al producto.
+
 Nunca menciones certificaciones (FSC, GRS, OEKO-TEX, GOTS) salvo que estén
 explícitas en los datos del proveedor.
 
 ### FORMATO DE LA DESCRIPCIÓN
 
-Cada oración del bloque 1 va en su propia línea.
+Cada oración del bloque 1 va en su propia línea, siguiendo el orden de temas indicado arriba.
 Entre el bloque 1 y el bloque 2 va una línea en blanco.
 Respetá esos saltos de línea en el valor del campo "descripcion".
 
