@@ -43,19 +43,40 @@ function htmlATexto(html, agresivo) {
       .replace(/<aside[\s\S]*?<\/aside>/gi, '')
       .replace(/<form[\s\S]*?<\/form>/gi, '');
   }
-  return h
+  const texto = h
     .replace(/<\/(p|div|li|tr|h[1-6]|br)>/gi, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
+    .replace(/<[^>]+>/g, ' ');
+  return decodificarEntidades(texto)
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\s*\n\s*/g, '\n')
     .trim();
+}
+
+// Entidades HTML con nombre que aparecen en páginas de proveedores en español.
+const ENTIDADES_HTML = {
+  nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'",
+  aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú',
+  Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú',
+  ntilde: 'ñ', Ntilde: 'Ñ', uuml: 'ü', Uuml: 'Ü',
+  iexcl: '¡', iquest: '¿', ordm: 'º', ordf: 'ª', deg: '°',
+  times: '×', plusmn: '±', middot: '·', bull: '•',
+  ndash: '–', mdash: '—', hellip: '…',
+  lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”',
+  laquo: '«', raquo: '»', copy: '©', reg: '®', trade: '™',
+  sup2: '²', sup3: '³', frac12: '½', euro: '€',
+};
+
+// Decodifica entidades con nombre y numéricas (&#233; y &#xE9;). Las desconocidas quedan como están.
+function decodificarEntidades(texto) {
+  return texto.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z][a-z0-9]*);/gi, (completa, cuerpo) => {
+    if (cuerpo[0] === '#') {
+      const codigo = cuerpo[1].toLowerCase() === 'x' ? parseInt(cuerpo.slice(2), 16) : parseInt(cuerpo.slice(1), 10);
+      if (!Number.isFinite(codigo) || codigo < 1 || codigo > 0x10FFFF) return completa;
+      return String.fromCodePoint(codigo);
+    }
+    return Object.prototype.hasOwnProperty.call(ENTIDADES_HTML, cuerpo) ? ENTIDADES_HTML[cuerpo] : completa;
+  });
 }
 
 const MODELO_IA = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
@@ -329,8 +350,13 @@ Nunca empieces con "Este" ni "Esta", y no te dirijas al lector.
 Orden: cada oración trata un solo tema, y los temas siguen este orden. Los que no tengan datos se omiten sin mencionarlos.
 1. Qué es y para qué sirve: tipo de producto, función principal y qué hace.
 2. Funcionamiento y datos técnicos: compatibilidad, potencias, voltajes, capacidad, autonomía, conexión, certificaciones.
-3. Diseño y construcción: material (con la aclaración eco si corresponde), componentes, sistemas de cierre, partes plegables, soportes, bolsillos, luces u otros detalles físicos.
-4. Qué incluye: cables, accesorios, repuestos o componentes que vienen con el producto.
+3. Diseño y construcción: material (con la aclaración eco si corresponde), componentes, sistemas de cierre, partes plegables, soportes, bolsillos, luces indicadoras u otros detalles físicos o funciones integradas al producto.
+4. Qué incluye: solo los elementos que acompañan al producto (cables, fundas, accesorios, repuestos). Una luz, un soporte o cualquier función integrada NO es parte de lo que incluye: va en el tema 3.
+
+Datos numéricos: transcribilos completos y con el dispositivo o la parte a la que corresponden, por ejemplo "15 W para el teléfono, 3 W para el reloj y 2 W para los auriculares" o "entradas de 5 V/3 A, 9 V/2 A y 12 V/1,5 A".
+No los resumas en rangos ni en promedios ("entre 5 W y 15 W") porque se pierde información.
+Si un valor del proveedor es ambiguo o parece inconsistente, usá solo la parte clara y omití el resto.
+Nombres de dispositivos o marcas que mencione el proveedor (por ejemplo Apple Watch) se conservan tal como figuran.
 5. Presentación: la caja o el envase, solo si es destacable (ver más abajo).
 No mezcles temas en una misma oración: una característica técnica no se junta con una de packaging, ni un accesorio con un dato de funcionamiento.
 Si un tema tiene pocos datos, se puede unir con el tema vecino siempre que sean del mismo orden (por ejemplo, funcionamiento con compatibilidad).
@@ -361,8 +387,12 @@ especiales, acciones de bienestar. Nunca un valor abstracto de marca
 Si vienen los campos Ocasiones y Destinatarios, usalos como base. Si están
 vacíos, deducí el contexto de la categoría del producto.
 
-Omití este bloque solamente si tendrías que inventar algo que los datos no
-respaldan. Una descripción sin este bloque es correcta.
+Este bloque va siempre, después de una línea en blanco. Si los campos
+Ocasiones y Destinatarios están vacíos, deducí el contexto del tipo de producto
+(por ejemplo, un cargador o un accesorio tecnológico: kits de onboarding y
+reconocimientos; una libreta: capacitaciones y kits de bienvenida).
+Omitilo únicamente si el producto es tan genérico que cualquier contexto de
+entrega sería inventado.
 
 ### PROHIBIDO
 
