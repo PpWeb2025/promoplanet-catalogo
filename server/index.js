@@ -55,6 +55,8 @@ const REDIRECTS_301 = {
   '/producto/PP-436':         '/',
   '/producto/PP-462':         '/',
   '/product/350540/cuaderno-bioy': '/categoria/escritorio-y-oficina',
+  // Carpeta de logos sin archivo: Google la tomaba como URL desde el JS de index.html y clientes.html (noviembre 2026)
+  '/logos-clientes':          '/clientes',
 };
 
 // Slugs del sitio anterior sin equivalente en el mapa: /algo-g123, /es-ar/algo-g123r, /catalogo/algo-g123.

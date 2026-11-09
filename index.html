@@ -1482,7 +1482,7 @@ function renderNavMobileCats() {
     const isActive = catActiva === c.id;
     const slug = CAT_LANDING_SLUGS[c.id];
     if (slug) {
-      html += `<a class="nav-mobile-cat-btn ${isActive ? 'active' : ''}" href="/categoria/${slug}" data-cat="${c.id}" onclick="return setMobileCatLink(event, '${c.id}')">
+      html += `<a class="nav-mobile-cat-btn ${isActive ? 'active' : ''}" href="${catUrl(slug)}" data-cat="${c.id}" onclick="return setMobileCatLink(event, '${c.id}')">
         <span class="cat-dot" style="background:${c.color}"></span> ${c.nombre}
       </a>`;
     } else {
@@ -1651,6 +1651,13 @@ const CAT_LANDING_SLUGS = {
   packaging:       'packaging-y-presentacion',
 };
 
+// Arma la URL de una landing de categoría. Se usa una función en vez de insertar
+// el slug dentro del texto del enlace, porque Google tomaba ese texto del script
+// como si fuera una URL real y la reportaba como 404 en Search Console.
+function catUrl(slug) {
+  return '/categoria/' + slug;
+}
+
 const OCC_LANDING_SLUGS = {
   evento:       'eventos',
   fechas:       'fechas-especiales',
@@ -1698,7 +1705,7 @@ function renderCatSidebar() {
   CATEGORIAS.forEach(c => {
     const slug = CAT_LANDING_SLUGS[c.id];
     if (slug) {
-      html += `<a class="cat-item ${catActiva === c.id ? 'active' : ''}" href="/categoria/${slug}" data-cat="${c.id}" onclick="return setCatLink(event, '${c.id}', this)">
+      html += `<a class="cat-item ${catActiva === c.id ? 'active' : ''}" href="${catUrl(slug)}" data-cat="${c.id}" onclick="return setCatLink(event, '${c.id}', this)">
         <span class="cat-dot" style="background:${c.color}"></span> ${c.nombre}
       </a>`;
     } else {
