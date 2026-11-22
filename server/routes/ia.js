@@ -300,9 +300,16 @@ Al elegir qué datos destacar y qué usos mencionar, pensá qué le resulta atra
 Esta perspectiva guía qué información se prioriza y cómo se redacta la oración final de usos.
 No cambia el tono: la redacción sigue siendo objetiva y descriptiva, en tercera persona, sin dirigirse al lector, sin decir "tu marca", "tu logo" ni "tu empresa", sin mencionar la impresión o personalización del producto y sin las fórmulas prohibidas más abajo.
 
+## Cómo lograr una descripción atractiva sin adjetivos
+
+El atractivo sale de lo concreto, no de los adjetivos: rasgos de construcción precisos, datos técnicos y usos específicos.
+El lector ya sabe qué es un cuaderno, una botella o un llavero. La descripción tiene que contarle lo que NO sabe con solo leer el nombre del producto: cómo está hecho, qué formato tiene, qué lleva, cómo se arma, qué lo distingue.
+Prueba obligatoria para cada oración: "¿esto le dice algo al lector que no sabría ya por el nombre del producto?". Si la respuesta es no, reescribila con un dato concreto del proveedor o eliminala.
+Es preferible una descripción de dos oraciones con datos reales que una de cuatro con obviedades.
+
 ## Ejemplos de estilo PromoPlanet
 
-Estos cinco ejemplos definen el estilo. Imitá su registro, su orden y su nivel de detalle. No imites su contenido.
+Estos seis ejemplos definen el estilo. Imitá su registro, su orden y su nivel de detalle. No imites su contenido.
 Fijate que el largo depende de la cantidad de información que hay: un producto simple lleva pocas oraciones y uno técnico o con varios componentes lleva más.
 
 Cargador inalámbrico de bambú y RPET:
@@ -341,6 +348,13 @@ El llavero es de metal, de formato redondo.
 
 Es apropiado para el uso diario en las llaves de casa, la oficina o el auto.
 
+Cuaderno A5 de tapa blanda (datos del proveedor: formato A5, tapa blanda, 48 hojas lisas de 80 g, encuadernación cosida):
+El cuaderno tiene formato A5, tapa blanda y encuadernación cosida.
+Cuenta con 48 hojas lisas de papel de 80 g.
+
+Apropiado para anotar los puntos de una reunión, armar listas de tareas o tomar apuntes en capacitaciones, y para kits de bienvenida.
+(Error a evitar: empezar con "El cuaderno sirve para tomar notas y escribir", porque repite lo que ya dice el nombre del producto.)
+
 ## Información del proveedor (${fuenteLabel})
 ${contenidoFuente}
 
@@ -357,14 +371,16 @@ Un producto simple lleva de dos a tres oraciones.
 Un producto con varias funciones, componentes o datos técnicos lleva de cuatro a seis oraciones.
 Las oraciones pueden ser completas, de entre 15 y 30 palabras cuando hay contenido que las justifique.
 No omitas datos relevantes del proveedor solo para acortar la descripción. Tampoco rellenes con frases vacías si no hay más datos.
+Si el proveedor da pocos datos, la descripción es corta: dos oraciones con datos reales. No alargues con obviedades ni repitas con otras palabras lo que ya dice el nombre del producto.
 
 Inicio: la primera oración empieza con artículo y el sustantivo del producto: "El cargador...", "La libreta...", "La botella...", "El llavero...".
 Nunca empieces con "Este" ni "Esta", y no te dirijas al lector.
 
 Orden: cada oración trata un solo tema, y los temas siguen este orden. Los que no tengan datos se omiten sin mencionarlos.
-1. Qué es y para qué sirve: tipo de producto, función principal y qué hace.
+1. Qué es: el tipo de producto con sus rasgos distintivos (formato, tipo de tapa o encuadernación, capacidad, tecnología, cantidad de hojas). La función se explica solo cuando no es evidente por el nombre (un powerbank, un hub, un difusor, un organizador modular). Nunca se explica la función obvia de un producto cuyo nombre ya la dice (cuaderno, bolígrafo, botella, llavero, mochila, gorra, taza): prohibido "sirve para", "está pensado para" o "permite" seguidos de esa función obvia.
 2. Funcionamiento y datos técnicos: compatibilidad, potencias, voltajes, capacidad, autonomía, conexión, certificaciones.
 3. Diseño y construcción: material (con la aclaración eco si corresponde), componentes, sistemas de cierre, partes plegables, soportes, bolsillos, luces indicadoras u otros detalles físicos o funciones integradas al producto. En indumentaria, los talles disponibles también van en este tema (por ejemplo "Disponible en talles del S al XXL"); no tienen campo propio.
+   Cuando un dato de construcción tiene una consecuencia directa y verificable, se puede nombrar en pocas palabras (por ejemplo, encuadernación cosida: "las hojas van cosidas al lomo"); nunca se suman cualidades que el proveedor no menciona.
 4. Qué incluye: solo los elementos que acompañan al producto (cables, fundas, accesorios, repuestos). Una luz, un soporte o cualquier función integrada NO es parte de lo que incluye: va en el tema 3.
 
 Datos numéricos: transcribilos completos y con el dispositivo o la parte a la que corresponden, por ejemplo "15 W para el teléfono, 3 W para el reloj y 2 W para los auriculares" o "entradas de 5 V/3 A, 9 V/2 A y 12 V/1,5 A".
@@ -388,7 +404,9 @@ Cada oración va en su propia línea, sin líneas en blanco entre ellas.
 
 ### BLOQUE 2 — usos reales del producto
 
-Una sola oración corta, precedida de una línea en blanco.
+Una sola oración de hasta 30 palabras, precedida de una línea en blanco.
+
+Nombrá actividades y momentos concretos de quien recibe el producto (anotar los puntos de una reunión, armar listas de tareas, escuchar música mientras se cocina), no una enumeración de lugares sin acción ("en el escritorio, en la oficina o en casa").
 
 Antes de escribirla, pensá cómo usa de verdad el producto la persona que lo recibe:
 dónde lo usa (casa, oficina, escritorio, viaje, aire libre, gimnasio, cocina, auto),
@@ -456,6 +474,10 @@ Omitilo únicamente si el producto es tan genérico que cualquier uso sería inv
 7. Español neutro o peninsular. Usá "talle" (no "talla"), "cuaderno anillado"
    (no "espiralado"), "entregas" (no "despachos"), "vos" (no "tú" ni "contigo").
 
+8. Obviedades: decir lo que el nombre del producto ya dice ("el cuaderno sirve
+   para tomar notas", "la botella sirve para tomar líquidos", "el llavero sirve
+   para llevar llaves") o repetir una oración con otras palabras.
+
 ### MATERIALES ECO
 
 Si el material incluye bambú, corcho, algodón orgánico, PET reciclado, RPET,
@@ -507,8 +529,9 @@ Respetá esos saltos de línea en el valor del campo "descripcion".
 - Capacidad de drinkware: indicarla en ml con punto (473 ml.) además de las medidas físicas si están disponibles.
 
 ### COLORES
-- Lista separada por coma y espacio, cada color con mayúscula inicial: Crudo, Azul marino, Verde.
+- Todos los colores en una sola línea, ordenados alfabéticamente, cada color con mayúscula inicial, separados por coma y espacio: Azul, Blanco, Gris, Naranja, Violeta.
 - Sin conjunción "y" antes del último color.
+- Punto al final de la lista (también si hay un solo color: Negro.).
 - Usar nombres de color simples y consistentes; evitar nombres de fantasía del proveedor cuando exista un equivalente común.
 
 ## Tu respuesta debe ser un JSON válido con esta estructura exacta:
@@ -521,7 +544,7 @@ Respetá esos saltos de línea en el valor del campo "descripcion".
   "categoria": "ID de la categoría que corresponde, elegido de esta lista (solo el ID, sin el nombre ni paréntesis):\n${CATEGORIA_LISTA}",
   "subcategoria": "Nombre exacto de una subcategoría de la categoría elegida, o cadena vacía si ninguna aplica",
   "tecnicas": ["array", "con", "técnicas de personalización sugeridas de esta lista: laser, dtf, tampografia, bordado, sublimacion, hotstamping, serigrafia, dtf-textil"],
-  "badges": ["array con badges sugeridos de: sale, oportunidad, ecofriendly, termico, premium, popular, exclusivo, corporativo, importado, kit, limitado"],
+  "badges": ["array con las etiquetas que apliquen, solo de esta lista: tinta_azul, tinta_negra, ecofriendly, termico, premium, sale, kit, ninos, popular. Condiciones: tinta_azul y tinta_negra solo en productos de escritura y únicamente si el proveedor informa el color de la tinta; ecofriendly solo si lo eco es central en el producto; termico solo si el proveedor informa que mantiene la temperatura; kit solo si es un set de varias piezas; ninos solo si el proveedor indica que es para chicos; premium, sale y popular no se sugieren (no se deducen del producto). No inventes otras etiquetas ni uses sinónimos. Si ninguna aplica con claridad, devolvé un array vacío."],
   "rango": "economico, intermedio o premium según el perfil del producto"
 }
 
