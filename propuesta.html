@@ -503,6 +503,27 @@ let cargaFallida = false;
 
   productos.forEach(normalizarProducto);
 
+  // Actualiza foto principal y galería con las fotos vigentes del catálogo:
+  // la propuesta guardada conserva las fotos de cuando se armó.
+  try {
+    const catRes = await fetch('/api/productos');
+    if (catRes.ok) {
+      const catalogo = await catRes.json();
+      const porId = new Map(catalogo.map(c => [String(c.id), c]));
+      productos.forEach(p => {
+        const c = porId.get(String(p.id));
+        if (!c) return;
+        const fotos = (c.fotos || [])
+          .map(f => typeof f === 'string' ? f : (f && f.driveId) || null)
+          .filter(Boolean);
+        if (fotos.length) {
+          p.fotos = fotos;
+          p.foto = fotos[0];
+        }
+      });
+    }
+  } catch (e) {}
+
   if (clientesRes && clientesRes.ok) renderClientSelect(await clientesRes.json());
 
   resetClienteForm();
